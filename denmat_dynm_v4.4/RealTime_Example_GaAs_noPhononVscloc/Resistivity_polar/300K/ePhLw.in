@@ -1,0 +1,5 @@
+scissor		1.022455
+valley          no
+T		300     #temperature (in Kelvin)
+NkMult		6    #kpoint resolution multiplier for final state
+EconserveWidth	0.002     #eV

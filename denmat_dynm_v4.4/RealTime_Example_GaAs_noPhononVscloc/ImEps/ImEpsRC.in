@@ -1,0 +1,13 @@
+scissor         1.022455
+
+contribution    Direct
+nOffsets        16384
+omegaMax        20.0    #eV
+T		300    #Kelvin
+dE              0.005 #eV
+polRe           1,0,0  #\
+polIm           0,1,0  #-+ LC probe pulse
+dmuMin		1.43    #eV
+dmuMax          1.43    #eV
+dmuCount        1
+broadening      0.01 #eV

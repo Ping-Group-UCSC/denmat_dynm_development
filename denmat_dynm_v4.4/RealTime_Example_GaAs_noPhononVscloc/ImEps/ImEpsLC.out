@@ -1,0 +1,76 @@
+TACC:  Starting up job 5649806 
+TACC:  Starting parallel tasks... 
+
+*************** FeynWann 1.0.alpha  ***************
++++++++++++++++ Linked to JDFTx 1.5.0  +++++++++++++++
+
+Start date and time: Tue May  5 07:33:27 2020
+Executable /home1/06235/tg855346/jdftx_codes/jdftx-20191025/build-FeynWann-lindblad-mod/ImEps with command-line: -i ImEpsLC.in
+Running on hosts (process indices):  c506-041.stampede2.tacc.utexas.edu (0-11)  c506-053.stampede2.tacc.utexas.edu (12-23)  c506-064.stampede2.tacc.utexas.edu (24-35)  c506-092.stampede2.tacc.utexas.edu (36-47)
+Divided in process groups (process indices):  0 (0)  1 (1)  2 (2)  3 (3)  4 (4)  5 (5)  6 (6)  7 (7)  8 (8)  9 (9)  10 (10)  11 (11)  12 (12)  13 (13)  14 (14)  15 (15)  16 (16)  17 (17)  18 (18)  19 (19)  20 (20)  21 (21)  22 (22)  23 (23)  24 (24)  25 (25)  26 (26)  27 (27)  28 (28)  29 (29)  30 (30)  31 (31)  32 (32)  33 (33)  34 (34)  35 (35)  36 (36)  37 (37)  38 (38)  39 (39)  40 (40)  41 (41)  42 (42)  43 (43)  44 (44)  45 (45)  46 (46)  47 (47)
+Resource initialization completed at t[s]:      0.00
+Run totals: 48 processes, 192 threads, 0 GPUs
+
+Inputs after conversion to atomic units:
+nOffsets = 1728
+omegaMax = 0.734986
+T = 0.000950043
+dE = 0.000183747
+polRe = [  0  1  0  ]
+polIm = [  1  0  0  ]
+GammaS = 0
+eta = 0.00367493
+dmuMin = 0.0525515
+dmuMax = 0.0525515
+dmuCount = 1
+broadening = 0.000367493
+contribution = Direct
+
+Reading 'Wannier/totalE.out' ... done.
+NOTE: mu unavailable; assuming semiconductor/insulator and setting to VBM.
+Reading 'Wannier/totalE.eigenvals' ... done.
+mu = 0.291366
+nElectrons = 28
+nBandsDFT = 120
+nSpins = 1
+nSpinor = 2
+spinSuffix = ''
+kfold = [  24  24  24  ]
+isTruncated = [  0  0  0  ]
+R:
+[  0  5.34145  5.34145  ]
+[  5.34145  0  5.34145  ]
+[  5.34145  5.34145  0  ]
+Atoms with fractional coordinates:
+	Ga   0.000000000000000   0.000000000000000   0.000000000000000
+	As   0.250000000000000   0.250000000000000   0.250000000000000
+
+Reading 'Wannier/wannier.mlwfCellMap' ... done.
+Reading 'Wannier/wannier.mlwfBandContrib' ... done.
+nBands = 46
+
+Reading 'Wannier/wannier.mlwfCellWeights' ... done.
+Reading 'Wannier/wannier.mlwfH' ... done.
+Reading 'Wannier/wannier.mlwfP' ... done.
+
+scissor = 0.0375745
+Effectively sampled nKpts: 23887872
+Ehat: [ 0+0.707107i , 0.707107+0i , 0+0i ]
+
+Initialized frequency grid: 0 to 40.775 eV with 8156 points.
+
+Collecting ImEps: 3% 6% 8% 11% 14% 17% 19% 22% 25% 28% 31% 33% 36% 39% 42% 44% 47% 50% 53% 56% 58% 61% 64% 67% 69% 72% 75% 78% 81% 83% 86% 89% 92% 94% 97% 100% done.
+done.
+Applying broadening ... done.
+End date and time: Tue May  5 07:44:59 2020  (Duration: 0-0:11:32.23)
+Done!
+
+PROFILER:  DistributedMatrix::transform1     3.019706 +/-     1.506087 s,   74 calls,    223.458279 s total
+PROFILER:       FeynWann::eLoop:callback     0.000094 +/-     0.000017 s, 511488 calls,     47.957297 s total
+PROFILER:   FeynWann::setState:rotations     0.000134 +/-     0.000030 s, 511488 calls,     68.724384 s total
+PROFILER:            matrix::diagonalize     0.000552 +/-     0.000085 s, 511488 calls,    282.595694 s total
+
+MEMUSAGE:                         matrix     1.125525 GB
+MEMUSAGE:                           misc     3.487061 GB
+MEMUSAGE:                          Total     4.612523 GB
+TACC:  Shutdown complete. Exiting. 
