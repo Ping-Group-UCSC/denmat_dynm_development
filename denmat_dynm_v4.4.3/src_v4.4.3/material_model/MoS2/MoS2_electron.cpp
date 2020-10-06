@@ -1,0 +1,300 @@
+#include "MoS2_electron.h"
+
+void elec_model_MoS2::set_H_BS(int ik0_glob, int ik1_glob){
+	int nk_proc = ik1_glob - ik0_glob;
+	H_BS = alloc_array(nk_proc, nb*nb);
+	for (int ik_local = 0; ik_local < nk_proc; ik_local++){
+		int ik_glob = ik_local + ik0_glob;
+		for (int i = 0; i < nb*nb; i++)
+			H_BS[ik_local][i] = H_Omega[ik_glob][i];
+	}
+}
+
+elec_model_MoS2::elec_model_MoS2(mymp *mp, lattice_MoS2 *latt, parameters *param)
+: mp(mp), latt(latt), electron(param),
+twomeff(0.48 * 2), Omega_z0(5.5e-5), A1(0.055), A2(0.023),
+alpha_e(3.3e-4), gs(2.), ethr(std::max(param->ewind, param->ewind + param->mu))
+{
+	ns = 1; nb = 2; nv = 0; nc = 2;
+	get_nk();
+	write_ldbd_size();
+
+	setState0();
+	write_ldbd_kvec();
+
+	setHOmega_mos2();
+
+	if (alg.modelH0hasBS)
+		setState_Bso_mos2();
+	write_ldbd_ek();
+	write_ldbd_smat();
+
+	compute_dm_Bpert(param->Bpert);
+	if (alg.modelH0hasBS)
+		zeros(H_Omega, nk, nb*nb);
+	write_ldbd_dm0();
+}
+
+void elec_model_MoS2::setState0(){
+	vinfo = new valleyInfo[nk];
+	alloc_mat(false, false);
+	e0 = alloc_real_array(nk, nb);
+	evc = new complex*[nk];
+	for (int ik = 0; ik < nk; ik++){
+		evc[ik] = new complex[2 * nb];
+		// As eigenstates of free Hamiltonian of the two-band model are pure states,
+		// evc[ik][ib*nb+0] and evc[ik][ib*nb+1] are spin-up and spin-down parts of band ib
+		evc[ik][0] = c1;
+		evc[ik][1] = c0;
+		evc[ik][2] = c0;
+		evc[ik][3] = c1;
+	}
+
+	int ik = 0;
+	if (DEBUG && ionode) printf("Print energies:\n");
+	for (int ik1 = 0; ik1 < kmesh[0]; ik1++)
+	for (int ik2 = 0; ik2 < kmesh[1]; ik2++)
+	for (int ik3 = 0; ik3 < kmesh[2]; ik3++){
+		vector3<> k = get_kvec(ik1, ik2, ik3);
+		double ene = e0k_mos2(k);
+		if (ene <= ethr){
+			kvec.push_back(k);
+			state0_mos2(k, vinfo[ik], e[ik], f[ik]);
+			for (int i = 0; i < nb; i++)
+				e0[ik][i] = e[ik][i]; // for debug
+			smat(evc[ik], s[ik]);
+			ik++;
+		}
+	}
+
+	if (DEBUG && ionode){
+		printf("\nPrint spin matrices:\n");
+		for (int ik = 0; ik < nk; ik++){
+			printf_complex_mat(s[ik][0], 2, "Sx:");
+			printf_complex_mat(s[ik][1], 2, "Sy:");
+			printf_complex_mat(s[ik][2], 2, "Sz:");
+		}
+		printf("\n");
+	}
+}
+
+void elec_model_MoS2::smat(complex *v, complex **s){
+	// v^dagger * sigma * v
+	s[0][0] = 0.5 * (conj(v[2])*v[0] + conj(v[0])*v[2]);
+	s[0][1] = 0.5 * (conj(v[2])*v[1] + conj(v[0])*v[3]);
+	s[0][2] = 0.5 * (conj(v[3])*v[0] + conj(v[1])*v[2]);
+	s[0][3] = 0.5 * (conj(v[3])*v[1] + conj(v[1])*v[3]);
+	s[1][0] = 0.5*ci * (conj(v[2])*v[0] - conj(v[0])*v[2]);
+	s[1][1] = 0.5*ci * (conj(v[2])*v[1] - conj(v[0])*v[3]);
+	s[1][2] = 0.5*ci * (conj(v[3])*v[0] - conj(v[1])*v[2]);
+	s[1][3] = 0.5*ci * (conj(v[3])*v[1] - conj(v[1])*v[3]);
+	s[2][0] = 0.5 * (conj(v[0])*v[0] - conj(v[2])*v[2]);
+	s[2][1] = 0.5 * (conj(v[0])*v[1] - conj(v[2])*v[3]);
+	s[2][2] = 0.5 * (conj(v[1])*v[0] - conj(v[3])*v[2]);
+	s[2][3] = 0.5 * (conj(v[1])*v[1] - conj(v[3])*v[3]);
+}
+
+void elec_model_MoS2::state0_mos2(vector3<>& k, valleyInfo& v, double e[2], double f[2]){
+	double kVSq;
+	v.isK = latt->isKvalley(k, v.kV, kVSq);
+	v.k = k;
+	e[0] = kVSq / twomeff; e[1] = e[0];
+	f[0] = fermi(temperature, mu, e[0]); f[1] = f[0];
+	if (DEBUG && ionode)
+		printf("isK= %d, kV= %lg %lg %lg, e= %lg, f= %lg\n", v.isK, v.kV[0], v.kV[1], v.kV[2], e[1], f[1]);
+}
+
+void elec_model_MoS2::get_nk(){
+	nk = 0;
+	for (int ik1 = 0; ik1 < kmesh[0]; ik1++)
+	for (int ik2 = 0; ik2 < kmesh[1]; ik2++)
+	for (int ik3 = 0; ik3 < kmesh[2]; ik3++){
+		vector3<> k = get_kvec(ik1, ik2, ik3);
+		double ene = e0k_mos2(k);
+		if (ene <= ethr)
+			nk++;
+	}
+}
+inline double elec_model_MoS2::e0k_mos2(vector3<>& k){
+	return latt->ktoKorKpSq(k) / twomeff;
+}
+
+void elec_model_MoS2::setHOmega_mos2(){
+	// suppose eigenstates of free Hamiltonian are pure ones and band 0 is spin-up
+	H_Omega = new complex*[nk];
+	for (int ik = 0; ik < nk; ik++)
+		H_Omega[ik] = new complex[nb * nb];
+
+	if (DEBUG && ionode) printf("\nPrint H_Omega:\n");
+	for (int ik = 0; ik < nk; ik++){
+		vector3<> Omega = Omega_mos2(vinfo[ik]);
+		H_Omega[ik][0] = 0.5 * complex(Omega[2], 0);
+		H_Omega[ik][3] = 0.5 * complex(-Omega[2], 0);
+		H_Omega[ik][1] = 0.5 * complex(Omega[0], -Omega[1]);
+		H_Omega[ik][2] = 0.5 * complex(Omega[0], Omega[1]);
+		if (DEBUG && ionode){
+			printf("ik = %d, kV = (%lg,%lg,%lg), kVlength = %lg\n", ik, vinfo[ik].kV[0], vinfo[ik].kV[1], vinfo[ik].kV[2], latt->klength(vinfo[ik].kV));
+			printf_complex_mat(H_Omega[ik], 2, "H_Omega:");
+		}
+	}
+	if (DEBUG && ionode) printf("\n");
+}
+inline vector3<> elec_model_MoS2::Omega_mos2(valleyInfo& v){
+	vector3<> Omega;
+	double kVlength = latt->klength(v.kV);
+	double sign = v.isK ? 1 : -1;
+	vector3<> kV_cart = v.kV * ~latt->Gvec;
+	Omega[0] = B[0];
+	Omega[1] = B[1];
+	Omega[2] = B[2] + sign * (2 * Omega_z0 + A1 * std::pow(kVlength, 2))
+		+ A2 * kV_cart[0] * (std::pow(kV_cart[0], 2) - 3 * std::pow(kV_cart[1], 2));
+	return Omega;
+}
+
+void elec_model_MoS2::setState_Bso_mos2(){
+	complex H[nb*nb];
+	for (int ik = 0; ik < nk; ik++){
+		for (int i = 0; i < nb; i++){
+			for (int j = 0; j < nb; j++)
+				H[i*nb + j] = H_Omega[ik][i*nb + j];
+			H[i*nb + i] += e[ik][i];
+		}
+		diagonalize(H, nb, e[ik], evc[ik]);
+		// As eigenstates of free Hamiltonian of the two-band model are pure states,
+		// evc[ik][ib*nb+0] and evc[ik][ib*nb+1] are spin-up and spin-down parts of band ib
+		for (int i = 0; i < nb; i++)
+			f[ik][i] = fermi(temperature, mu, e[ik][i]);
+		smat(evc[ik], s[ik]);
+	}
+
+	if (DEBUG && ionode){
+		printf("\nPrint energies with H0 = Hfree + H_Omega:\n");
+		for (int ik = 0; ik < nk; ik++)
+			printf("e: %lg %lg, f: %lg %lg\n", e[ik][0], e[ik][1], f[ik][0], f[ik][1]);
+		printf("\n");
+
+		printf("\nPrint eigenvectors with H0 = Hfree + H_Omega:\n");
+		for (int ik = 0; ik < nk; ik++)
+			printf_complex_mat(evc[ik], 2, "");
+		printf("\n");
+
+		printf("\nPrint spin matrices with H0 = Hfree + H_Omega:\n");
+		for (int ik = 0; ik < nk; ik++){
+			printf_complex_mat(s[ik][0], 2, "Sx:");
+			printf_complex_mat(s[ik][1], 2, "Sy:");
+			printf_complex_mat(s[ik][2], 2, "Sz:");
+		}
+		printf("\n");
+	}
+}
+
+void elec_model_MoS2::compute_dm_Bpert(vector3<> Bpert){
+	//dm_Bpert = new complex*[nk];
+	//for (int ik = 0; ik < nk; ik++)
+	//	dm_Bpert[ik] = new complex[nb * nb];
+	dm_Bpert = alloc_array(nk, nb*nb);
+	complex H[nb*nb], evc_pert_bandbasis[nb*nb], evc_pert_msbasis[2 * nb];
+	double e_pert[nb];
+
+	if (DEBUG && ionode && alg.modelH0hasBS) printf("\nPrint e_pert and evc_pert:\n");
+	for (int ik = 0; ik < nk; ik++){
+		vec3_dot_vec3array(H, Bpert, s[ik], nb*nb);
+		for (int i = 0; i < nb; i++)//{
+		//	for (int j = 0; j < nb; j++)
+		//		H[i*nb + j] = Bpert[2] * s[ik][2][i*nb + j];
+			H[i*nb + i] += e[ik][i];
+		//}
+		diagonalize(H, nb, e_pert, evc_pert_bandbasis);
+
+		if (DEBUG && ionode && alg.modelH0hasBS){
+			cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, nb, nb, nb,
+				&c1, evc[ik], nb, evc_pert_bandbasis, nb, &c0, evc_pert_msbasis, nb);
+
+			printf("ik= %d\n", ik);
+			printf("e: %lg %lg\n", e[ik][0], e[ik][1]);
+			printf_complex_mat(evc[ik], 2, "evc:");
+			printf_complex_mat(H, 2, "H:");
+			printf("e_p: %lg %lg\n", e_pert[0], e_pert[1]);
+			printf_complex_mat(evc_pert_bandbasis, 2, "evc_p_band:");
+			printf_complex_mat(evc_pert_msbasis, 2, "evc_p_ms:");
+
+			for (int i = 0; i < nb; i++){
+				H[0] = e0[ik][0] + H_Omega[ik][0] + 0.5*Bpert[2];
+				H[3] = e0[ik][1] + H_Omega[ik][3] - 0.5*Bpert[2];
+				H[1] = H_Omega[ik][1] + 0.5 * complex(Bpert[0], -Bpert[1]);
+				H[2] = H_Omega[ik][2] + 0.5 * complex(Bpert[0], Bpert[1]);
+			}
+			diagonalize(H, nb, e_pert, evc_pert_msbasis);
+
+			printf_complex_mat(H, 2, "H:");
+			printf("e_p: %lg %lg\n", e_pert[0], e_pert[1]);
+			printf_complex_mat(evc_pert_msbasis, 2, "evc_p_ms:");
+			printf("\n");
+		}
+
+		complex f_Bpert[nb*nb], maux[nb*nb];
+		f_Bpert[0] = fermi(temperature, mu, e_pert[0]);
+		f_Bpert[3] = fermi(temperature, mu, e_pert[1]);
+		f_Bpert[1] = c0;
+		f_Bpert[2] = c0;
+		// under unperturbated eigenvector evc[][], 
+		// dm_pert = evc_pert_bandbasis * f_pert * evc_pert_bandbasis^dagger
+		cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasConjTrans, nb, nb, nb,
+			&c1, f_Bpert, nb, evc_pert_bandbasis, nb, &c0, maux, nb);
+		cblas_zgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, nb, nb, nb,
+			&c1, evc_pert_bandbasis, nb, maux, nb, &c0, dm_Bpert[ik], nb);
+	}
+	if (DEBUG && ionode){
+		printf("\nPrint dm_Bpert:\n");
+		for (int ik = 0; ik < nk; ik++)
+			printf_complex_mat(dm_Bpert[ik], 2, "dm_Bpert[" + to_string(ik) + "]:");
+		printf("\n");
+	}
+}
+
+void elec_model_MoS2::write_ldbd_size(){
+	if (ionode){
+		FILE *fp = fopen("ldbd_data/ldbd_size.dat", "w");
+		fprintf(fp, "Conduction electrons\n");
+		fprintf(fp, "%d %d # nb nv\n", nb, 0);
+		fprintf(fp, "%lu %lu # nkfull nk\n", nk_full, nk);
+		fprintf(fp, "%lu %lu # nkpair nkpairh\n", nk*nk, 0);
+		fprintf(fp, "%14.7le # T\n", temperature);
+		fprintf(fp, "%14.7le %14.7le # muMin, muMax\n", mu, mu);
+		fprintf(fp, "%14.7le # degauss\n", 0.); // does not matter 
+		fclose(fp);
+	}
+}
+void elec_model_MoS2::write_ldbd_kvec(){
+	if (ionode){
+		FILE *fp = fopen("ldbd_data/ldbd_kvec.bin", "wb");
+		for (int ik = 0; ik < nk; ik++)
+			fwrite(&vinfo[ik].k[0], sizeof(double), 3, fp);
+		fclose(fp);
+	}
+}
+void elec_model_MoS2::write_ldbd_ek(){
+	if (ionode){
+		FILE *fp = fopen("ldbd_data/ldbd_ek.bin", "wb");
+		for (int ik = 0; ik < nk; ik++)
+			fwrite(e[ik], sizeof(double), nb, fp);
+		fclose(fp);
+	}
+}
+void elec_model_MoS2::write_ldbd_smat(){
+	if (ionode){
+		FILE *fp = fopen("ldbd_data/ldbd_smat.bin", "wb");
+		for (int ik = 0; ik < nk; ik++)
+		for (int idir = 0; idir < 3; idir++)
+			fwrite(s[ik][idir], 2 * sizeof(double), nb*nb, fp);
+		fclose(fp);
+	}
+}
+void elec_model_MoS2::write_ldbd_dm0(){
+	if (ionode){
+		FILE *fp = fopen("ldbd_data/ldbd_dm0.bin", "wb");
+		for (int ik = 0; ik < nk; ik++)
+			fwrite(dm_Bpert[ik], 2 * sizeof(double), nb*nb, fp);
+		fclose(fp);
+	}
+}

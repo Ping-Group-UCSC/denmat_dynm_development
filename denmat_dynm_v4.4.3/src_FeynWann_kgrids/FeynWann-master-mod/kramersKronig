@@ -1,0 +1,82 @@
+#!/usr/bin/octave -qf
+
+more off;
+graphics_toolkit("gnuplot");
+
+function printUsage()
+	printf("\n\t Usage: kramersKronig <ImEpsFile> <ReEpsFile>\n\n");
+	printf("\t Calculate ReEps from ImEps using the Kramers-Kronig relation.\n");
+	printf("\t First column of ImEpsFile should be a uniform frequency grid starting at 0.\n");
+	printf("\t Each subsequent column is converted from ImEps to ReEps in the output.\n");
+endfunction
+
+arg_list = argv();
+if (nargin < 2 || strcmp(arg_list{1},"--help") || strcmp(arg_list{1},"-h"))
+	printUsage();
+	exit(1);
+endif
+
+inFile = arg_list{1};
+outFile = arg_list{2};
+
+nSmooth = 0;
+
+printf("Converting ImEps from '%s' to ReEps in '%s'.\n", inFile, outFile);
+
+# smoothing function that uses a moving average; input should be a vector and a number of points to use in smoothing
+function out = smoothColumns(in,N)
+	out = in;
+	for iter=1:N
+		if(size(out,1) > 2)
+			out(2:end-1,:) = (1./6) * (out(1:end-2,:) + 4*out(2:end-1,:) + out(3:end,:));
+		endif
+	endfor
+endfunction
+
+#Read input:
+inData = load("-ascii", inFile);
+omega = inData(:,1);
+imEps = inData(:,2:end);
+imEps(find(imEps<0)) = 0; #remove unphysical negative parts
+
+#Smooth ImEps data at each temperature
+nEps = size(imEps,2);
+sWeight = repmat(omega.^3, 1,nEps);
+imEpsSmooth = smoothColumns(imEps .* sWeight, nSmooth) ./ sWeight;
+
+#Check frequency grid:
+nOmega = length(omega)-1;
+omegaUniform = linspace(0, max(omega), nOmega+1)';
+if norm(omegaUniform-omega) > 1e-4*norm(omega)
+	error("Frequency grid is not a uniform one starting at zero frequency.\n");
+endif
+
+#Repeat ImEps to get a periodic function with correct symmetry:
+nOmegaFThlf = 2*nOmega+10;
+nOmegaFT = 2*nOmegaFThlf;
+imEpsFT = zeros(nOmegaFT, nEps);
+imEpsFT(2:nOmega+1,:) = imEpsSmooth(2:end,:);
+imEpsFT(end:-1:end-nOmega+1,:) = -imEpsFT(2:nOmega+1,:);
+
+#Initialize KK kernel:
+kkKernel = zeros(nOmegaFT,1);
+kkKernel(2) = -log(4);
+iGrid = [2:nOmegaFThlf-1]';
+kkKernel(3:nOmegaFThlf) = -2.*(iGrid-1).*acoth(1-2.*iGrid) + (1.+iGrid).*log(iGrid./(1.+iGrid));
+kkKernel(end:-1:end-nOmegaFThlf+2,:) = -kkKernel(2:nOmegaFThlf); #odd about 0
+#Apply convolution:
+reEpsFT = 1. + (nOmegaFT/pi)*real(fft(ifft(imEpsFT) .* repmat(ifft(kkKernel), 1,nEps)));
+reEps = reEpsFT(1:nOmega+1,:);
+
+outDat = [ omega reEps ];
+save("-ascii", outFile, "outDat");
+exit(0);
+
+outImDat = [ omega imEpsSmooth];
+save("-ascii", 'ImEps_dirPhSmooth.dat', "outImDat");
+
+temps = [0 linspace(198,19998,199)];
+ReEpsOut = [temps; outDat];
+save("-ascii", 'ReEps_dirPhSmooth_matrix.dat', "ReEpsOut");
+ImEpsOut = [temps; outImDat];
+save("-ascii", 'ImEps_dirPhSmooth_matrix.dat', "ImEpsOut");

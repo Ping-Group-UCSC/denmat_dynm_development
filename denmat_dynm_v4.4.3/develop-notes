@@ -1,0 +1,69 @@
+From Sep. 27, 2020
+v4.4.3
+1.
+DP spin relaxation time using ImSigma_eph
+2.
+Electron-impurity scattering
+3.
+Electron-electron scattering
+
+From May 25, 2020
+v4.3
+1.
+sparse electron-phonon scattering matrix P? = sum_{+-,mode} G G nq.
+this option can be turned on by setting "alg_sparseP = 1" in input "param.in"
+
+this can speed up the calculation significantly but
+note that scattering matrix P? may not be sparse at all (e.g., two conduction bands of GaAs)
+in any case, you can search "ns_tot" in output to see
+how many elements of P? matrices are larger than several thresholds (1e-10, 1e-20, 1e-30, 1e-40, default is 1e-40)
+2.
+reduce half memory by not storing P?_{jk,ik} with ik < jk, since P1(2)_{jk,ik} = conj(P2(1)_{jk,ik})
+this will slow the computation a littile (~10%)
+note that updated version of the initialization code must be used
+3.
+add an inpute parameter compute_only_dot
+if 1, the code will report dot of observable, e.g, dSz/dt, at starting time but will not do any evolution
+so that you can extract relaxation time at starting time without being worrying about time step magnitude
+
+
+From May 22, 2020
+v4.2.3
+use adaptive integraor (rkf45 method from GSL) for time evolution
+now the following parameter are used to control evulution:
+(i)
+t0 - starting time. for a restart calculation, it will be read from file
+tend - ending time
+tstep - time step for reporting
+tstep_pump - time step for reporting during pump (pump time center +- 6*pumpTau)
+(ii)
+ode_hmax - maybe understood as maximum time step for evolution
+ode_hmax_pump - maybe understood as maximum time step for evolution during pump
+                could be useful for coherent pump (e.g., 1 fs)
+ode_epsabs - error threshold of time evolution, default 1e-8
+Al above parameters except ode_epsabs are in unit fs
+
+v4.2.2:
+1.
+units in input param.in are changed:
+  energy - eV; temperature - K; time - fs, except tau_phenom in ps;
+  magnetic field - T; length - bohr
+2.
+add probe:
+  related parameters: probePoltype? (LC, RC, Ex, Ey),
+  probeEmin, probeEmax, probeDE, probeTau.
+
+  Now code has 3 band ranges: the largest one for probe;
+  one where density matrix can be different from ground state;
+  the smallest one for electron-phonon scattering
+  Notice that in different subroutines, the default band range can be different,
+  e.g., nb=8 in electron.h, =6 in DenMat.h and =2 in ElectronPhonon.h
+3.
+add phenomenon relaxation - \dot{rho} = - (rho - rho_eq) / tau_phenom:
+  to turn on, set "alg_phenom_relax = 1",
+  other related parameters: tau_phenom (in ps);
+  bStart_tau and bEnd_tau - bands considering phenomenon relaxation, relative to starting band of density matrix
+4.
+add pumpMode "coherent" - real-time pump using coherent formula -i[P(t),rho]
+5.
+add oscillation factor exp[i(ei-ej-w)t] to probeP matrix
