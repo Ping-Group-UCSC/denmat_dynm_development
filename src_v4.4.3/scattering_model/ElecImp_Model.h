@@ -15,7 +15,7 @@ struct elecimp_model
 	int nk, bStart, bEnd, nb, nbpow4, bStart_wannier; // bStart and bEnd relative to bStart_dm
 	double nk_full, degauss, ethr, prefac_A, prefac_gauss, prefac_sqrtgauss, prefac_exp_ld, prefac_exp_cv, prefac_imsig;
 	double **imsig;
-	complex *Uih, *ovlp, *eimp, *P1imp, *P2imp;
+	complex *Uih, *ovlp, *eimp, *P1imp, *P2imp, *A1, *A2;
 	double **e;
 
 	elecimp_model(lattice *latt, parameters *param, electron *elec, int bStart, int bEnd, coulomb_model *coul_model)
@@ -40,6 +40,7 @@ struct elecimp_model
 		ovlp = new complex[nb*nb];
 		eimp = new complex[nb*nb];
 		P1imp = new complex[nbpow4]{c0}; P2imp = new complex[nbpow4]{c0};
+		A1 = new complex[nb*nb]{c0}; A2 = new complex[nb*nb]{c0};
 
 		if (bStart != coul_model->bStart || bEnd != coul_model->bEnd) error_message("bStart(bEnd) must be the same as bStart in coul_model","elecimp_model");
 		e = coul_model->e;
@@ -78,7 +79,6 @@ struct elecimp_model
 	}
 
 	void calc_P(int ik, int jk, complex* P1, complex* P2, bool accum = false){
-		complex *A1 = new complex[nb*nb]{c0}; complex *A2 = new complex[nb*nb]{c0};
 		calc_A(ik, jk, A1, A2);
 
 		// P1_n3n2,n4n5 = A_n3n4 * conj(A_n2n5)
