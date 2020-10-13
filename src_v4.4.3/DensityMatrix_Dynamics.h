@@ -233,7 +233,7 @@ public:
 
 	void compute(double t, bool active_coh = true){
 		if (exists("EXIT_DMD")){ { if (ionode) system("rm EXIT_DMD"); } mpkpair.mpi_abort("clean exit", 0); } // user can "touch EXIT_DMD to exit the program"
-		ode.ncalls++;
+		sdmk->t = t; ode.ncalls++;
 		if (ionode && ode.ncalls > 12 && ode.ncalls % 6 == 0) { printf("t= %lg fs\n", t / fs); fflush(stdout); }
 
 		if (alg.use_dmDP_in_evolution) sdmk->use_dmDP(elec->f_dm);
@@ -244,7 +244,7 @@ public:
 			sdmk->update_ddmdt(sdmk->ddmdt_term);
 		}
 
-		if (pmp.active() && elight->pumpMode != "perturb"){
+		if (pmp.active() && elight->pumpMode != "perturb" && elight->during_pump(t)){
 			if (alg.ddmeq || alg.phenom_relax || update_eimp_model_inside(t)) sdmk->set_dm_eq(param->temperature, elec->e_dm, elec->nv_dm);
 			if (alg.ddmeq) eph->compute_ddm_eq(sdmk->f_eq); // compute time derivative of density matrix in equilibrium
 			elight->evolve_pump(t, sdmk->dm, sdmk->oneminusdm, sdmk->ddmdt_term);
@@ -267,16 +267,16 @@ public:
 	void update_scatt_inside(double t){
 		if (update_eimp_model_inside(t)){
 			sdmk->set_dm_eq(param->temperature, elec->e_dm, elec->nv_dm);
-			eph->reset_scatt(true, true, sdmk->dm_eq, nullptr, sdmk->t);
-			eph->compute_ddm_eq(sdmk->f_eq); // compute time derivative of density matrix in equilibrium
+			if (alg.ddmeq) eph->reset_scatt(true, true, sdmk->dm_eq, nullptr, sdmk->t);
+			if (alg.ddmeq) eph->compute_ddm_eq(sdmk->f_eq); // compute time derivative of density matrix in equilibrium
 		}
 		eph->reset_scatt(update_eimp_model_inside(t), update_ee_model_inside(), sdmk->dm, sdmk->oneminusdm, t);
 	}
 	void update_scatt_outside(double t, int it){
 		if (update_eimp_model_outside(t, it)){
 			sdmk->set_dm_eq(param->temperature, elec->e_dm, elec->nv_dm);
-			eph->reset_scatt(true, true, sdmk->dm_eq, nullptr, sdmk->t);
-			eph->compute_ddm_eq(sdmk->f_eq); // compute time derivative of density matrix in equilibrium
+			if (alg.ddmeq) eph->reset_scatt(true, true, sdmk->dm_eq, nullptr, sdmk->t);
+			if (alg.ddmeq) eph->compute_ddm_eq(sdmk->f_eq); // compute time derivative of density matrix in equilibrium
 		}
 		sdmk->set_oneminusdm(); // also zeros(ddmdt)
 		eph->reset_scatt(update_eimp_model_outside(sdmk->t, it), update_ee_model_outside(it), sdmk->dm, sdmk->oneminusdm, t);
@@ -295,6 +295,7 @@ public:
 	}
 
 	void report(int it, bool diff = true, bool prtprobe = true, bool prtdos = false, string lable = ""){
+		if (it % ob->freq_measure != 0) return;
 		if (it > 0) sdmk->write_dm_tofile(sdmk->t);
 		bool print_ene = it % ob->freq_measure_ene == 0;
 		if (prtdos) ob->measure("dos", lable, true, true, sdmk->t, sdmk->dm); // for dos, diff == true just means file name has no "initial"
