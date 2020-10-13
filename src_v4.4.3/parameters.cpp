@@ -149,6 +149,7 @@ void parameters::read_param(){
 	}
 	tend = get(param_map, "tend", 0., fs);
 	tstep = get(param_map, "tstep", 1., fs);
+	freq_measure = get(param_map, "freq_measure", 1);
 	freq_measure_ene = get(param_map, "freq_measure_ene", 10);
 	freq_compute_tau = get(param_map, "freq_compute_tau", freq_measure_ene);
 	de_measure = get(param_map, "de_measure", 5e-4, eV);

@@ -9,10 +9,10 @@ public:
 	Te* elec;
 	int dim;
 	double VAL, t0;
-	int freq_measure_ene, freq_compute_tau;
+	int freq_measure, freq_measure_ene, freq_compute_tau;
 	observable(Tl* latt, parameters* param, Te* elec)
 		:latt(latt), elec(elec), dim(latt->dim), t0(param->restart ? param->t0 : param->t0 - 1),
-		freq_measure_ene(param->freq_measure_ene), freq_compute_tau(param->freq_compute_tau)
+		freq_measure(param->freq_measure), freq_measure_ene(param->freq_measure_ene), freq_compute_tau(param->freq_compute_tau)
 	{
 		if (dim == 3)
 			VAL = latt->volume;
