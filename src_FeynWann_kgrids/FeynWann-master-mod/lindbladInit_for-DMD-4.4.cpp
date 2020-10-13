@@ -325,6 +325,11 @@ struct LindbladInit
 			for (size_t ik2 = ik1; ik2 < k.size(); ik2++)
 				kpairs.push_back(std::make_pair(ik1, ik2));
 			logPrintf("Number of pairs: %lu\n\n", kpairs.size());
+
+			if (mpiWorld->isHead()) std::random_shuffle(kpairs.begin(), kpairs.end());
+			logPrintf("Randomly rearranging kpairs done\n");
+			mpiWorld->bcast((size_t*)kpairs.data(), kpairs.size() * 2);
+			logPrintf("bcast kpairs done\n");
 			return;
 		}
 
@@ -368,19 +373,6 @@ struct LindbladInit
 		size_t nkpairsTot = k.size()*k.size();
 		logPrintf("Found %lu k-pairs with e-ph coupling from %lu total pairs of selected k-points (%.0fx reduction)\n",
 			nkpairs, nkpairsTot, round(nkpairsTot*1. / nkpairs));
-		//--- initialize kpartners (list of k2 by k1):
-		// jxu: I did not used the following part but I kept it
-		kpartners.resize(k.size());
-		for (auto kpair : kpairs)
-			kpartners[kpair.first].push_back(kpair.second);
-		size_t nPartnersMin = k.size(), nPartnersMax = 0;
-		for (std::vector<size_t>& kp : kpartners){
-			std::sort(kp.begin(), kp.end()); //sort k2 within each k1 array
-			const size_t& nPartners = kp.size();
-			if (nPartners < nPartnersMin) nPartnersMin = nPartners;
-			if (nPartners > nPartnersMax) nPartnersMax = nPartners;
-		}
-		logPrintf("Number of partners per k-point:  min: %lu  max: %lu  mean: %.1lf\n\n", nPartnersMin, nPartnersMax, nkpairs*1. / k.size());
 	}
 
 	//--------- Save data -------------
