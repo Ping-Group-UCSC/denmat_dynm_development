@@ -82,7 +82,7 @@ public:
 
 	bool during_pump(double t){
 		if (pumpMode == "lindblad" || pumpMode == "coherent")
-			return fabs(t - pmp.pump_tcenter) <= 6 * pmp.pumpTau;
+			return fabs(t - pmp.pump_tcenter) <= 6.1 * pmp.pumpTau;
 	}
 	bool enter_pump(double t, double tnext){
 		return !during_pump(t) && during_pump(tnext);
