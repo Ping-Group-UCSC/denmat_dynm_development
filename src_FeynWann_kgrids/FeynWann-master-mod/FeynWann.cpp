@@ -121,7 +121,7 @@ std::vector<vector3<>> readArrayVec3(string fname); //Read an array of vector3<>
 
 FeynWann::FeynWann(FeynWannParams& fwp)
 : fwp(fwp), nAtoms(0), nSpins(0), nSpinor(0), spinWeight(0), isMetal(false), mu(NAN), nElectrons(0), polar(false), inEphLoop(false), 
-eEneOnly(false), ePhEstart(-1), ePhEstop(0)
+eEneOnly(false), ePhEstart(0), ePhEstop(-1)
 {	
 	//Create inter-group communicator if requested:
 	std::shared_ptr<MPIUtil> mpiInterGroup;
