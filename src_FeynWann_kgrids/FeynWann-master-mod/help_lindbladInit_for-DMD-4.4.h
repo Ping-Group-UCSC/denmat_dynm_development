@@ -11,6 +11,7 @@ const complex ci(0, 1);
 const complex cmi(0, -1);
 const double bohr2cm = 5.291772109038e-9;
 const double Tesla = eV*sec / (meter*meter);
+const vector3<> K = vector3<>(1. / 3, 1. / 3, 0), Kp = vector3<>(-1. / 3, -1. / 3, 0);
 
 template <typename T> int sgn(T val){
 	return (T(0) < val) - (val < T(0));
@@ -21,6 +22,13 @@ vector3<> wrap_around_Gamma(const vector3<>& x){
 	for (int dir = 0; dir<3; dir++)
 		result[dir] -= floor(0.5 + result[dir]);
 	return result;
+}
+bool isKvalley(matrix3<> GGT, vector3<> k){
+	return GGT.metric_length_squared(wrap_around_Gamma(K - k))
+		< GGT.metric_length_squared(wrap_around_Gamma(Kp - k));
+}
+bool isInterValley(matrix3<> GGT, vector3<> k1, vector3<> k2){
+	return isKvalley(GGT, k1) xor isKvalley(GGT, k2);
 }
 
 int dimension(FeynWann& fw);
@@ -55,3 +63,22 @@ void zeros(std::vector<matrix>& v);
 void error_message(string s, string routine);
 void printf_complex_mat(complex *m, int n, string s);
 void fprintf_complex_mat(FILE *fp, complex *m, int n, string s);
+
+double maxval(std::vector<FeynWann::StateE>& e, int bStart, int bStop){
+	double r = DBL_MIN;
+	for (size_t ik; ik < e.size(); ik++){
+		diagMatrix Ek = e[ik].E(bStart, bStop);
+		for (int b = 0; b < bStop - bStart; b++)
+		if (Ek[b] > r) r = Ek[b];
+	}
+	return r;
+}
+double minval(std::vector<FeynWann::StateE>& e, int bStart, int bStop){
+	double r = DBL_MAX;
+	for (size_t ik; ik < e.size(); ik++){
+		diagMatrix Ek = e[ik].E(bStart, bStop);
+		for (int b = 0; b < bStop - bStart; b++)
+		if (Ek[b] < r) r = Ek[b];
+	}
+	return r;
+}
