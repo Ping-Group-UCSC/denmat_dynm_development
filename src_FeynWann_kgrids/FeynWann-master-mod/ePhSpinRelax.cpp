@@ -23,48 +23,11 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include <core/Random.h>
 #include <algorithm>
 #include "SparseMatrix.h"
-#include "help_lindbladInit_for-DMD-4.4.h"
 
 static const int ngrid = 1000;
 
-//Helper class for collecting relevant energy range:
-struct EnergyRangeCollect{
-	FeynWann& fw;
-	const double &dmuMin, &dmuMax; //minimum and maximum chemical potentials considered
-	double EvMax, EcMin; //VBM and CBM estimates
-	double omegaPhMax; //max phonon energy
-	int band_skipped;
-
-	EnergyRangeCollect(const std::vector<double>& dmu, FeynWann& fw, const int& band_skipped)
-		: dmuMin(dmu.front()), dmuMax(dmu.back()),
-		EvMax(-DBL_MAX), EcMin(+DBL_MAX), omegaPhMax(0.), fw(fw), band_skipped(band_skipped)
-	{}
-
-	void process(const FeynWann::StateE& state){
-		if (band_skipped < 0){
-			for (const double& E : state.E){
-				if (E < 1e-4 and E > EvMax) EvMax = E;
-				if (E > 1e-4 and E < EcMin) EcMin = E;
-			}
-		}
-		else{
-			if (state.E[fw.nElectrons - band_skipped - 1] > EvMax) EvMax = state.E[fw.nElectrons - band_skipped - 1];
-			if (state.E[fw.nElectrons - band_skipped] < EcMin) EcMin = state.E[fw.nElectrons - band_skipped];
-		}
-	}
-	static void eProcess(const FeynWann::StateE& state, void* params){
-		((EnergyRangeCollect*)params)->process(state);
-	}
-
-	static void phProcess(const FeynWann::StatePh& state, void* params){
-		double& omegaPhMax = ((EnergyRangeCollect*)params)->omegaPhMax;
-		omegaPhMax = std::max(omegaPhMax, state.omega.back());
-	}
-};
-
 struct SpinRelaxCollect{
 	FeynWann& fw;
-	EnergyRangeCollect& erc;
 	const std::vector<double>& dmu; //doping levels
 	const std::vector<double>& T; //temperatures
 	const double omegaPhByTmin; //lower cutoff in phonon frequency (relative to T)
@@ -83,14 +46,13 @@ struct SpinRelaxCollect{
 	std::vector<vector3<double>> weighted_sum_bsq, bsqe, weighted_sum_Bin, Bine; // spin mixing, |internal magnetic field|^2
 	std::vector<double> sum_dfde, weighted_sum_Bintot, Bintote; // spin mixing, |internal magnetic field|^2
 	std::vector<size_t> nstates;
-	std::vector<double> nfree; double prefac_nfree;
 
 	SpinRelaxCollect(FeynWann& fw, const std::vector<double>& dmu, const std::vector<double>& T,
-		EnergyRangeCollect& erc, const double& omegaPhByTmin, const int& nModes,
+		const double& omegaPhMax, const double& omegaPhByTmin, const int& nModes,
 		const double& EconserveWidth, size_t nK, size_t nKpairs,
 		const double& Estart, const double& Estop, const double& degeneracyThreshold)
-		: fw(fw), dmu(dmu), T(T), erc(erc),
-		omegaPhByTmin(std::max(1e-4, std::min(1e-2, omegaPhByTmin))), nModes(nModes),
+		: fw(fw), dmu(dmu), T(T),
+		omegaPhByTmin(std::max(1e-3, omegaPhByTmin)), nModes(nModes),
 		EconserveExpFac(-0.5 / std::pow(EconserveWidth, 2)), sqrtEconserveExpFac(-0.25 / std::pow(EconserveWidth, 2)),
 		prefacChi(0.5 / nK), prefacGamma(2 * M_PI / nKpairs), prefacG(1. / sqrt(sqrt(2.*M_PI)*EconserveWidth)), //include prefactor of Gaussian energy conservation
 		Estart(Estart), Estop(Estop),
@@ -99,8 +61,7 @@ struct SpinRelaxCollect{
 		GammaV(T.size()*dmu.size()), K(1. / 3, 1. / 3, 0), Kp(-1. / 3, -1. / 3, 0),
 		degeneracyThreshold(degeneracyThreshold),
 		weighted_sum_bsq(T.size()*dmu.size()), sum_dfde(T.size()*dmu.size()), bsqe(ngrid + 1), nstates(ngrid + 1),
-		weighted_sum_Bin(T.size()*dmu.size()), weighted_sum_Bintot(T.size()*dmu.size()), Bine(ngrid + 1), Bintote(ngrid + 1),
-		nfree(T.size()*dmu.size()), prefac_nfree(0.5 / nK / cell_size(fw)) // 0.5 due to eLoop is run twice
+		weighted_sum_Bin(T.size()*dmu.size()), weighted_sum_Bintot(T.size()*dmu.size()), Bine(ngrid + 1), Bintote(ngrid + 1)
 	{
 		Gvec = (2.*M_PI)*inv(fw.R);
 		GGT = Gvec * (~Gvec);
@@ -197,16 +158,6 @@ struct SpinRelaxCollect{
 				diagMatrix F(nBandsSel);
 				for (int b = 0; b < nBandsSel; b++){
 					F[b] = fermi(invT*(E[b] - dmu[iMu]));
-					if (fw.isMetal && erc.band_skipped < 0){
-						nfree[iMuT] += prefac_nfree * F[b];
-					}
-					else{
-						if (dmu[iMu] < (erc.EvMax + erc.EcMin) / 2. && E[b] < (erc.EvMax + erc.EcMin) / 2.)
-							nfree[iMuT] += prefac_nfree * (1 - F[b]);
-						else if (dmu[iMu] >= (erc.EvMax + erc.EcMin) / 2. && E[b] >= (erc.EvMax + erc.EcMin) / 2.)
-							nfree[iMuT] += prefac_nfree * F[b];
-					}
-
 					double FFbar = F[b] * (1 - F[b]);
 					weighted_sum_bsq[iMuT] += FFbar * bsq[b];
 					weighted_sum_Bin[iMuT] += FFbar * Bin[b];
@@ -358,6 +309,41 @@ struct SpinRelaxCollect{
 	}
 };
 
+//Helper class for collecting relevant energy range:
+struct EnergyRangeCollect{
+	FeynWann& fw;
+	const double &dmuMin, &dmuMax; //minimum and maximum chemical potentials considered
+	double EvMax, EcMin; //VBM and CBM estimates
+	double omegaPhMax; //max phonon energy
+	int band_skipped;
+
+	EnergyRangeCollect(const std::vector<double>& dmu, FeynWann& fw, const int& band_skipped)
+		: dmuMin(dmu.front()), dmuMax(dmu.back()),
+		EvMax(-DBL_MAX), EcMin(+DBL_MAX), omegaPhMax(0.), fw(fw), band_skipped(band_skipped)
+	{}
+
+	void process(const FeynWann::StateE& state){
+		if (band_skipped < 0){
+			for (const double& E : state.E){
+				if (E < 1e-4 and E > EvMax) EvMax = E;
+				if (E > 1e-4 and E < EcMin) EcMin = E;
+			}
+		}
+		else{
+			if (state.E[fw.nElectrons - band_skipped - 1] > EvMax) EvMax = state.E[fw.nElectrons - band_skipped - 1];
+			if (state.E[fw.nElectrons - band_skipped] < EcMin) EcMin = state.E[fw.nElectrons - band_skipped];
+		}
+	}
+	static void eProcess(const FeynWann::StateE& state, void* params){
+		((EnergyRangeCollect*)params)->process(state);
+	}
+
+	static void phProcess(const FeynWann::StatePh& state, void* params){
+		double& omegaPhMax = ((EnergyRangeCollect*)params)->omegaPhMax;
+		omegaPhMax = std::max(omegaPhMax, state.omega.back());
+	}
+};
+
 int main(int argc, char** argv)
 {
 	InitParams ip = FeynWann::initialize(argc, argv, "Electron-phonon scattering contribution to spin relaxation.");
@@ -402,7 +388,7 @@ int main(int argc, char** argv)
 	//Initialize FeynWann:
 	FeynWannParams fwp(&inputMap);	fwp.printParams(); // Bext, EzExt and scissor
 	fwp.needSymmetries = true;
-	fwp.needPhonons = ePhEnable ? true : false;
+	fwp.needPhonons = true;
 	fwp.needSpin = true;
 	fwp.needVelocity = true;
 	FeynWann fw(fwp);
@@ -454,7 +440,7 @@ int main(int argc, char** argv)
 	//Determine relevant energy range (states close enough to mu or band edges to matter):
 	EnergyRangeCollect erc(dmu, fw, band_skipped);
 	fw.eLoop(vector3<>(), EnergyRangeCollect::eProcess, &erc);
-	if (ePhEnable) fw.phLoop(vector3<>(), EnergyRangeCollect::phProcess, &erc);
+	fw.phLoop(vector3<>(), EnergyRangeCollect::phProcess, &erc);
 	mpiWorld->allReduce(erc.EvMax, MPIUtil::ReduceMax);
 	mpiWorld->allReduce(erc.EcMin, MPIUtil::ReduceMin);
 	mpiWorld->allReduce(erc.omegaPhMax, MPIUtil::ReduceMin);
@@ -483,10 +469,10 @@ int main(int argc, char** argv)
 	for (int block = 0; block < nBlocks; block++){
 		logPrintf("Working on block %d of %d: ", block + 1, nBlocks); logFlush();
 		srcArr[block] = std::make_shared<SpinRelaxCollect>(fw, dmu, T,
-			erc, omegaPhByTmin, nModes, EconserveWidth, nKPerBlock, nKpairsPerBlock,
+			erc.omegaPhMax, omegaPhByTmin, nModes, EconserveWidth, nKPerBlock, nKpairsPerBlock,
 			Estart, Estop, degeneracyThreshold);
 		SpinRelaxCollect& src = *(srcArr[block]);
-		for (int o = 0; o < noMine; o++){
+		for (int o = 0; o < noMine; o++)		{
 			Random::seed(seedStart + block*nOffsetsPerBlock + o + oStart); //to make results independent of MPI division
 			//Process with a random offset pair:
 			vector3<> k01 = fw.randomVector(mpiGroup); //must be constant across group
@@ -509,7 +495,6 @@ int main(int argc, char** argv)
 		for (std::vector<matrix3<>>& v : src.Gamma_mode)
 			mpiWorld->allReduceData(v, MPIUtil::ReduceSum);
 		mpiWorld->allReduceData(src.chi, MPIUtil::ReduceSum);
-		mpiWorld->allReduceData(src.nfree, MPIUtil::ReduceSum);
 		mpiWorld->allReduceData(src.weighted_sum_bsq, MPIUtil::ReduceSum);
 		mpiWorld->allReduceData(src.weighted_sum_Bin, MPIUtil::ReduceSum);
 		mpiWorld->allReduceData(src.weighted_sum_Bintot, MPIUtil::ReduceSum);
@@ -546,13 +531,13 @@ int main(int argc, char** argv)
 		for (size_t iMu = 0; iMu < dmuCount; iMu++)
 		{
 			size_t iMuT = iT*dmuCount + iMu; //combined index
-			logPrintf("\nResults for T = %lg K and dmu = %lg eV:\n", T[iT] / Kelvin, dmu[iMu] / eV); logFlush();
+			logPrintf("\nResults for T = %lg K and dmu = %lg eV:\n", T[iT] / Kelvin, dmu[iMu] / eV);
 			std::vector<matrix3<>> Gamma(nBlocks), Gammaavg(1), Gammasym(nBlocks), chi(1), chisym(1), T1bar(nBlocks), T1barsym(nBlocks), T1barVsym(nBlocks), T1barIntrasym(nBlocks);
 			std::vector<double> T1(nBlocks), T1sym(nBlocks);
 			std::vector<matrix3<>> Gammaavg_mode(nModes);
 			vector3<> weighted_sum_bsq_avg, bsq_avg, weighted_sum_Bin_avg, Bin_avg;
 			std::vector<vector3<>> bsqe(ngrid + 1), Bine(ngrid + 1); std::vector<double> nstates(ngrid + 1), Bintote(ngrid + 1);
-			double sum_dfde_avg = 0, weighted_sum_Bintot_avg = 0, Bintot_avg = 0, nfree_avg = 0;
+			double sum_dfde_avg = 0, weighted_sum_Bintot_avg = 0, Bintot_avg = 0;
 			// Neglect the variation of chi
 			for (int block = 0; block < nBlocks; block++){
 				SpinRelaxCollect& src = *(srcArr[block]);
@@ -563,7 +548,6 @@ int main(int argc, char** argv)
 				weighted_sum_Bin_avg += src.weighted_sum_Bin[iMuT] / nBlocks;
 				weighted_sum_Bintot_avg += src.weighted_sum_Bintot[iMuT] / nBlocks;
 				sum_dfde_avg += src.sum_dfde[iMuT] / nBlocks;
-				nfree_avg += src.nfree[iMuT] / nBlocks;
 				for (int ie = 0; ie < ngrid + 1; ie++){
 					bsqe[ie] += src.bsqe[ie] / nBlocks;
 					Bine[ie] += src.Bine[ie] / nBlocks; Bintote[ie] += src.Bintote[ie] / nBlocks;
@@ -610,7 +594,6 @@ int main(int argc, char** argv)
 					}
 				}
 			}
-			print_carrier_density(fw, nfree_avg); logFlush();
 
 			if (ePhEnable){
 				reportResult(T1barsym, "T1sym", ps, "ps", stdout, true); //tensor version
