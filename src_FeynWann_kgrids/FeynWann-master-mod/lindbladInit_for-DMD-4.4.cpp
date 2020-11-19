@@ -65,7 +65,7 @@ struct LindbladInit
 	double nkBT;
 	const double pumpOmegaMax, pumpTau, probeOmegaMax;
 
-	bool ePhEnabled;
+	bool ePhEnabled, onlyInterValley, onlyIntraValley;
 	const bool ePhOnlyElec, ePhOnlyHole; //!< whether e-ph coupling is enabled
 	string shole;
 	const double ePhDelta; //!< Gaussian energy conservation width
@@ -192,6 +192,7 @@ struct LindbladInit
 		}
 		EBot_probe = EBot_dm - probeOmegaMax - 5. / pumpTau;
 		ETop_probe = ETop_dm + probeOmegaMax + 5. / pumpTau;
+		logPrintf("Emargin = %.3lf eV\n", Emargin / eV);
 		logPrintf("Active energy range for probe: %.3lf to %.3lf eV\n", EBot_probe / eV, ETop_probe / eV);
 		logPrintf("Active energy range for kpointSelect: %.3lf to %.3lf eV\n", EBot_eph / eV, ETop_eph / eV);
 		logPrintf("Active energy range for density matrix: %.3lf to %.3lf eV\n", EBot_dm / eV, ETop_dm / eV);
@@ -277,6 +278,8 @@ struct LindbladInit
 		for (size_t ik1 = 0; ik1 < k.size(); ik1++){
 			const vector3<>& k1 = k[ik1];
 			vector3<> k2 = k1 - state.q; //momentum conservation
+			if (onlyInterValley && !isInterValley(GGT, k1, k2)) continue;
+			if (onlyIntraValley && isInterValley(GGT, k1, k2)) continue;
 			size_t ik2; if (not findK(k2, ik2)) continue;
 			if (ik1 > ik2) continue;
 			//Check energy conservation for pair of bands within active range:
@@ -570,10 +573,25 @@ struct LindbladInit
 		for (int ikpair_local = 0; ikpair_local < nkpairMine; ikpair_local++){
 			int ikpair_glob = ikpair_local + ikpairStart;
 			int ik = kpairs[ikpair_glob].first, jk = kpairs[ikpair_glob].second;
+			if (ldebug){
+				fprintf(fpd, "\nik= %d, k= %lg %lg %lg, ikp= %d, kp= %lg %lg %lg\n",
+					ik, k[ik][0], k[ik][1], k[ik][2], jk, k[jk][0], k[jk][1], k[jk][2]); fflush(fpd);
+			}
 			diagMatrix Ek = state_elec[ik].E(bStart, bStop), Ekp = state_elec[jk].E(bStart, bStop);
+			if (ldebug){
+				for (int b = 0; b < nBandsSel; b++){
+					fprintf(fpd, "Ek[%d]= %lg Ekp[%d]= %lg\n", b, Ek[b], b, Ekp[b]); fflush(fpd);
+				}
+			}
 			FeynWann::StatePh php, phm;
 			if (modeStop > modeStart) fw.phCalc(k[jk] - k[ik], php); // q = k' -k
 			if (modeStop > modeStart) fw.phCalc(k[ik] - k[jk], phm); // q = k - k'
+			if (ldebug){
+				for (int alpha = modeStart; alpha < modeStop; alpha++){
+					double wqm = phm.omega[alpha], wqp = php.omega[alpha];
+					fprintf(fpd, "alpha= %d wqm= %lg wqp= %lg\n", alpha, wqm, wqp); fflush(fpd);
+				}
+			}
 			FeynWann::MatrixEph mp, mm;
 			if (modeStop > modeStart) fw.ePhCalc(state_elec[jk], state_elec[ik], php, mp); // g^-_k'k
 			if (modeStop > modeStart) fw.ePhCalc(state_elec[ik], state_elec[jk], phm, mm); // g^-_kk'
@@ -595,9 +613,10 @@ struct LindbladInit
 				}
 			}
 
-			if (ldebug)
+			if (ldebug){
 				fprintf(fpd, "\nik= %d, k= %lg %lg %lg, ikp= %d, kp= %lg %lg %lg\n",
-				ik, k[ik][0], k[ik][1], k[ik][2], jk, k[jk][0], k[jk][1], k[jk][2]);
+					ik, k[ik][0], k[ik][1], k[ik][2], jk, k[jk][0], k[jk][1], k[jk][2]); fflush(fpd);
+			}
 
 			compute_P(ik, jk, Ek, Ekp, php, phm, mp, mm, true, ldebug, true, false); // gaussian smearing
 			fwriteP(fp1, fp2, fp1ns, fp1s, fp1i, fp1j, fp2ns, fp2s, fp2i, fp2j);
@@ -648,21 +667,22 @@ struct LindbladInit
 			double prefac_imsig = M_PI / nkTot * prefac_delta;
 
 			double nqm = bose(std::max(1e-3, wqm / Tmax)), nqp = bose(std::max(1e-3, wqp / Tmax));
-			if (ldebug) fprintf(fpd, "alpha= %d wqm= %lg wqp= %lg nqm= %lg\n", alpha, wqm, wqp, nqm);
+			if (ldebug) { fprintf(fpd, "alpha= %d wqm= %lg wqp= %lg nqm= %lg\n", alpha, wqm, wqp, nqm); fflush(fpd); }
 			matrix gp = dagger(mp.M[alpha](bStart, bStop, bStart, bStop)); // g^+_kk' = g^-_k'k^(dagger_n)
 			matrix gm = mm.M[alpha](bStart, bStop, bStart, bStop);
 			///*
 			if (ldebug){
-			//fprintf(fpd, "gp:");
-			//for (int b1 = 0; b1 < nBandsSel; b1++)
-			//for (int b2 = 0; b2 < nBandsSel; b2++)
-			//	fprintf(fpd, " (%lg,%lg)", gp(b1, b2).real(), gp(b1, b2).imag());
-			//fprintf(fpd, "\n:");
-			fprintf(fpd, "gm:");
-			for (int b1 = 0; b1 < nBandsSel; b1++)
-			for (int b2 = 0; b2 < nBandsSel; b2++)
-			fprintf(fpd, " (%lg,%lg)", gm(b1, b2).real(), gm(b1, b2).imag());
-			fprintf(fpd, "\n");
+				//fprintf(fpd, "gp:");
+				//for (int b1 = 0; b1 < nBandsSel; b1++)
+				//for (int b2 = 0; b2 < nBandsSel; b2++)
+				//	fprintf(fpd, " (%lg,%lg)", gp(b1, b2).real(), gp(b1, b2).imag());
+				//fprintf(fpd, "\n:");
+				fprintf(fpd, "gm:");  fflush(fpd);
+				for (int b1 = 0; b1 < nBandsSel; b1++)
+				for (int b2 = 0; b2 < nBandsSel; b2++){
+					fprintf(fpd, " (%lg,%lg)", gm(b1, b2).real(), gm(b1, b2).imag()); fflush(fpd);
+				}
+				fprintf(fpd, "\n");  fflush(fpd);
 			}
 			//*/
 			bool conserve = false;
@@ -747,15 +767,17 @@ struct LindbladInit
 
 		if (ldebug){
 			///*
-			fprintf(fpd, "\nP1:\n");
+			fprintf(fpd, "\nP1:\n"); fflush(fpd);
 			for (int b1 = 0; b1 < nBandsSel*nBandsSel; b1++)
-			for (int b2 = 0; b2 < nBandsSel*nBandsSel; b2++)
-				fprintf(fpd, " (%lg,%lg)", P1[b1*nBandsSel*nBandsSel + b2].real(), P1[b1*nBandsSel*nBandsSel + b2].imag());
-			fprintf(fpd, "P2:\n");
+			for (int b2 = 0; b2 < nBandsSel*nBandsSel; b2++){
+				fprintf(fpd, " (%lg,%lg)", P1[b1*nBandsSel*nBandsSel + b2].real(), P1[b1*nBandsSel*nBandsSel + b2].imag()); fflush(fpd);
+			}
+			fprintf(fpd, "P2:\n"); fflush(fpd);
 			for (int b1 = 0; b1 < nBandsSel*nBandsSel; b1++)
-			for (int b2 = 0; b2 < nBandsSel*nBandsSel; b2++)
-				fprintf(fpd, " (%lg,%lg)", P2[b1*nBandsSel*nBandsSel + b2].real(), P2[b1*nBandsSel*nBandsSel + b2].imag());
-			fprintf(fpd, "\n");
+			for (int b2 = 0; b2 < nBandsSel*nBandsSel; b2++){
+				fprintf(fpd, " (%lg,%lg)", P2[b1*nBandsSel*nBandsSel + b2].real(), P2[b1*nBandsSel*nBandsSel + b2].imag()); fflush(fpd);
+			}
+			fprintf(fpd, "\n"); fflush(fpd);
 			//*/
 		}
 	}
@@ -776,11 +798,17 @@ struct LindbladInit
 		fclose(fpsigkn);
 
 		std::vector<double> imsige(102); std::vector<int> nstate(102);
-		double dE = (Estop - Estart) / 100;
+		double Estart_imsige = Estart, Estop_imsige = Estop;
+		if (!fw.isMetal){
+			if (ePhOnlyElec) Estart_imsige = minval(state_elec, bCBM, bTop_eph) - std::min(7., nEphDelta) * ePhDelta;
+			if (ePhOnlyHole) Estop_imsige = maxval(state_elec, bBot_eph, bCBM) + std::max(7., nEphDelta) * ePhDelta;
+			if (ePhOnlyElec || ePhOnlyHole) logPrintf("Active energy range for printing ImSigma(E): %.3lf to %.3lf eV\n", Estart_imsige / eV, Estop_imsige / eV);
+		}
+		double dE = (Estop_imsige - Estart_imsige) / 100;
 		for (size_t ik = 0; ik < k.size(); ik++){
 			diagMatrix Ek = state_elec[ik].E(bStart, bStop);
 			for (int b = 0; b < nBandsSel; b++){
-				int ie = round((Ek[b] - Estart) / dE);
+				int ie = round((Ek[b] - Estart_imsige) / dE);
 				if (ie >= 0 && ie <= 101){
 					nstate[ie]++;
 					imsige[ie] += imsig[ik][b];
@@ -793,7 +821,7 @@ struct LindbladInit
 		for (int ie = 0; ie < 102; ie++){
 			if (nstate[ie] > 0){
 				imsige[ie] /= nstate[ie];
-				fprintf(fpsige, "%14.7le %14.7le %d\n", (Estart + ie*dE) / eV, imsige[ie] / eV, nstate[ie]);
+				fprintf(fpsige, "%14.7le %14.7le %d\n", (Estart_imsige + ie*dE) / eV, imsige[ie] / eV, nstate[ie]);
 			}
 		}
 		fclose(fpsige);
@@ -1224,6 +1252,9 @@ int main(int argc, char** argv)
 	double carrier_density = inputMap.get("carrier_density", 0); // unit can be 1, cm-1, cm-2 or cm-3 and is undetermined until dimension of the system has been known
 	bool write_sparseP = inputMap.get("write_sparseP", 0);
 	double degthr = inputMap.get("degthr", degthr_default);
+	bool onlyInterValley = inputMap.get("onlyInterValley", 0);
+	bool onlyIntraValley = inputMap.get("onlyIntraValley", 0);
+	assert(!onlyInterValley || !onlyIntraValley);
 
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("NkMult = "); NkMult.print(globalLog, " %d ");
@@ -1249,6 +1280,8 @@ int main(int argc, char** argv)
 	logPrintf("writeU = %d\n", writeU);
 	logPrintf("write_sparseP = %d\n", write_sparseP);
 	logPrintf("degthr = %lg\n", degthr);
+	logPrintf("onlyInterValley = %d\n", onlyInterValley);
+	logPrintf("onlyIntraValley = %d\n", onlyIntraValley);
 
 	//Initialize FeynWann:
 	FeynWannParams fwp(&inputMap);	fwp.printParams(); // Bext, EzExt and scissor
@@ -1320,6 +1353,7 @@ int main(int argc, char** argv)
 	lb.n_dmu = carrier_density;
 	lb.write_sparseP = write_sparseP;
 	lb.degthr = degthr;
+	lb.onlyInterValley = onlyInterValley; lb.onlyIntraValley = onlyIntraValley;
 
 	//First pass (e only): select k-points
 	fw.eEneOnly = true;
