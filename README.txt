@@ -1,3 +1,7 @@
+Note:
+Except sources files are new, all others are from older version 4.4.3.
+They should be updated, e.g., an example of monolayer WSe2 using QE2JDFTx scripts and with e-imp scattering needs to be added.
+
 Folders and files:
 1. executables are in ./bin (github does not want an empty folder, so please create this folder)
 2. src_v4.4.3 : source codes
