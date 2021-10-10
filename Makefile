@@ -1,7 +1,7 @@
 DIRBIN = ./bin
 TARGET = $(DIRBIN)/$(EXE)
-EXE = denmat_dynm_v4.4.3
-SRC_DIRS = ./src_v4.4.3
+EXE = denmat_dynm_v4.5.4
+SRC_DIRS = ./src_v4.5.4
 
 all: $(TARGET) rm_d_files
 

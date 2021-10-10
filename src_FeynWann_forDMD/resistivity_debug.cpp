@@ -61,7 +61,7 @@ struct ResistivityCollect
 				}
 				g[iMu] += (-dfdE);
 				vSq[iMu] += (-dfdE) * v.length_squared();
-				tau[iMu] += (-dfdE) / (2*ImSigma);
+				tau[iMu] += (-dfdE) * ImSigma;
 				//JX
 				matrix3<> m3tmp = ((-dfdE) / (2 * ImSigmaP)) * vdotv;
 				//vvTau[iMu] += ((-dfdE) / (2 * ImSigmaP)) * vdotv;
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
 				rhoBarArr[block] = trace(rhoArr[block], slabDir) / (slabDir>=0 ? 2. : 3.);
 				mobBarArr[block] = trace(mobArr[block], slabDir) / (slabDir>=0 ? 2. : 3.);
 				kappaBarArr[block] = trace(kappaArr[block], slabDir) / (slabDir>=0 ? 2. : 3.);
-				tauArr[block] = rc.tau[iMu] / rc.g[iMu];
+				tauArr[block] = 0.5 / (rc.tau[iMu] / rc.g[iMu]);
 				tauDrudeArr[block] = trace(rc.vvTau[iMu], slabDir) / rc.vSq[iMu];
 				mEffArr[block] = tauDrudeArr[block] / mobBarArr[block]; //mobility-effective-mass
 				vFarr[block] = sqrt(rc.vSq[iMu] / rc.g[iMu]);
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
 			reportResult(mobBarArr, "Mobility"+spinSuffix, cm2byVs, "cm^2/(V.s)");
 			reportResult(kappaBarArr, kappaName+spinSuffix, kappaUnit, kappaUnitName);
 			reportResult(tauDrudeArr, "tauDrude"+spinSuffix, fs, "fs");
-			reportResult(tauArr, "tau"+spinSuffix, fs, "fs");
+			reportResult(tauArr, "tau"+spinSuffix, fs, "fs", globalLog, true);
 			reportResult(mEffArr, "mEff"+spinSuffix, 1, "");
 			reportResult(vFarr, "vF"+spinSuffix, 1, "");
 			reportResult(gArr, "g"+spinSuffix+"(eF)", 1, "");

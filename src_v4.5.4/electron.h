@@ -16,16 +16,16 @@ public:
 	int bStart_dm, bEnd_dm, nb_dm, nv_dm, nc_dm; // band range related to density matrix
 	int bStart_eph, bEnd_eph, nb_eph, nv_eph, nc_eph;
 	std::vector<vector3<>> kvec;
-	bool print_along_kpath;
+	bool print_along_kpath, print_layer_occ, print_layer_spin;
 	std::vector<vector3<double>> kpath_start, kpath_end;
 	int nkpath;
 	std::vector<int> ik_kpath;
 	double **e, **f, **e_dm, **f_dm; // ocuupation number
 	double emin, emax, evmax, ecmin, emid;
-	vector3<> B;
-	complex ***s, ***v, **U;
+	vector3<> B; double scale_Ez;
+	complex ***s, **layer, **layerspin, ***v, **U;
 	std::vector<vector3<>> Bso;
-	complex **H_BS;
+	complex **H_BS, **H_Ez;
 	double degthr;
 	complex **ddm_Bpert, **dm_Bpert, **ddm_Bpert_neq, **dm_Bpert_neq; // store ddm_eq and ddm_neq for later analysis of ddm
 	bool *has_precess;
@@ -39,14 +39,16 @@ public:
 		print_along_kpath(param->print_along_kpath), kpath_start(param->kpath_start), kpath_end(param->kpath_end), nkpath(param->kpath_start.size()){}
 	electron(mymp *mp, lattice *latt, parameters *param)
 		:mp(mp), latt(latt), temperature(param->temperature), mu(param->mu), carrier_density(param->carrier_density),
-		kmesh(vector3<int>(param->nk1, param->nk2, param->nk3)), nk_full((double)param->nk1*(double)param->nk2*(double)param->nk3), B(param->B),
+		kmesh(vector3<int>(param->nk1, param->nk2, param->nk3)), nk_full((double)param->nk1*(double)param->nk2*(double)param->nk3), B(param->B), scale_Ez(param->scale_Ez),
 		print_along_kpath(param->print_along_kpath), kpath_start(param->kpath_start), kpath_end(param->kpath_end), nkpath(param->kpath_start.size()),
-		H_BS(nullptr), ddm_Bpert(nullptr), ddm_Bpert_neq(nullptr), dm_Bpert_neq(nullptr),
+		H_BS(nullptr), H_Ez(nullptr), ddm_Bpert(nullptr), ddm_Bpert_neq(nullptr), dm_Bpert_neq(nullptr),
 		imsig_eph_kn(nullptr), imsig_eph_k(nullptr), imsig_eph_avg(0)
 	{
 		if (code == "jdftx"){
 			read_ldbd_size();
 			bool alloc_U = false;
+			print_layer_occ = exists("ldbd_data/ldbd_layermat.bin");
+			print_layer_spin = exists("ldbd_data/ldbd_layerspinmat.bin");
 			for (int iD = 0; iD < eip.ni.size(); iD++)
 				if (eep.eeMode != "none" || (eip.ni[iD] != 0 && eip.impMode[iD] == "model_ionized")) alloc_U = true;
 			alloc_mat(pmp.pumpA0 > 0, alloc_U);
@@ -57,6 +59,8 @@ public:
 			f_dm = trunc_alloccopy_array(f, nk, bStart_dm, bEnd_dm);
 			read_ldbd_imsig_eph();
 			read_ldbd_smat();
+			if (print_layer_occ) read_ldbd_layermat();
+			if (print_layer_occ) read_ldbd_layerspinmat();
 			if (pmp.pumpA0 > 0) read_ldbd_vmat();
 			if (alloc_U) read_ldbd_Umat();
 			if (alg.read_Bso) read_ldbd_Bso();
@@ -125,6 +129,8 @@ public:
 	void read_ldbd_ek();
 	void read_ldbd_imsig_eph();
 	void read_ldbd_smat();
+	void read_ldbd_layermat();
+	void read_ldbd_layerspinmat();
 	void read_ldbd_vmat();
 	void read_ldbd_Umat();
 	void read_ldbd_Bso();
@@ -137,4 +143,5 @@ public:
 	void compute_DP_related(vector3<> Bpert);
 
 	void set_H_BS(int ik0_glob, int ik1_glob);
+	void set_H_Ez(int ik0_glob, int ik1_glob);
 };

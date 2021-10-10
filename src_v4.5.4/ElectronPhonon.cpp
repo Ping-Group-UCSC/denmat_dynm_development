@@ -4,7 +4,7 @@ void electronphonon::set_eph(){
 	alloc_ephmat(mp->varstart, mp->varend); // allocate matrix A or P
 	set_kpair();
 	if (alg.linearize) return;
-	if (alg.eph_enable) set_ephmat();
+	set_ephmat();
 	for (int iD = 0; iD < eip.ni.size(); iD++)
 		if (!alg.only_ee) add_scatt_contrib("eimp", iD);
 	if (ee_model != nullptr && eep.eeMode == "Pee_fixed_at_eq" && !alg.only_eimp) add_scatt_contrib("ee");
@@ -197,6 +197,8 @@ void electronphonon::set_ephmat(){
 }
 void electronphonon::read_ldbd_eph(){
 	if (!alg.Pin_is_sparse){
+		if (!alg.eph_enable) return;
+
 		if (ionode) printf("\nread ldbd_P1(2)_(lindblad/conventional)(_hole).dat:\n");
 		string fname1 = "ldbd_data/ldbd_P1_", fname2 = "ldbd_data/ldbd_P2_", suffix;
 		suffix = isHole ? alg.scatt + "_hole" : alg.scatt;
@@ -223,13 +225,19 @@ void electronphonon::read_ldbd_eph(){
 		if (ionode) printf("Read sP1 and sP2\n");
 		if (sP1 != nullptr) { delete sP1; sP1 = nullptr; }
 		if (sP2 != nullptr) { delete sP2; sP2 = nullptr; }
-		string suffix = isHole ? alg.scatt + "_hole" : alg.scatt;
-		sP1 = new sparse2D(mp, "ldbd_data/sP1_" + suffix + "_ns.bin", "ldbd_data/sP1_" + suffix + "_s.bin", "ldbd_data/sP1_" + suffix + "_i.bin", "ldbd_data/sP1_" + suffix + "_j.bin", nb*nb, nb*nb);
-		sP2 = new sparse2D(mp, "ldbd_data/sP2_" + suffix + "_ns.bin", "ldbd_data/sP2_" + suffix + "_s.bin", "ldbd_data/sP2_" + suffix + "_i.bin", "ldbd_data/sP2_" + suffix + "_j.bin", nb*nb, nb*nb);
-		sP1->read_smat(true); // do_test = true
-		sP2->read_smat(true);
-		sparse_plus_dense(sP1->smat, sP1->thrsh, nullptr, sP1->nk, sP1->ni, sP1->nj, c0, complex(scale_eph, 0));
-		sparse_plus_dense(sP2->smat, sP2->thrsh, nullptr, sP2->nk, sP2->ni, sP2->nj, c0, complex(scale_eph, 0));
+		if (alg.eph_enable){
+			string suffix = isHole ? alg.scatt + "_hole" : alg.scatt;
+			sP1 = new sparse2D(mp, "ldbd_data/sP1_" + suffix + "_ns.bin", "ldbd_data/sP1_" + suffix + "_s.bin", "ldbd_data/sP1_" + suffix + "_i.bin", "ldbd_data/sP1_" + suffix + "_j.bin", nb*nb, nb*nb);
+			sP2 = new sparse2D(mp, "ldbd_data/sP2_" + suffix + "_ns.bin", "ldbd_data/sP2_" + suffix + "_s.bin", "ldbd_data/sP2_" + suffix + "_i.bin", "ldbd_data/sP2_" + suffix + "_j.bin", nb*nb, nb*nb);
+			sP1->read_smat(true); // do_test = true
+			sP2->read_smat(true);
+			sparse_plus_dense(sP1->smat, sP1->thrsh, nullptr, sP1->nk, sP1->ni, sP1->nj, c0, complex(scale_eph, 0));
+			sparse_plus_dense(sP2->smat, sP2->thrsh, nullptr, sP2->nk, sP2->ni, sP2->nj, c0, complex(scale_eph, 0));
+		}
+		else{
+			sP1 = new sparse2D(mp, nullptr, nb*nb, nb*nb, alg.thr_sparseP);
+			sP2 = new sparse2D(mp, nullptr, nb*nb, nb*nb, alg.thr_sparseP);
+		}
 	}
 }
 

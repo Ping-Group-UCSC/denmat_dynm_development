@@ -31,11 +31,13 @@ void findMaxOmega(const FeynWann::StatePh& state, void* params)
 struct CollectDOS
 {	Histogram* dos;
 	double weight;
+	int modeStart, modeStop;
 	
 	static void phProcess(const FeynWann::StatePh& state, void* params)
 	{	CollectDOS& cd = *((CollectDOS*)params);
-		for(const double& omega: state.omega)
-			cd.dos->addEvent(omega, cd.weight);
+		//for(const double& omega: state.omega)
+		for (int alpha = cd.modeStart; alpha < cd.modeStop; alpha++)
+			cd.dos->addEvent(state.omega[alpha], cd.weight);
 	}
 };
 
@@ -51,7 +53,9 @@ int main(int argc, char** argv)
 	const double Tstep = inputMap.get("Tstep") * Kelvin; //lattice temperature grid spacing
 	const double vL = inputMap.get("vL", 0.) * meter/sec; //longitudinal speed of sound (optional for Debye model)
 	const double vT = inputMap.get("vT", vL) * meter/sec; //transverse speed of sound (assumed x2, optional for Debye model)
-	
+	int modeStart = inputMap.get("modeStart", 0);
+	int modeStop = inputMap.get("modeStop", -1); //replaced with nModes below if 0
+
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("nOffsets = %lu\n", nOffsets);
 	logPrintf("domega = %lg\n", domega);
@@ -60,7 +64,9 @@ int main(int argc, char** argv)
 	logPrintf("Tstep = %lg\n", Tstep);
 	if(vL) logPrintf("vL = %lg\n", vL);
 	if(vT) logPrintf("vT = %lg\n", vT);
-	
+	logPrintf("modeStart = %d\n", modeStart);
+	logPrintf("modeStop = %d\n", modeStop);
+
 	//Initialize FeynWann:
 	FeynWannParams fwp;
 	fwp.needPhonons = true;
@@ -68,6 +74,7 @@ int main(int argc, char** argv)
 	size_t nKpts = nOffsets * fw.phCountPerOffset();
 	logPrintf("Effectively sampled nKpts: %lu\n", nKpts);
 	if(mpiWorld->isHead()) logPrintf("%lu phonon q-mesh offsets parallelized over %d process groups.\n", nOffsets, mpiGroupHead->nProcesses());
+	modeStop = modeStop < 0 ? fw.nModes : modeStop; assert(modeStop <= fw.nModes); assert(modeStop > modeStart);
 
 	if(ip.dryRun)
 	{	logPrintf("Dry run successful: commands are valid and initialization succeeded.\n");
@@ -108,6 +115,8 @@ int main(int argc, char** argv)
 	
 	logPrintf("\nCollecting DOS: "); logFlush();
 	CollectDOS cd;
+	cd.modeStart = modeStart;
+	cd.modeStop = modeStop;
 	cd.dos = &dos;
 	cd.weight = (1./nKpts);
 	for(int o=0; o<noMine; o++)

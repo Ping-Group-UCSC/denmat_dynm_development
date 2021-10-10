@@ -123,28 +123,33 @@ std::vector<diagMatrix> computeF(double t, double mu, std::vector<FeynWann::Stat
 	return F;
 }
 
-vector3<> compute_bsq(std::vector<FeynWann::StateE>& e, int bStart, int bStop, double degthr, std::vector<diagMatrix> F){
+std::vector<std::vector<vector3<>>> compute_bsq(std::vector<FeynWann::StateE>& e, int bStart, int bStop, double degthr, std::vector<diagMatrix> F){
+	std::vector<std::vector<vector3<>>> bsq(e.size(), std::vector<vector3<>>(bStop - bStart));
 	int nb = bStop - bStart;
-	vector3<> bsq_avg(vector3<>(0,0,0));
-	double sum = 0;
 	for (size_t ik = 0; ik < e.size(); ik++){
 		diagMatrix Ek = e[ik].E(bStart, bStop), dfde(nb);
-		for (int b = 0; b < nb; b++){
-			dfde[b] = F[ik][b] * (1 - F[ik][b]);
-			sum += dfde[b];
-		}
 		for (int id = 0; id < 3; id++){
 			matrix s = e[ik].S[id](bStart, bStop, bStart, bStop);
 			matrix sdeg = degProj(s, Ek, degthr);
 			diagMatrix ss = diag(sdeg*sdeg);
 			// a^2 + b^2 = 1, a^2 - b^2 = sdeg^2 => b^2 = (1 - sdeg^2) / 2
-			for (int b = 0; b < nb; b++){
-				double bsq = 0.5 * (1 - sqrt(ss[b]));
-				bsq_avg[id] += dfde[b] * bsq;
-			}
+			for (int b = 0; b < nb; b++)
+				bsq[ik][b][id] = 0.5 * (1 - sqrt(ss[b]));
 		}
 	}
-	return bsq_avg / sum;
+	if (mpiWorld->isHead()){
+		string fname_bsq = "ldbd_data/ldbd_bsq.out";
+		FILE *fp_bsq = fopen(fname_bsq.c_str(), "w");
+		fprintf(fp_bsq, "E(Har) b^2\n");
+		for (size_t ik = 0; ik < e.size(); ik++){
+			diagMatrix Ek = e[ik].E(bStart, bStop);
+			for (int b = 0; b < nb; b++)
+				fprintf(fp_bsq, "%14.7le %14.7le %14.7le %14.7le\n", Ek[b], bsq[ik][b][0], bsq[ik][b][1], bsq[ik][b][2]);
+		}
+		fclose(fp_bsq);
+	}
+	//MPI_Barrier(MPI_COMM_WORLD);
+	return bsq;
 }
 matrix degProj(matrix& M, diagMatrix& E, double degthr){
 	matrix Mdeg(E.size(), E.size());

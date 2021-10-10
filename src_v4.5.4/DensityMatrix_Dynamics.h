@@ -34,7 +34,7 @@ public:
 		// density matrix
 		sdmk = new singdenmat_k(param, &mpk, elec->nk, elec->nb_dm); // k-independent single density matrix
 		if (alg.use_dmDP_in_evolution) sdmk->init_dmDP(elec->ddm_Bpert, elec->ddm_Bpert_neq);
-		sdmk->init_Hcoh(elec->H_BS, elec->e_dm);
+		sdmk->init_Hcoh(elec->H_BS, elec->H_Ez, elec->e_dm);
 		// probe ground state
 		sdmk->init_dm(elec->f_dm);
 		if (pmp.active()) elight->probe(-1, sdmk->t, sdmk->dm, sdmk->oneminusdm);
@@ -66,7 +66,8 @@ public:
 
 		// observables
 		ob = new ob_1dmk<Tl, Te>(latt, param, elec, eph->bStart, eph->bEnd);
-		if (!param->restart){ report(0, false, false, true); report(0); } // report initial quatities: dos, occupation, spin, probe
+		report(0, false, false, true); // report initial quatities: dos, occupation, spin, probe to stdout
+		if (!param->restart) report(0); // write initial excess quantities in files
 
 		// compute relaxtion according to intial density matrix
 		if (param->compute_tau_only){ compute(sdmk->t); report_tau(0); } //compute initial relaxation time
@@ -241,7 +242,7 @@ public:
 		if (alg.use_dmDP_in_evolution) sdmk->use_dmDP(elec->f_dm);
 		sdmk->set_oneminusdm(); // also zeros(ddmdt)
 
-		if (active_coh && (alg.picture == "schrodinger" || elec->H_BS)){ // coherent dynamics, including BS
+		if (active_coh && (alg.picture == "schrodinger" || elec->H_BS || elec->H_Ez)){ // coherent dynamics, including BS
 			sdmk->evolve_coh(t, sdmk->ddmdt_term);
 			sdmk->update_ddmdt(sdmk->ddmdt_term);
 		}
@@ -315,6 +316,8 @@ public:
 		bool print_ene = it % ob->freq_measure_ene == 0;
 		if (prtdos) ob->measure("dos", lable, true, true, sdmk->t, sdmk->dm); // for dos, diff == true just means file name has no "initial"
 		ob->measure("fn", lable, diff, print_ene, sdmk->t, sdmk->dm);
+		if (ob->print_layer_occ) ob->measure("layer", lable, diff, false, sdmk->t, sdmk->dm);
+		if (ob->print_layer_spin) ob->measure("layerspin", lable, diff, false, sdmk->t, sdmk->dm);
 		ob->measure("sx", lable, diff, print_ene && diff, sdmk->t, sdmk->dm);
 		ob->measure("sy", lable, diff, print_ene && diff, sdmk->t, sdmk->dm);
 		ob->measure("sz", lable, diff, print_ene && diff, sdmk->t, sdmk->dm);

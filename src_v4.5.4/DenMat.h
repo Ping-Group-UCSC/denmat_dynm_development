@@ -82,7 +82,7 @@ public:
 	complex **Hcoh, *Hcoht;
 	double **e;
 	complex prefac_coh;
-	void init_Hcoh(complex **H_BS, double **e);
+	void init_Hcoh(complex **H_BS, complex **H_Ez, double **e);
 	void compute_Hcoht(double t, complex *H, double *e);
 	void evolve_coh(double t, complex** ddmdt_coh);
 };

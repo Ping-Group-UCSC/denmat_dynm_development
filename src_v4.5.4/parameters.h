@@ -20,7 +20,7 @@ public:
 
 	string pumpMode;
 
-	double Bx, By, Bz; vector3<> B;
+	double Bx, By, Bz, scale_Ez; vector3<> B;
 	double Bxpert, Bypert, Bzpert; vector3<> Bpert; // to generate an initial spin inbalance
 
 	vector3<double> lattvec1, lattvec2, lattvec3;

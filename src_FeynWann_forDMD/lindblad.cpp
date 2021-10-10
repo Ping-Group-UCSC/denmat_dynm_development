@@ -59,6 +59,7 @@ struct Lindblad : public Integrator<DM1>
 	const double dE; //!< energy resolution for distribution functions
 	
 	const bool ePhEnabled; //!< whether e-ph coupling is enabled
+	bool detailBalance;
 	const double defectFraction; //!< defect fraction if present
 	const bool verbose; //!< whether to print more detailed stats during evolution
 	const string checkpointFile; //!< file name to save checkpoint data to
@@ -269,7 +270,10 @@ struct Lindblad : public Integrator<DM1>
 			for(State& s: state)
 			{	for(LindbladFile::GePhEntry& g: s.GePh)
 				{	g.G.init(s.nInner, nInnerAll[g.jk]);
-					g.initA(T, defectFraction);
+					if (!detailBalance) //JX
+						g.initA(T, defectFraction);
+					else
+						g.initA(&(s.E[s.innerStart]), &(Eall[nInnerPrev[g.jk]]), T, defectFraction);
 				}
 			}
 		}
@@ -706,7 +710,8 @@ int main(int argc, char** argv)
 	const bool verbose = (verboseMode=="yes");
 	const string inFile = inputMap.has("inFile") ? inputMap.getString("inFile") : "ldbd.dat"; //input file name
 	const string checkpointFile = inputMap.has("checkpointFile") ? inputMap.getString("checkpointFile") : ""; //checkpoint file name
-	
+	const bool detailBalance = inputMap.get("detailBalance", 0);
+
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("dmu = %lg\n", dmu);
 	logPrintf("T = %lg\n", T);
@@ -741,6 +746,7 @@ int main(int argc, char** argv)
 	logPrintf("verbose = %s\n", verboseMode.c_str());
 	logPrintf("inFile = %s\n", inFile.c_str());
 	logPrintf("checkpointFile = %s\n", checkpointFile.c_str());
+	logPrintf("detailBalance = %d\n", detailBalance);
 	logPrintf("\n");
 	
 	//Create and initialize lindblad calculator:
@@ -748,6 +754,7 @@ int main(int argc, char** argv)
 		pumpOmega, pumpA0, pumpTau, pumpPol, (pumpMode=="Evolve"), (pumpMode=="Bfield"), pumpB,
 		omegaMin, omegaMax, domega, tau, pol, dE,
 		ePhEnabled, defectFraction, verbose, checkpointFile);
+	lb.detailBalance = detailBalance;
 	lb.initialize(inFile);
 	logPrintf("Initialization completed successfully at t[s]: %9.2lf\n\n", clock_sec());
 	logFlush();

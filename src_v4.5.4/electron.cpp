@@ -15,6 +15,24 @@ void electron::set_H_BS(int ik0_glob, int ik1_glob){
 		vec3_dot_vec3array(H_BS[ik_local], Btot, s[ik_glob], nb_dm*nb_dm); //vec3_dot_vec3array(complex *vm, vector3<complex> v, complex **m, int n);
 	}
 }
+void electron::set_H_Ez(int ik0_glob, int ik1_glob){
+	if (scale_Ez == 0. || !exists("ldbd_data/ldbd_HEzmat.bin")) return;
+	if (ionode) printf("\nread ldbd_HEzmat.bin:\n");
+	FILE *fp = fopen("ldbd_data/ldbd_HEzmat.bin", "rb");
+	size_t expected_size = nk * nb_dm*nb_dm * 2 * sizeof(double);
+	check_file_size(fp, expected_size, "ldbd_HEzmat.bin size does not match expected size");
+	fseek_bigfile(fp, ik0_glob, nb_dm*nb_dm * 2 * sizeof(double));
+
+	int nk_proc = ik1_glob - ik0_glob;
+	H_Ez = alloc_array(nk_proc, nb_dm*nb_dm);
+	fread(H_Ez[0], 2 * sizeof(double), nk_proc*nb_dm*nb_dm, fp);
+	axbyc(H_Ez, nullptr, nk_proc, nb_dm*nb_dm, c0, complex(scale_Ez, 0));
+	if (ionode){
+		for (int ik = 0; ik < std::min(nk_proc, 20); ik++)
+			printf_complex_mat(H_Ez[ik], nb_dm, nb_dm, "");
+	}
+	fclose(fp);
+}
 
 void electron::compute_dm_Bpert_1st(vector3<> Bpert, double t0){
 	if (ionode) printf("\nenter compute_dm_Bpert_1st\n");
@@ -230,6 +248,34 @@ void electron::read_ldbd_smat(){
 	}
 	fclose(fp);
 }
+void electron::read_ldbd_layermat(){
+	if (!print_layer_occ) return;
+	if (ionode) printf("\nread ldbd_layermat.bin:\n");
+	FILE *fp = fopen("ldbd_data/ldbd_layermat.bin", "rb");
+	size_t expected_size = nk * nb_dm*nb_dm * 2 * sizeof(double);
+	check_file_size(fp, expected_size, "ldbd_layermat.bin size does not match expected size");
+	for (int ik = 0; ik < nk; ik++)
+		fread(layer[ik], 2 * sizeof(double), nb_dm*nb_dm, fp);
+	if (ionode){
+		for (int ik = 0; ik < std::min(nk, 20); ik++)
+			printf_complex_mat(layer[ik], nb_dm, nb_dm, "");
+	}
+	fclose(fp);
+}
+void electron::read_ldbd_layerspinmat(){
+	if (!print_layer_spin) return;
+	if (ionode) printf("\nread ldbd_layerspinmat.bin:\n");
+	FILE *fp = fopen("ldbd_data/ldbd_layerspinmat.bin", "rb");
+	size_t expected_size = nk * nb_dm*nb_dm * 2 * sizeof(double);
+	check_file_size(fp, expected_size, "ldbd_layerspinmat.bin size does not match expected size");
+	for (int ik = 0; ik < nk; ik++)
+		fread(layerspin[ik], 2 * sizeof(double), nb_dm*nb_dm, fp);
+	if (ionode){
+		for (int ik = 0; ik < std::min(nk, 20); ik++)
+			printf_complex_mat(layerspin[ik], nb_dm, nb_dm, "");
+	}
+	fclose(fp);
+}
 void electron::read_ldbd_vmat(){
 	if (ionode) printf("\nread ldbd_vmat.bin:\n");
 	FILE *fp = fopen("ldbd_data/ldbd_vmat.bin", "rb");
@@ -315,6 +361,8 @@ void electron::alloc_mat(bool alloc_v, bool alloc_U){
 	s = alloc_array(nk, 3, nb_dm*nb_dm);
 	if (alloc_v) v = alloc_array(nk, 3, nb_dm*nb);
 	if (alloc_U) U = alloc_array(nk, nb_wannier * nb_eph);
+	if (print_layer_occ) layer = alloc_array(nk, nb_dm * nb_dm);
+	if (print_layer_spin) layerspin = alloc_array(nk, nb_dm * nb_dm);
 }
 
 vector3<> electron::get_kvec(int& ik1, int& ik2, int& ik3){

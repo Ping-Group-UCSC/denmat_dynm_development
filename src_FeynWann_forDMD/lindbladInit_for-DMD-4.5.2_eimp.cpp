@@ -53,7 +53,7 @@ struct LindbladInit_eimp
 {
 	bool DEBUG;
 	FeynWann& fw;
-	bool writeU;
+	bool writeU, layerOcc, writeHEz;
 	const vector3<int>& NkFine; //!< effective k-point mesh sampled
 	const double nkTot; //!< total k-points effectively used in BZ sampling
 	double degthr;
@@ -63,12 +63,13 @@ struct LindbladInit_eimp
 	double nkBT;
 	const double pumpOmegaMax, pumpTau, probeOmegaMax;
 	double EBot_set, ETop_set;
+	bool assumeMetal;
 
 	const int iDefect; string siDefect, siDefectHole;
 	const double defect_density; double defect_fraction;
 	bool ePhEnabled, onlyInterValley, onlyIntraValley, eScattOnlyElec, eScattOnlyHole; //!< whether e-ph coupling is enabled
 	string shole;
-	bool detailBalance;
+	bool detailBalance, needConventional;
 	const double scattDelta; double nScattDelta; //!< Gaussian energy conservation width
 	bool writeg, mergeg, write_sparseP;
 	int band_skipped;
@@ -174,6 +175,7 @@ struct LindbladInit_eimp
 		logPrintf("VBM: %.6lf eV, CBM: %.6lf eV, Middle: %.6lf\n", EvMax / eV, EcMin / eV, Emid/eV);
 		logPrintf("Note that VBM and CBM may not be determined correctly,\nyou may have to use band_skipped to set starting band index of wannier bands\n");
 		if (EvMax < EcMin && band_skipped >= 0) fw.isMetal = false;
+		if (assumeMetal) fw.isMetal = true;
 
 		//Determine energy range:
 		//--- add margins of max phonon energy, energy conservation width and fermiPrime width
@@ -326,9 +328,10 @@ struct LindbladInit_eimp
 					if ((writeU || kparis_eph_eimp) && fabs(dE) < nScattDelta*scattDelta)
 						Econserve = true;
 					else if (modeStop > modeStart){
-						for (const double omegaPh : state.omega) if (omegaPh/Tmax>omegabyTCut){ //loop over non-zero phonon frequencies
-							double deltaE_minus = dE - omegaPh; //energy conservation violation
-							double deltaE_plus = dE + omegaPh; //energy conservation violation
+						//for (const double omegaPh : state.omega) if (omegaPh / Tmax > omegabyTCut){
+						for (int alpha = modeStart; alpha < modeStop; alpha++) if (state.omega[alpha]/Tmax > omegabyTCut){ //loop over non-zero phonon frequencies
+							double deltaE_minus = dE - state.omega[alpha]; //energy conservation violation
+							double deltaE_plus = dE + state.omega[alpha]; //energy conservation violation
 							if (fabs(deltaE_minus) < nScattDelta*scattDelta || fabs(deltaE_plus) < nScattDelta*scattDelta){ //else negligible at the 10^-3 level for a Gaussian
 								Econserve = true;
 								break;
@@ -515,6 +518,16 @@ struct LindbladInit_eimp
 		logPrintf("bcastState_inEphLoop done\n");
 
 		if (mpiWorld->isHead()){
+			//  write energies
+			string fnamee = dir_ldbd + "ldbd_ek.bin";
+			FILE *fpe = fopen(fnamee.c_str(), "wb");
+			for (size_t ik = 0; ik < k.size(); ik++){
+				diagMatrix E = state_elec[ik].E(bBot_probe, bTop_probe); // notice the band range here
+				fwrite(E.data(), sizeof(double), nBandsSel_probe, fpe);
+			}
+			fclose(fpe);
+		}
+		if (mpiWorld->isHead()){
 			//  write spin matrices
 			string fnames = dir_ldbd + "ldbd_smat.bin";
 			FILE *fps = fopen(fnames.c_str(), "wb");
@@ -525,6 +538,27 @@ struct LindbladInit_eimp
 				fwrite(st.data(), 2 * sizeof(double), (bTop_dm - bBot_dm)*(bTop_dm - bBot_dm), fps);
 			}
 			fclose(fps);
+		}
+		if (mpiWorld->isHead() && layerOcc){
+			//  write layer operator matrices
+			string fnamel = dir_ldbd + "ldbd_layermat.bin", fnamesl = dir_ldbd + "ldbd_spinlayermat.bin", fnamels = dir_ldbd + "ldbd_layerspinmat.bin";
+			FILE *fpl = fopen(fnamel.c_str(), "wb"), *fpsl = fopen(fnamesl.c_str(), "wb"), *fpls = fopen(fnamels.c_str(), "wb");
+			for (size_t ik = 0; ik < k.size(); ik++){
+				matrix l = state_elec[ik].layer(bBot_dm, bTop_dm, bBot_dm, bTop_dm); // notice the band range here
+				matrix lt = transpose(l); // from ColMajor to RowMajor
+				fwrite(lt.data(), 2 * sizeof(double), (bTop_dm - bBot_dm)*(bTop_dm - bBot_dm), fpl);
+
+				matrix slfull = state_elec[ik].S[2] * state_elec[ik].layer; // notice the band range here
+				matrix sl = 0.5*slfull(bBot_dm, bTop_dm, bBot_dm, bTop_dm);
+				matrix slt = transpose(sl); // from ColMajor to RowMajor
+				fwrite(slt.data(), 2 * sizeof(double), (bTop_dm - bBot_dm)*(bTop_dm - bBot_dm), fpsl);
+
+				matrix lsfull = state_elec[ik].layer * state_elec[ik].S[2]; // notice the band range here
+				matrix ls = 0.5*lsfull(bBot_dm, bTop_dm, bBot_dm, bTop_dm);
+				matrix lst = transpose(ls); // from ColMajor to RowMajor
+				fwrite(lst.data(), 2 * sizeof(double), (bTop_dm - bBot_dm)*(bTop_dm - bBot_dm), fpls);
+			}
+			fclose(fpl); fclose(fpsl); fclose(fpls);
 		}
 		if (mpiWorld->isHead()){
 			string fnamev = dir_ldbd + "ldbd_vmat.bin";
@@ -547,6 +581,17 @@ struct LindbladInit_eimp
 			}
 			fclose(fpu);
 		}
+		if (mpiWorld->isHead() && writeHEz){
+			string fnameh = dir_ldbd + "ldbd_HEzmat.bin";
+			FILE *fph = fopen(fnameh.c_str(), "wb");
+			for (size_t ik = 0; ik < k.size(); ik++){
+				matrix HEz = state_elec[ik].HEz; // full U matrix
+				matrix HEzt = transpose(HEz); // from ColMajor to RowMajor
+				fwrite(HEzt.data(), 2 * sizeof(double), (bTop_dm - bBot_dm)*(bTop_dm - bBot_dm), fph);
+			}
+			fclose(fph);
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	void saveKpair(){
 		if (mpiWorld->isHead()){
@@ -589,18 +634,20 @@ struct LindbladInit_eimp
 		FILE *fp1, *fp2, *fp1c, *fp2c;
 		FILE *fp1ns, *fp2ns, *fp1s, *fp2s, *fp1i, *fp2i, *fp1j, *fp2j, *fp1cns, *fp2cns, *fp1cs, *fp2cs, *fp1ci, *fp2ci, *fp1cj, *fp2cj;
 		if (!write_sparseP){
-			fp1 = fopenP("ldbd_P1_lindblad" + siDefectHole + ".bin." + convert.str(), "wb"); fp1c = fopenP("ldbd_P1_conventional" + siDefectHole + ".bin." + convert.str(), "wb");
-			fp2 = fopenP("ldbd_P2_lindblad" + siDefectHole + ".bin." + convert.str(), "wb"); fp2c = fopenP("ldbd_P2_conventional" + siDefectHole + ".bin." + convert.str(), "wb");
+			fp1 = fopenP("ldbd_P1_lindblad" + siDefectHole + ".bin." + convert.str(), "wb"); fp2 = fopenP("ldbd_P2_lindblad" + siDefectHole + ".bin." + convert.str(), "wb");
+			if (needConventional) { fp1c = fopenP("ldbd_P1_conventional" + siDefectHole + ".bin." + convert.str(), "wb"); fp2c = fopenP("ldbd_P2_conventional" + siDefectHole + ".bin." + convert.str(), "wb"); }
 		}
 		else{
 			fp1ns = fopenP("sP1_lindblad" + siDefectHole + "_ns.bin." + convert.str(), "wb"); fp1s = fopenP("sP1_lindblad" + siDefectHole + "_s.bin." + convert.str(), "wb");
 			fp1i = fopenP("sP1_lindblad" + siDefectHole + "_i.bin." + convert.str(), "wb"); fp1j = fopenP("sP1_lindblad" + siDefectHole + "_j.bin." + convert.str(), "wb");
 			fp2ns = fopenP("sP2_lindblad" + siDefectHole + "_ns.bin." + convert.str(), "wb"); fp2s = fopenP("sP2_lindblad" + siDefectHole + "_s.bin." + convert.str(), "wb");
 			fp2i = fopenP("sP2_lindblad" + siDefectHole + "_i.bin." + convert.str(), "wb"); fp2j = fopenP("sP2_lindblad" + siDefectHole + "_j.bin." + convert.str(), "wb");
-			fp1cns = fopenP("sP1_conventional" + siDefectHole + "_ns.bin." + convert.str(), "wb"); fp1cs = fopenP("sP1_conventional" + siDefectHole + "_s.bin." + convert.str(), "wb");
-			fp1ci = fopenP("sP1_conventional" + siDefectHole + "_i.bin." + convert.str(), "wb"); fp1cj = fopenP("sP1_conventional" + siDefectHole + "_j.bin." + convert.str(), "wb");
-			fp2cns = fopenP("sP2_conventional" + siDefectHole + "_ns.bin." + convert.str(), "wb"); fp2cs = fopenP("sP2_conventional" + siDefectHole + "_s.bin." + convert.str(), "wb");
-			fp2ci = fopenP("sP2_conventional" + siDefectHole + "_i.bin." + convert.str(), "wb"); fp2cj = fopenP("sP2_conventional" + siDefectHole + "_j.bin." + convert.str(), "wb");
+			if (needConventional){
+				fp1cns = fopenP("sP1_conventional" + siDefectHole + "_ns.bin." + convert.str(), "wb"); fp1cs = fopenP("sP1_conventional" + siDefectHole + "_s.bin." + convert.str(), "wb");
+				fp1ci = fopenP("sP1_conventional" + siDefectHole + "_i.bin." + convert.str(), "wb"); fp1cj = fopenP("sP1_conventional" + siDefectHole + "_j.bin." + convert.str(), "wb");
+				fp2cns = fopenP("sP2_conventional" + siDefectHole + "_ns.bin." + convert.str(), "wb"); fp2cs = fopenP("sP2_conventional" + siDefectHole + "_s.bin." + convert.str(), "wb");
+				fp2ci = fopenP("sP2_conventional" + siDefectHole + "_i.bin." + convert.str(), "wb"); fp2cj = fopenP("sP2_conventional" + siDefectHole + "_j.bin." + convert.str(), "wb");
+			}
 		}
 		string fnameg = dir_ldbd + "ldbd_g.bin." + convert.str();
 		FILE *fpg; if (writeg) fpg = fopen(fnameg.c_str(), "wb");
@@ -631,6 +678,8 @@ struct LindbladInit_eimp
 				fprintf(fpd, "\nik= %d, k= %lg %lg %lg, ikp= %d, kp= %lg %lg %lg\n",
 					ik, k[ik][0], k[ik][1], k[ik][2], jk, k[jk][0], k[jk][1], k[jk][2]); fflush(fpd);
 			}
+			if (onlyInterValley && !isInterValley(GGT, k[ik], k[jk])) continue;
+			if (onlyIntraValley && isInterValley(GGT, k[ik], k[jk])) continue;
 			diagMatrix Ek = state_elec[ik].E(bStart, bStop), Ekp = state_elec[jk].E(bStart, bStop);
 			if (ldebug){
 				for (int b = 0; b < nBandsSel; b++){
@@ -652,8 +701,10 @@ struct LindbladInit_eimp
 			compute_P_eimp(ik, jk, Ek, Ekp, mD, true, ldebug, true, false); // gaussian smearing
 			fwriteP(fp1, fp2, fp1ns, fp1s, fp1i, fp1j, fp2ns, fp2s, fp2i, fp2j);
 			
-			compute_P_eimp(ik, jk, Ek, Ekp, mD, false, ldebug, false, false); // conventional, gaussian smearing
-			fwriteP(fp1c, fp2c, fp1cns, fp1cs, fp1ci, fp1cj, fp2cns, fp2cs, fp2ci, fp2cj);
+			if (needConventional){
+				compute_P_eimp(ik, jk, Ek, Ekp, mD, false, ldebug, false, false); // conventional, gaussian smearing
+				fwriteP(fp1c, fp2c, fp1cns, fp1cs, fp1ci, fp1cj, fp2cns, fp2cs, fp2ci, fp2cj);
+			}
 
 			//Print progress:
 			if ((ikpair_local + 1) % nkpairInterval == 0) { logPrintf("%d%% ", int(round((ikpair_local + 1)*100. / nkpairMine))); logFlush(); }
@@ -670,11 +721,11 @@ struct LindbladInit_eimp
 		MPI_Barrier(MPI_COMM_WORLD);
 		logPrintf("done.\n"); logFlush();
 		if (!write_sparseP){
-			fclose(fp1); fclose(fp2); fclose(fp1c); fclose(fp2c);
+			fclose(fp1); fclose(fp2); if (needConventional){ fclose(fp1c); fclose(fp2c); }
 		}
 		else{
 			fclose(fp1ns); fclose(fp1s); fclose(fp1i); fclose(fp1j); fclose(fp2ns); fclose(fp2s); fclose(fp2i); fclose(fp2j);
-			fclose(fp1cns); fclose(fp1cs); fclose(fp1ci); fclose(fp1cj); fclose(fp2cns); fclose(fp2cs); fclose(fp2ci); fclose(fp2cj);
+			if (needConventional){ fclose(fp1cns); fclose(fp1cs); fclose(fp1ci); fclose(fp1cj); fclose(fp2cns); fclose(fp2cs); fclose(fp2ci); fclose(fp2cj); }
 		}
 		if (writeg) fclose(fpg); fclose(fpsig); if (ldebug) fclose(fpd); //if (writeg) fclose(fpwq);
 	}
@@ -726,7 +777,7 @@ struct LindbladInit_eimp
 					G2 = prefac_delta * g(b1, b2) * delta;
 
 				if (compute_imsig && (ik != jk || b1 != b2)){
-					const vector3<>& v1 = state_elec[ik].vVec[b1]; const vector3<>& v2 = state_elec[jk].vVec[b2];
+					const vector3<>& v1 = state_elec[ik].vVec[b1 + bStart]; const vector3<>& v2 = state_elec[jk].vVec[b2 + bStart];
 					double cosThetaScatter = dot(v1, v2) / sqrt(std::max(1e-16, v1.length_squared() * v2.length_squared()));
 					double dtmp1 = prefac_imsig * g(b1, b2).norm() * delta;
 					imsig[ik][b1] += dtmp1; imsigp[ik][b1] += dtmp1 * (1. - cosThetaScatter);
@@ -836,17 +887,19 @@ struct LindbladInit_eimp
 		complex ctmp; int itmp;
 		if (!write_sparseP){
 			merge_files_mpi(dir_ldbd + "ldbd_P1_lindblad" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); merge_files_mpi(dir_ldbd + "ldbd_P2_lindblad" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4));
-			merge_files_mpi(dir_ldbd + "ldbd_P1_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); merge_files_mpi(dir_ldbd + "ldbd_P2_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4));
+			if (needConventional) { merge_files_mpi(dir_ldbd + "ldbd_P1_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); merge_files_mpi(dir_ldbd + "ldbd_P2_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); }
 		}
 		else{
 			merge_files_mpi(dir_ldbd + "sP1_lindblad" + siDefectHole + "_ns.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP1_lindblad" + siDefectHole + "_s.bin", ctmp, 1);
 			merge_files_mpi(dir_ldbd + "sP1_lindblad" + siDefectHole + "_i.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP1_lindblad" + siDefectHole + "_j.bin", itmp, 1);
 			merge_files_mpi(dir_ldbd + "sP2_lindblad" + siDefectHole + "_ns.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP2_lindblad" + siDefectHole + "_s.bin", ctmp, 1);
 			merge_files_mpi(dir_ldbd + "sP2_lindblad" + siDefectHole + "_i.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP2_lindblad" + siDefectHole + "_j.bin", itmp, 1);
-			merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_s.bin", ctmp, 1);
-			merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_j.bin", itmp, 1);
-			merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_s.bin", ctmp, 1);
-			merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_j.bin", itmp, 1);
+			if (needConventional){
+				merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_s.bin", ctmp, 1);
+				merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP1_conventional" + siDefectHole + "_j.bin", itmp, 1);
+				merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_s.bin", ctmp, 1);
+				merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files_mpi(dir_ldbd + "sP2_conventional" + siDefectHole + "_j.bin", itmp, 1);
+			}
 		}
 	}
 	void merge_eimp_P(){
@@ -854,17 +907,19 @@ struct LindbladInit_eimp
 		complex ctmp; int itmp;
 		if (!write_sparseP){
 			merge_files(dir_ldbd + "ldbd_P1_lindblad" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); merge_files(dir_ldbd + "ldbd_P2_lindblad" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4));
-			merge_files(dir_ldbd + "ldbd_P1_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); merge_files(dir_ldbd + "ldbd_P2_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4));
+			if (needConventional){ merge_files(dir_ldbd + "ldbd_P1_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); merge_files(dir_ldbd + "ldbd_P2_conventional" + siDefectHole + ".bin", ctmp, (size_t)std::pow(nBandsSel, 4)); }
 		}
 		else{
 			merge_files(dir_ldbd + "sP1_lindblad" + siDefectHole + "_ns.bin", itmp, 1); merge_files(dir_ldbd + "sP1_lindblad" + siDefectHole + "_s.bin", ctmp, 1);
 			merge_files(dir_ldbd + "sP1_lindblad" + siDefectHole + "_i.bin", itmp, 1); merge_files(dir_ldbd + "sP1_lindblad" + siDefectHole + "_j.bin", itmp, 1);
 			merge_files(dir_ldbd + "sP2_lindblad" + siDefectHole + "_ns.bin", itmp, 1); merge_files(dir_ldbd + "sP2_lindblad" + siDefectHole + "_s.bin", ctmp, 1);
 			merge_files(dir_ldbd + "sP2_lindblad" + siDefectHole + "_i.bin", itmp, 1); merge_files(dir_ldbd + "sP2_lindblad" + siDefectHole + "_j.bin", itmp, 1);
-			merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_s.bin", ctmp, 1);
-			merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_j.bin", itmp, 1);
-			merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_s.bin", ctmp, 1);
-			merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_j.bin", itmp, 1);
+			if (needConventional){
+				merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_s.bin", ctmp, 1);
+				merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files(dir_ldbd + "sP1_conventional" + siDefectHole + "_j.bin", itmp, 1);
+				merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_ns.bin", itmp, 1); merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_s.bin", ctmp, 1);
+				merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_i.bin", itmp, 1); merge_files(dir_ldbd + "sP2_conventional" + siDefectHole + "_j.bin", itmp, 1);
+			}
 		}
 	}
 	void merge_eimp_g(){
@@ -881,6 +936,7 @@ struct LindbladInit_eimp
 	}
 
 	std::vector<diagMatrix> F;
+	std::vector<std::vector<vector3<>>> bsq;
 	void savekData(){
 		// please never use -G? when running this program
 		if (mpiWorld->isHead()) system("mkdir ldbd_data");
@@ -908,7 +964,8 @@ struct LindbladInit_eimp
 		logPrintf("At dmuMin, majority density: "); print_carrier_density(fw, n_maj_dmuMin);
 		logPrintf("At dmuMin, minority density: "); print_carrier_density(fw, n_min_dmuMin);
 
-		vector3<> bsq_avg = compute_bsq(state_elec, bStart, bStop, degthr, F);
+		bsq = compute_bsq(state_elec, bStart, bStop, degthr, F);
+		vector3<> bsq_avg; average_dfde(F, bsq, bsq_avg);
 		logPrintf("\nSpin mixing |b|^2: %lg %lg %lg\n", bsq_avg[0], bsq_avg[1], bsq_avg[2]);
 	}
 
@@ -1174,10 +1231,10 @@ struct LindbladInit_eimp
 		maux2 = alloc_array(nBandsSel*nBandsSel);
 
 		T1_1step_useP(true, 0); // just to confirm zero dRho leads to zero change
-		T1_1step_useP(false, 0); // just to confirm zero dRho leads to zero change
+		if (needConventional) T1_1step_useP(false, 0); // just to confirm zero dRho leads to zero change
 		T1_1step_useP(true, 1 * Tesla);
 		T1_1step_useP(true, 0.1 * Tesla);
-		T1_1step_useP(false, 0.1 * Tesla);
+		if (needConventional) T1_1step_useP(false, 0.1 * Tesla);
 	}
 	void relax_rate_useg(){
 		// single-rate calculations
@@ -1188,22 +1245,15 @@ struct LindbladInit_eimp
 			logPrintf("dRho formula with constant smearings:\n");
 			logPrintf("**************************************************\n");
 			if (nScattDelta * scattDelta / eV / 0.001 > 4) T1_rate_dRho(false, false, true, 0, 0.001);
-			if (nScattDelta * scattDelta / eV / 0.002 > 4) T1_rate_dRho(false, false, true, 0, 0.002);
 			if (nScattDelta * scattDelta / eV / 0.005 > 4) T1_rate_dRho(false, false, true, 0, 0.005);
-			if (nScattDelta * scattDelta / eV / 0.01 > 4) T1_rate_dRho(false, false, true, 0, 0.01);
 
 			logPrintf("\n**************************************************\n");
 			logPrintf("dRho formula with ImSigma_eph + a constant:\n");
 			logPrintf("**************************************************\n");
 			T1_rate_dRho(false, false, true, 1, 0);
-			T1_rate_dRho(false, false, true, 0.67, 0);
 			T1_rate_dRho(false, false, true, 0.5, 0);
-			T1_rate_dRho(false, false, true, 0.33, 0);
-			T1_rate_dRho(false, false, true, 0.25, 0);
 			if (nScattDelta * scattDelta / eV / 0.001 > 4) T1_rate_dRho(false, false, true, 1, 0.001);
-			if (nScattDelta * scattDelta / eV / 0.002 > 4) T1_rate_dRho(false, false, true, 1, 0.002);
 			if (nScattDelta * scattDelta / eV / 0.005 > 4) T1_rate_dRho(false, false, true, 1, 0.005);
-			if (nScattDelta * scattDelta / eV / 0.01 > 4) T1_rate_dRho(false, false, true, 1, 0.01);
 		}
 	}
 };
@@ -1260,6 +1310,10 @@ int main(int argc, char** argv)
 	bool onlyInterValley = inputMap.get("onlyInterValley", 0);
 	bool onlyIntraValley = inputMap.get("onlyIntraValley", 0);
 	assert(!onlyInterValley || !onlyIntraValley);
+	bool layerOcc = inputMap.get("layerOcc", 0);
+	bool writeHEz = inputMap.get("writeHEz", 0);
+	bool assumeMetal = inputMap.get("assumeMetal", 0);
+	bool needConventional = inputMap.get("needConventional", 0);
 
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("NkMult = "); NkMult.print(globalLog, " %d ");
@@ -1295,11 +1349,17 @@ int main(int argc, char** argv)
 	logPrintf("kparis_eph_eimp = %d\n", kparis_eph_eimp);
 	logPrintf("onlyInterValley = %d\n", onlyInterValley);
 	logPrintf("onlyIntraValley = %d\n", onlyIntraValley);
+	logPrintf("layerOcc = %d\n", layerOcc);
+	logPrintf("writeHEz = %d\n", writeHEz);
+	logPrintf("assumeMetal = %d\n", assumeMetal);
+	logPrintf("needConventional = %d\n", needConventional);
 
 	//Initialize FeynWann:
 	FeynWannParams fwp(&inputMap);	fwp.printParams(); // Bext, EzExt and scissor
 	fwp.needVelocity = true;
 	fwp.needSpin = true;
+	fwp.needLayer = layerOcc;
+	fwp.needHEz = writeHEz;
 	fwp.needDefect = defectName;
 	fwp.needPhonons = ePhEnabled;
 	//fwp.maskOptimize = true;
@@ -1371,6 +1431,10 @@ int main(int argc, char** argv)
 	lb.EBot_set = EBot_set;	lb.ETop_set = ETop_set;
 	lb.read_kpts = read_kpts; lb.read_kpairs = read_kpairs; lb.kparis_eph_eimp = kparis_eph_eimp;
 	lb.onlyInterValley = onlyInterValley; lb.onlyIntraValley = onlyIntraValley;
+	lb.layerOcc = layerOcc;
+	lb.writeHEz = writeHEz;
+	lb.assumeMetal = assumeMetal;
+	lb.needConventional = needConventional;
 
 	//First pass (e only): select k-points and output electronic quantities
 	fw.eEneOnly = true;
@@ -1396,7 +1460,10 @@ int main(int argc, char** argv)
 	}
 
 	//Cleanup:
+	MPI_Barrier(MPI_COMM_WORLD);
 	fw.free();
+	MPI_Barrier(MPI_COMM_WORLD);
 	FeynWann::finalize();
+	MPI_Barrier(MPI_COMM_WORLD);
 	return 0;
 }

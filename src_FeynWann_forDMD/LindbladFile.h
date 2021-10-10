@@ -156,7 +156,8 @@ namespace LindbladFile
 			double mWeight = 0., pWeight = 0.; //weights for Am and Ap elements
 			if(omegaPh)
 			{	//Phonon case:
-				double nPh = (T>0 and omegaPh>1e-3*T) ? bose(omegaPh/T) : 0.;
+				//double nPh = (T>0 and omegaPh>1e-3*T) ? bose(omegaPh / T) : 0.;
+				double nPh = (T>0 and omegaPh>1e-4*T) ? bose(omegaPh / T) : 0.;
 				mWeight = sqrt(nPh);
 				pWeight = sqrt(nPh+1);
 			}
@@ -168,6 +169,28 @@ namespace LindbladFile
 			for(const SparseEntry& se: G)
 			{	SparseEntry sm = se; sm.val *= mWeight; Am.push_back(sm);
 				SparseEntry sp = se; sp.val *= pWeight; Ap.push_back(sp);
+			}
+		}
+		//Initialize Am and Ap given energy arrays and T:
+		void initA(const double* Ei, const double* Ej, double T, double defectFraction){
+			Am.clear(); Am.init(G.nRows(), G.nCols(), G.size());
+			Ap.clear(); Ap.init(G.nRows(), G.nCols(), G.size());
+			if (omegaPh)
+			{	//Phonon case:
+				double nPh = (T>0 and omegaPh>1e-4*T) ? bose(omegaPh / T) : 0.;
+				for (const SparseEntry& se : G){
+					double dEbyT = (Ei[se.i] - Ej[se.j]) / T; //phonon frequency with exact energy conservation
+					double nPh1 = dEbyT < 68 ? exp(dEbyT) * nPh : nPh + 1;
+					SparseEntry sm = se; sm.val *= sqrt(nPh); Am.push_back(sm);
+					SparseEntry sp = se; sp.val *= sqrt(nPh1); Ap.push_back(sp);
+				}
+			}
+			else
+			{	//Defect case
+				for (const SparseEntry& se : G){
+					SparseEntry sm = se; sm.val *= sqrt(defectFraction); Am.push_back(sm);
+					SparseEntry sp = se; sp.val *= sqrt(defectFraction); Ap.push_back(sp);
+				}
 			}
 		}
 	};

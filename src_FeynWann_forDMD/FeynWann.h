@@ -32,6 +32,8 @@ struct FeynWannParams
 	bool needPhonons; //!< whether to initialize phonon-related quantities (default: false)
 	bool needVelocity; //!< whether to initialize velocity (momentum) matrix elements
 	bool needSpin; //!< whether to initialize spin matrix elements (will be reset to false if not relativstic)
+	bool needLayer; //JX
+	bool needHEz; //JX
 	bool needLinewidth_ee; //!< whether to provide e-e line-width (default: false)
 	bool needLinewidth_ePh; //!< whether to provide e-ph line-width (default: false)
 	bool needLinewidthP_ePh; //!< whether to provide momentum-relaxation e-ph line-width (default: false)
@@ -75,6 +77,7 @@ public:
 		std::vector<vector3<>> vVec; //!< band velocities (diagonal part of v) in Cartesian coordinates, available if needVelocity = true
 		matrix S[3]; //!< Spin matrix elements in Cartesian coordinates, available if needSpin = true
 		std::vector<vector3<>> Svec; //!< band spins (diagonal part of S) in Cartesian coordinates, available if needSpin = true
+		matrix layer, HEz; //JX
 		diagMatrix ImSigma_ee; //!< e-e linewidth, available if needLinewidth_ee = true
 		double ImSigma_ePh(int n, double f) const; //!< get e-ph linewidth for band n given its occupation f, available if needLinewidth_ePh = true
 		double ImSigmaP_ePh(int n, double f) const; //!< get e-ph linewidth for band n given its occupation f, available if needLinewidthP_ePh = true
@@ -127,6 +130,8 @@ public:
 	//! Calls provided callback function phProcess on each of them, along with provided params
 	void phLoop(const vector3<>& q0, phProcessFunc phProcess, void* params);
 	void phCalc(const vector3<>& q, StatePh& ph); //!< Calculate phonon properties for a single q and store results in ph on group head
+	void phLoop_masstest(const vector3<>& q0, phProcessFunc phProcess, void* params);
+	void phCalc_masstest(const vector3<>& q, StatePh& ph); //!< Calculate phonon properties for a single q and store results in ph on group head
 	size_t phCountPerOffset() const { return OsqW->nkTot; } //!< number of q's sampled per offset = prod(offsetDim)
 	
 	//! Calculate electronic properties for each pair of k-points between two meshes offset by k01 and k02,
@@ -177,7 +182,7 @@ public:
 	//Electrons:
 	std::vector< vector3<int> > cellMap; //electron Wannier cell map
 	matrix cellWeights; //corresponding weights (nBands*nBands x nCells)
-	std::shared_ptr<DistributedMatrix> Hw, Pw, Sw, Zw; //Wannier hamiltonian, momentum, spin and z matrix elements
+	std::shared_ptr<DistributedMatrix> Hw, Pw, Sw, Zw, Layerw; //Wannier hamiltonian, momentum, spin and z matrix elements
 	std::shared_ptr<DistributedMatrix> ImSigma_eeW, ImSigma_ePhW, ImSigmaP_ePhW, ImSigma_DW, ImSigmaP_DW; //linewidths in wannier basis
 	void setState(StateE& state); //!< set requested properties for ik in state
 	void bcastState(StateE& state, MPIUtil* mpiUtil, int root); //!< broadcast specified state on specified MPI instance
@@ -196,8 +201,9 @@ public:
 	std::shared_ptr<class LongRangeSum> lrs; //long range sum corrector for e-ph matrix elements
 	std::shared_ptr<class LongRangeSum2D> lrs2D; //long range sum corrector for e-ph matrix elements (2D)
 	matrix phononCellWeights; //corresponding weights (nAtoms*nAtoms x nCells), available if polar
-	std::shared_ptr<DistributedMatrix> OsqW; //phonon omega-squared matrix
+	std::shared_ptr<DistributedMatrix> OsqW, OsqW_masstest; bool masstest; //phonon omega-squared matrix
 	void setState(StatePh& state); //!< set requested properties for iq in state
+	void setState_masstest(StatePh& state); //!< set requested properties for iq in state
 	void bcastState(StatePh& state, MPIUtil* mpiUtil, int root); //!< broadcast specified state on specified MPI instance
 	
 	//Electron-phonon interaction:

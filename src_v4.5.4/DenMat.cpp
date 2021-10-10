@@ -4,15 +4,19 @@ template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
 }
 
-void singdenmat_k::init_Hcoh(complex **H_BS, double **e){
+void singdenmat_k::init_Hcoh(complex **H_BS, complex **H_Ez, double **e){
 	this->e = e;
-	if (H_BS != nullptr){
+	if (H_BS != nullptr || H_Ez != nullptr){
+		if (H_BS != nullptr){
+			Hcoh = trunc_alloccopy_arraymat(H_BS, nk_proc, nb, 0, nb);
+			axbyc(Hcoh, H_Ez, nk_proc, nb*nb, c1, c1);
+		}
+		else Hcoh = trunc_alloccopy_arraymat(H_Ez, nk_proc, nb, 0, nb);
+
 		if (alg.picture == "interaction"){
-			this->Hcoh = H_BS;
 			Hcoht = new complex[nb*nb]; zeros(Hcoht, nb*nb);
 		}
 		else{
-			Hcoh = trunc_alloccopy_arraymat(H_BS, nk_proc, nb, 0, nb);
 			for (int ik_local = 0; ik_local < nk_proc; ik_local++){
 				int ik_glob = ik_local + ik0_glob;
 				for (int i = 0; i < nb; i++)

@@ -22,6 +22,7 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include "FeynWann.h"
 #include "InputMap.h"
 #include <core/Units.h>
+#include "help_lindbladInit_for-DMD.h"
 
 //Read a list of k-points from a file
 std::vector<vector3<>> readKpointsFile(string fname)
@@ -51,12 +52,15 @@ struct DebugEph
 {	int bandStart, bandStop; //optional band range read in from input
 	int modeStart, modeStop; //optional mode range read in from input
 	double Mtot;
+	double T;
 	
 	//Previously computed quantities using single-k version to test against transformed ones:
 	FeynWann::StateE e1, e2;
 	FeynWann::StatePh ph;
 	FeynWann::MatrixEph m;
 	bool spinAvailable;
+
+	matrix3<> GGT;
 	
 	DebugEph(int bandStart, int bandStop, int modeStart, int modeStop)
 	: bandStart(bandStart), bandStop(bandStop), modeStart(modeStart), modeStop(modeStop)
@@ -72,35 +76,38 @@ struct DebugEph
 		//---- Phonon frequency debug ----
 		
 		//---- e-ph matrix element debug ----
-		logPrintf("|g_{}(k1,k2)|: ");
-		for (int b1 = bandStart; b1 < bandStop; b1++)
-		{
-			for (int b2 = bandStart; b2 < bandStop; b2++)
-			{
-				double m2 = 0, ndeg = 0;
+		logPrintf("|g_{}(k1,k2)|^2: ");
+		for (int b1 = bandStart; b1 < bandStop; b1++){
+			for (int b2 = bandStart; b2 < bandStop; b2++){
+				double m2 = 0, ndeg = 0, sum_m2_nq = 0;
 				for (int d1 = bandStart; d1 < bandStop; d1++)
 				for (int d2 = bandStart; d2 < bandStop; d2++)
 				if ((fabs(E1[d1] - E1[b1]) < 1e-6) and(fabs(E2[d2] - E2[b2]) < 1e-6)){
-					for (int iMode = modeStart; iMode<modeStop; iMode++)
+					for (int iMode = modeStart; iMode < modeStop; iMode++){
+						//double nq = bose(omegaPh[iMode] / T);
 						m2 += mEph.M[iMode](d1, d2).norm();
+						//sum_m2_nq += mEph.M[iMode](d1, d2).norm() * nq;
+					}
 					ndeg += 1;
 				}
-				logPrintf("%lg ", sqrt(m2 / ndeg) / eV);
+				logPrintf("%lg ", m2 / ndeg / eV/eV);
 			}
 		}
-
 		logPrintf("\n"); logFlush();
+		//double sum_nq = 0;
+		//for (int iMode = modeStart; iMode < modeStop; iMode++){
+		//	double nq = bose(omegaPh[iMode] / T);
+		//	sum_nq += nq;
+		//}
+		//logPrintf("%lg\n", sum_nq); logFlush();
 
 		//---- Spin commutator debug ---
-		if (spinAvailable)
-		{
+		if (spinAvailable){
 			matrix S1z = degenerateProject(mEph.e1->S[2], E1);
 			matrix S2z = degenerateProject(mEph.e2->S[2], E2);
-			logPrintf("SGcommDEBUG: ");
-			for (int b1 = bandStart; b1 < bandStop; b1++)
-			{
-				for (int b2 = bandStart; b2 < bandStop; b2++)
-				{
+			logPrintf("|SGcomm|^2: ");
+			for (int b1 = bandStart; b1 < bandStop; b1++){
+				for (int b2 = bandStart; b2 < bandStop; b2++){
 					double m2 = 0, ndeg = 0;
 					for (int d1 = bandStart; d1 < bandStop; d1++)
 					for (int d2 = bandStart; d2 < bandStop; d2++)
@@ -111,7 +118,7 @@ struct DebugEph
 						}
 						ndeg += 1;
 					}
-					logPrintf("%lg ", sqrt(m2 / ndeg) / eV);
+					logPrintf("%lg ", m2 / ndeg / eV/eV);
 				}
 			}
 			logPrintf("\n"); logFlush();
@@ -213,8 +220,10 @@ int main(int argc, char** argv)
 	string k2file = inputMap.getString("k2file"); //file containing list of k2 points (like a bandstruct.kpoints file)
 	int bandStart = inputMap.get("bandStart", 0);
 	int bandStop = inputMap.get("bandStop", 0); //replaced with nBands below if 0
-	int modeStart = inputMap.get("modeStart", 0);
-	int modeStop = inputMap.get("modeStop", 0); //replaced with nModes below if 0
+	bool ePhEnable = inputMap.get("ePhEnable", 1);
+	int modeStart = ePhEnable ? inputMap.get("modeStart", 0) : 0;
+	int modeStop = ePhEnable ? inputMap.get("modeStop", 0) : 0; //replaced with nModes below if 0
+	double T = inputMap.get("T", 300.) * Kelvin;
 	FeynWannParams fwp(&inputMap);
 	
 	logPrintf("\nInputs after conversion to atomic units:\n");
@@ -222,8 +231,10 @@ int main(int argc, char** argv)
 	logPrintf("k2file = %s\n", k2file.c_str());
 	logPrintf("bandStart = %d\n", bandStart);
 	logPrintf("bandStop = %d\n", bandStop);
+	logPrintf("ePhEnable = %d\n", ePhEnable);
 	logPrintf("modeStart = %d\n", modeStart);
 	logPrintf("modeStop = %d\n", modeStop);
+	logPrintf("T = %lg\n", T);
 	fwp.printParams();
 	
 	//Read k-points:
@@ -231,12 +242,14 @@ int main(int argc, char** argv)
 	logPrintf("Read %lu k-points from '%s'\n", k2arr.size(), k2file.c_str());
 	
 	//Initialize FeynWann:
-	fwp.needPhonons = true;
-	fwp.ePhHeadOnly = true; //so as to debug k-path alone
+	fwp.needPhonons = ePhEnable;
+	fwp.ePhHeadOnly = ePhEnable; //so as to debug k-path alone
 	fwp.needSpin = true;
 	FeynWann fw(fwp);
 	if(!bandStop) bandStop = fw.nBands;
-	if(!modeStop) modeStop = fw.nModes;
+	if (ePhEnable && !modeStop) modeStop = fw.nModes;
+	matrix3<> Gvec = (2.*M_PI)*inv(fw.R);
+	matrix3<> GGT = Gvec * (~Gvec);
 	
 	if(ip.dryRun)
 	{	logPrintf("Dry run successful: commands are valid and initialization succeeded.\n");
@@ -245,15 +258,17 @@ int main(int argc, char** argv)
 		return 0;
 	}
 	logPrintf("\n");
-	diagMatrix invsqrtM = fw.invsqrtM;
+	diagMatrix invsqrtM; if (ePhEnable) invsqrtM = fw.invsqrtM;
 	double Mtot = 0.0;
-	for(int iMode=0; iMode< fw.nModes; iMode++)
+	for (int iMode = 0; iMode< (ePhEnable ? fw.nModes : 0); iMode++)
 	{	Mtot += 1./std::pow(invsqrtM[iMode],2);
 	}
 	Mtot *= 1./3;
 	DebugEph src(bandStart, bandStop, modeStart, modeStop);
+	src.T = T;
 	src.Mtot = Mtot;
 	src.spinAvailable = fwp.needSpin;
+	src.GGT = GGT;
 	fw.eCalc(k1, src.e1);
 	if(mpiGroup->isHead())
 	{	logPrintf("E1[eV]: ");
@@ -262,10 +277,19 @@ int main(int argc, char** argv)
 	for(vector3<> k2: k2arr)
 	{	//Compute single k quantities:
 		fw.eCalc(k2, src.e2);
-		fw.phCalc(k1-k2, src.ph);
-		fw.ePhCalc(src.e1, src.e2, src.ph, src.m);
+
+		//---- Single k compute debug ----
+		logPrintf("|k-K|^2: %lg\n", GGT.metric_length_squared(wrap_around_Gamma(K - src.e2.k))); logFlush();
+
+		logPrintf("E2:");
+		for (int b2 = bandStart; b2 < bandStop; b2++)
+			logPrintf(" %lg", src.e2.E[b2] / eV);
+		logPrintf("\n"); logFlush();
+
+		if (ePhEnable) fw.phCalc(k1 - k2, src.ph);
+		if (ePhEnable) fw.ePhCalc(src.e1, src.e2, src.ph, src.m);
 		
-		if(mpiGroup->isHead()) src.process(src.m); //directly use much faster single-k version (test of single-k skipped above)
+		if (ePhEnable && mpiGroup->isHead()) src.process(src.m); //directly use much faster single-k version (test of single-k skipped above)
 		//fw.ePhLoop(k1, k2, DebugEph::ePhProcess, &src); //Call ePh loop to test the single-k stuff above
 	}
 	

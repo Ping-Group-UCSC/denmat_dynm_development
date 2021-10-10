@@ -162,6 +162,8 @@ void parameters::read_param(){
 	By = get(param_map, "By", 0., Tesla2au);
 	Bz = get(param_map, "Bz", 0., Tesla2au);
 	B[0] = Bx; B[1] = By; B[2] = Bz;
+	// electric field
+	scale_Ez = get(param_map, "scale_Ez", 0.); // scaling factor of HEz
 
 	if (ionode) printf("\n**************************************************\n");
 	if (ionode) printf("Screening and model e-i and e-e parameters:\n");
@@ -194,6 +196,7 @@ void parameters::read_param(){
 		eip.g.push_back(get(param_map, "g_impurity" + dfName, 2));
 		//eip.lng.push_back(std::log(eip.g[ni.size()-1])); if (ionode) printf("lng = %lg\n", eip.lng[ni.size()-1]);
 		eip.Eimp.push_back(get(param_map, "E_impurity" + dfName, mu, eV));
+		eip.degauss.push_back(get(param_map, "degauss_eimp", degauss / eV, eV));
 	}
 	eip.ni_bvk.resize(eip.ni.size()); eip.ni_ionized.resize(eip.ni.size());
 	freq_update_eimp_model = get(param_map, "freq_update_eimp_model", 0);
@@ -201,6 +204,7 @@ void parameters::read_param(){
 	if (ionode) printf("\nelectron-electron parameters:\n");
 	eep.eeMode = getString(param_map, "eeMode", "none"); // "none" will turn off electron-electron scattering
 	eep.antisymmetry = get(param_map, "ee_antisymmetry", 0);
+	eep.degauss = get(param_map, "degauss_ee", degauss / eV, eV);
 	freq_update_ee_model = get(param_map, "freq_update_ee_model", 0);
 
 	if (ionode) printf("\n**************************************************\n");
@@ -435,8 +439,12 @@ void parameters::read_param(){
 		error_message("if you want only e-i scattering, please set eeMode to be none","read_param");
 	if (alg.only_intravalley && alg.only_intervalley)
 		error_message("only_intravalley and only_intervalley cannot be true at the same time", "read_param");
-	if (alg.Pin_is_sparse && !alg.eph_enable)
-		error_message("alg_Pin_is_sparse implies e-ph is enabled", "read_param");
+	if (alg.Pin_is_sparse && !alg.eph_enable){
+		bool no_ab_neutral = true;
+		for (int iD = 0; iD < eip.ni.size(); iD++)
+		if (eip.impMode[iD] == "ab_neutral") no_ab_neutral = false;
+		if (no_ab_neutral) error_message("alg_Pin_is_sparse implies ab initio e-ph or e-i is enabled", "read_param");
+	}
 	if (freq_update_eimp_model != freq_update_ee_model)
 		error_message("freq_update_eimp_model is the same as freq_update_ee_model in current version", "read_param");
 

@@ -10,11 +10,11 @@ public:
 	int dim;
 	double VAL, t0;
 	int freq_measure, freq_measure_ene, freq_compute_tau, it_start_ddm;
-	bool print_tot_band;
+	bool print_tot_band, print_layer_occ, print_layer_spin;
 	observable(Tl* latt, parameters* param, Te* elec)
 		:latt(latt), elec(elec), dim(latt->dim), t0(param->restart ? param->t0 : param->t0 - 1),
 		freq_measure(param->freq_measure), freq_measure_ene(param->freq_measure_ene), freq_compute_tau(param->freq_compute_tau),
-		print_tot_band(param->print_tot_band)
+		print_tot_band(param->print_tot_band), print_layer_occ(elec->print_layer_occ), print_layer_spin(elec->print_layer_spin)
 	{
 		if (dim == 3)
 			VAL = latt->volume;
@@ -36,7 +36,7 @@ public:
 	int nk_glob, nb, nv, bStart_eph, bEnd_eph; // nb = nb_dm in class electron
 	double prefac;
 	double **e, **f;
-	complex ***s;
+	complex ***s, **layer, **layerspin;
 	GaussianSmapling *gauss_elec, *gauss_hole, *gauss_dot_elec, *gauss_dot_hole;
 	double *obk, *tot_band, *tot_valley, **tot_valley_band;
 	std::vector<int> ik_kpath;
@@ -57,7 +57,7 @@ public:
 			gauss_hole = new GaussianSmapling(elec->emin, param->de_measure, elec->evmax, param->degauss_measure);
 			gauss_dot_hole = new GaussianSmapling(elec->emin, param->de_measure, elec->evmax, param->degauss_measure);
 		}
-		this->s = elec->s;
+		this->s = elec->s; this->layer = elec->layer; this->layerspin = elec->layerspin;
 		obk = new double[nk_glob]; zeros(obk, nk_glob);
 		tot_band = new double[nb]; zeros(tot_band, nb);
 		tot_valley = new double[(int)latt->vpos.size()]; zeros(tot_valley, (int)latt->vpos.size());
@@ -128,17 +128,19 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 			else filtot = fopen(fname.c_str(), "a");
 		}
 	}
-	else if (what == "sx" || what == "sy" || what == "sz"){
+	else if (what == "sx" || what == "sy" || what == "sz" || what == "layer" || what =="layerspin"){
+		if ((what == "layer" || what == "layerspin") && (print_ene || ddmdt)) error_message("print_ene is not allowed for layer population/spin currently");
 		if (print_ene && !diff) error_message("print_ene && !diff is not allowed currently");
 		if (what == "sx") idir = 0;
 		else if (what == "sy") idir = 1;
 		else if (what == "sz") idir = 2;
 		if (!ddmdt && diff){
-			fname = what + scarr + "_ene.out"; fil = fopen(fname.c_str(), "a");
+			fname = what + scarr + "_ene.out"; if (what != "layer" && what != "layerspin") fil = fopen(fname.c_str(), "a");
 			fname = what + scarr + "_tot.out";
 			if (!exists(fname)){
 				filtot = fopen(fname.c_str(), "a");
-				fprintf(filtot, "#time(au), s(t), s(t) without exp(iwt)\n");
+				if (what != "layer" && what != "layerspin") fprintf(filtot, "#time(au), s(t), s(t) without exp(iwt)\n");
+				else fprintf(filtot, "#time(au), layer population/spin, without exp(iwt)\n");
 			}
 			else filtot = fopen(fname.c_str(), "a");
 		}
@@ -171,9 +173,22 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 				if (diff) ob = isHole ? real(f[ik_glob][i] - dm[ik_glob][i*nb + i]) : real(dm[ik_glob][i*nb + i] - f[ik_glob][i]);
 				else ob = isHole ? 1 - f[ik_glob][i] : f[ik_glob][i];
 			}
+			else if (what == "layer"){
+				for (int b = 0; b < nb; b++){
+					complex ob_kib = layer[ik_glob][i*nb + b];
+					complex ob_kib_t = (i == b || alg.picture == "schrodinger") ? ob_kib : (ob_kib * cis((e[ik_glob][i] - e[ik_glob][b])*t));
+					complex dm_kbi = (i != b) ? (isHole ? c0 - dm[ik_glob][b*nb + i] : dm[ik_glob][b*nb + i]) :
+						(isHole ? (f[ik_glob][i] - dm[ik_glob][i*nb + i]) : (dm[ik_glob][i*nb + i] - f[ik_glob][i]));
+					if (diff){
+						ob += real(ob_kib_t * dm_kbi);
+						ob_amp += real(ob_kib * dm_kbi);
+					}
+					else if (i == b) ob += real(ob_kib * (isHole ? 1 - f[ik_glob][i] : f[ik_glob][i]));
+				}
+			}
 			else{
 				for (int b = 0; b < nb; b++){
-					complex ob_kib = s[ik_glob][idir][i*nb + b];
+					complex ob_kib = (what == "layerspin") ? layerspin[ik_glob][i*nb + b] : s[ik_glob][idir][i*nb + b];
 					complex ob_kib_t = (i == b || alg.picture == "schrodinger") ? ob_kib : (ob_kib * cis((e[ik_glob][i] - e[ik_glob][b])*t));
 					complex dm_kbi = (i == b) ? (dm[ik_glob][b*nb + i] - f[ik_glob][i]) : dm[ik_glob][b*nb + i];
 					if (diff){
@@ -265,8 +280,8 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 		else fprintf(fil, "time and density:  %21.14le %21.14le\n", t, dens); // carrier density in fn_ene.out
 	}
 	if (!ddmdt && print_ene) fprintf(fil, "**************************************************\n");
-	if (what == "fn" || what == "dos" || (!ddmdt &&  diff)) fflush(fil); fflush(stdout);
-	if (what == "fn" || what == "dos" || (!ddmdt &&  diff)) fclose(fil);
+	if (what == "fn" || what == "dos" || (!ddmdt &&  diff && what != "layer" && what != "layerspin")) fflush(fil); fflush(stdout);
+	if (what == "fn" || what == "dos" || (!ddmdt &&  diff && what != "layer" && what != "layerspin")) fclose(fil);
 }
 
 template<class Tl, class Te>

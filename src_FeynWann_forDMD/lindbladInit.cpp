@@ -32,6 +32,7 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 template<class T> constexpr std::reverse_iterator<T*> reverse(T* i) { return std::reverse_iterator<T*>(i); }
 
 static const double omegaPhCut = 1e-6;
+static const double omegabyTCut = 1e-3;
 static const double nEphDelta = 5.; //number of ePhDelta to include in output
 
 //Helper class to "argsort" an array i.e. determine the indices that sort it
@@ -53,21 +54,25 @@ struct LindbladInit
 	const vector3<int>& NkFine; //!< effective k-point mesh sampled
 	const size_t nkTot; //!< total k-points effectively used in BZ sampling
 	
-	const double dmuMin, dmuMax, Tmax;
-	const double pumpOmegaMax, probeOmegaMax;
+	const double dmuMin, dmuMax, Tmax; double nkBT;
+	int band_skipped;
+	bool assumeMetal;
+	bool onlyElec, onlyHole;
+	const double pumpOmegaMax, pumpTau, probeOmegaMax;
 	
 	const bool ePhEnabled; //!< whether e-ph coupling is enabled
-	const double ePhDelta; //!< Gaussian energy conservation width
+	int modeStart, modeStop;
+	const double ePhDelta, eIDelta; //!< Gaussian energy conservation width
 	
 	const bool defectEnabled; //!< if defect scattering is enabled with phonons
 	
 	LindbladInit(FeynWann& fw, const vector3<int>& NkFine,
-		double dmuMin, double dmuMax, double Tmax, double pumpOmegaMax, double probeOmegaMax,
-		bool ePhEnabled, double ePhDelta, bool defectEnabled)
+		double dmuMin, double dmuMax, double Tmax, double pumpOmegaMax, double pumpTau, double probeOmegaMax,
+		bool ePhEnabled, double ePhDelta, double eIDelta, bool defectEnabled)
 	: fw(fw), NkFine(NkFine), nkTot(NkFine[0]*NkFine[1]*NkFine[2]),
 		dmuMin(dmuMin), dmuMax(dmuMax), Tmax(Tmax),
-		pumpOmegaMax(pumpOmegaMax), probeOmegaMax(probeOmegaMax),
-		ePhEnabled(ePhEnabled), ePhDelta(ePhDelta), defectEnabled(defectEnabled)
+		pumpOmegaMax(pumpOmegaMax), pumpTau(pumpTau), probeOmegaMax(probeOmegaMax),
+		ePhEnabled(ePhEnabled), ePhDelta(ePhDelta), eIDelta(eIDelta), defectEnabled(defectEnabled)
 	{
 	}
 	
@@ -75,9 +80,19 @@ struct LindbladInit
 	
 	double EvMax, EcMin; //VBM and CBM estimates
 	inline void eRange(const FeynWann::StateE& state)
-	{	for(const double& E: state.E)
-		{	if(E<dmuMin and E>EvMax) EvMax = E;
-			if(E>dmuMax and E<EcMin) EcMin = E;
+	{	//for(const double& E: state.E)
+		//{	if(E<dmuMin and E>EvMax) EvMax = E;
+		//	if(E>dmuMax and E<EcMin) EcMin = E;
+		//}
+		if (band_skipped < 0){
+			for (const double& E : state.E){
+				if (E < 1e-4 and E > EvMax) EvMax = E;
+				if (E > 1e-4 and E < EcMin) EcMin = E;
+			}
+		}
+		else{
+			if (state.E[fw.nElectrons - band_skipped - 1] > EvMax) EvMax = state.E[fw.nElectrons - band_skipped - 1];
+			if (state.E[fw.nElectrons - band_skipped] < EcMin) EcMin = state.E[fw.nElectrons - band_skipped];
 		}
 	}
 	static void eRange(const FeynWann::StateE& state, void* params)
@@ -135,8 +150,7 @@ struct LindbladInit
 	static void kSelect(const FeynWann::StateE& state, void* params)
 	{	((LindbladInit*)params)->kSelect(state);
 	}
-	void kpointSelect(const std::vector<vector3<>>& k0)
-	{
+	void kpointSelect(const std::vector<vector3<>>& k0){
 		//Initialize sampling parameters:
 		size_t oStart, oStop; //range of offsets handled by this process group
 		if(mpiGroup->isHead())
@@ -158,10 +172,26 @@ struct LindbladInit
 		logPrintf("done.\n"); logFlush();
 		mpiWorld->allReduce(EvMax, MPIUtil::ReduceMax);
 		mpiWorld->allReduce(EcMin, MPIUtil::ReduceMin);
+		logPrintf("VBM: %.6lf eV, CBM: %.6lf eV, Middle: %.6lf\n", EvMax / eV, EcMin / eV, (EvMax + EcMin)/2 / eV);
+		logPrintf("Note that VBM and CBM may not be determined correctly,\nyou may have to use band_skipped to set starting band index of wannier bands\n");
+		if (EvMax < EcMin && band_skipped >= 0) fw.isMetal = false;
+		if (assumeMetal) fw.isMetal = true;
 		//--- add margins of max phonon energy, energy conservation width and fermiPrime width
-		double Emargin =7.*Tmax; //neglect below 10^-3 occupation deviation from equilibrium
-		Estart = std::min(EcMin - pumpOmegaMax, EvMax) - Emargin;
-		Estop = std::max(EvMax + pumpOmegaMax, EcMin) + Emargin;
+		double Emargin = nkBT*Tmax; //neglect below 10^-3 occupation deviation from equilibrium
+		//Estart = std::min(EcMin - pumpOmegaMax, EvMax) - Emargin;
+		//Estop = std::max(EvMax + pumpOmegaMax, EcMin) + Emargin;
+		if (!fw.isMetal){
+			logPrintf("The system is not metalic\n");
+			Estart = std::min(EcMin - pumpOmegaMax, std::min(EvMax, dmuMin)) - Emargin;
+			Estop = std::max(EvMax + pumpOmegaMax, std::max(EcMin, dmuMax)) + Emargin;
+			if (onlyElec) Estart = (EvMax + EcMin) / 2.;
+			if (onlyHole) Estop = (EvMax + EcMin) / 2.;
+		}
+		else{
+			logPrintf("The system is metalic\n");
+			Estart = dmuMin - Emargin;
+			Estop = dmuMax + Emargin;
+		}
 		logPrintf("Active energy range: %.3lf to %.3lf eV\n", Estart/eV, Estop/eV);
 		
 		//Select k-points:
@@ -284,8 +314,9 @@ struct LindbladInit
 			bool Econserve = false;
 			for(const double* E1=E1begin; E1<E1end; E1++) //E1 in active range
 			{	for(const double* E2=E2begin; E2<E2end; E2++) //E2 in active range
-				{	for(const double omegaPh: state.omega) if(omegaPh>omegaPhCut) //loop over non-zero phonon frequencies
-					{	double deltaE = (*E1) - (*E2) - omegaPh; //energy conservation violation
+				{	//for(const double omegaPh: state.omega) if(omegaPh>omegaPhCut) //loop over non-zero phonon frequencies
+					for (int alpha = modeStart; alpha < modeStop; alpha++) if (state.omega[alpha]/Tmax > omegabyTCut){ //loop over non-zero phonon frequencies
+						double deltaE = (*E1) - (*E2) - state.omega[alpha]; //energy conservation violation
 						if(fabs(deltaE) < nEphDelta*ePhDelta) //else negligible
 						{	Econserve = true;
 							nActivePairs++;
@@ -293,7 +324,7 @@ struct LindbladInit
 					} 
 					if(defectEnabled) //Check for energy conservation for elastic scattering
 					{   double deltaE = (*E1) - (*E2); //energy conservation violation
-						if(fabs(deltaE) < nEphDelta*ePhDelta) //else negligible
+						if (fabs(deltaE) < nEphDelta*eIDelta) //else negligible
 						{	Econserve = true;
 							nActivePairs++;
 						}
@@ -477,11 +508,12 @@ struct LindbladInit
 		PREP(2)
 		#undef PREP
 		//Collect energy-conserving matrix elements within active window:
-		for(int alpha=0; alpha<fw.nModes; alpha++)
+		//for(int alpha=0; alpha<fw.nModes; alpha++)
+		for (int alpha = modeStart; alpha < modeStop; alpha++)
 		{	LindbladFile::GePhEntry g;
 			g.jk = ik2;
 			g.omegaPh = ph.omega[alpha];
-			if(g.omegaPh < omegaPhCut) continue; //avoid zero frequency phonons
+			if (g.omegaPh/Tmax < omegabyTCut) continue; //avoid zero frequency phonons
 			double sigmaInv = 1./ePhDelta;
 			double deltaPrefac = sqrt(sigmaInv/sqrt(2.*M_PI)) * kpairWeight[ik1]; //account for down-sampling weight (1 if no down-sampling)
 			const matrix& M = mEph.M[alpha];
@@ -524,7 +556,7 @@ struct LindbladInit
 		LindbladFile::GePhEntry g;
 		g.jk = ik2;
 		g.omegaPh = 0.;
-		double sigmaInv = 1./ePhDelta;
+		double sigmaInv = 1. / eIDelta; //JX
 		double deltaPrefac = sqrt(sigmaInv/sqrt(2.*M_PI)) * kpairWeight[ik1]; //account for down-sampling weight (1 if no down-sampling)
 		const matrix& M = mD.M;
 		for(int n2=innerOffset2; n2<innerOffset2+nInner2; n2++)
@@ -619,7 +651,7 @@ struct LindbladInit
 					vector3<> k02 = k0[offKpartner[0]] + fw.qOffset[offKpartner[1]];
 					FeynWann::eProcessFunc initFunc = 0; //after first pass, only need to invoke addEph(),
 					if(not initDone) initFunc = initKpoint; //... but in first pass, also invoke initKpoint()
-					fw.ePhLoop(k01, k02, addEph, this, initFunc, 0, 0, &mask1, &mask2, &maskPair);
+					if(modeStop>modeStart) fw.ePhLoop(k01, k02, addEph, this, initFunc, 0, 0, &mask1, &mask2, &maskPair);
                     if(defectEnabled)
 						fw.defectLoop(k01, k02, addDefect, this, initFunc, 0, &mask1, &mask2, &maskPair);
 					initDone = true;
@@ -765,31 +797,50 @@ int main(int argc, char** argv)
 	//--- doping / temperature
 	const double dmuMin = inputMap.get("dmuMin", 0.) * eV; //optional: lowest shift in fermi level from neutral value / VBM in eV (default: 0)
 	const double dmuMax = inputMap.get("dmuMax", 0.) * eV; //optional: highest shift in fermi level from neutral value / VBM in eV (default: 0)
+	const int band_skipped = inputMap.get("band_skipped", -1);
 	const double Tmax = inputMap.get("Tmax") * Kelvin; //maximum temperature in Kelvin (ambient phonon T = initial electron T)
+	const double nkBT = inputMap.get("nkBT", 7); //energy range parameter
 	//--- pump
 	const double pumpOmegaMax = inputMap.get("pumpOmegaMax") * eV; //maximum pump frequency in eV
+	const double pumpTau = inputMap.get("pumpTau") * fs; //maximum pump frequency in eV
 	const double probeOmegaMax = inputMap.get("probeOmegaMax") * eV; //maximum probe frequency in eV
 	const string ePhMode = inputMap.getString("ePhMode"); //must be Off or DiagK (add FullK in future)
 	const string defectName = inputMap.has("defectName") ? inputMap.getString("defectName") : "Off"; //optional defect contribution
 	const bool ePhEnabled = (ePhMode != "Off");
-    const bool defectEnabled = (defectName != "Off");
+	const int modeStart = inputMap.get("modeStart", 0);
+	const int modeStop = inputMap.get("modeStop", -1);
+	const bool defectEnabled = (defectName != "Off");
 	const double ePhDelta = inputMap.get("ePhDelta") * eV; //energy conservation width for e-ph coupling
+	const double eIDelta = inputMap.get("eIDelta", ePhDelta) * eV; //energy conservation width for e-ph coupling
 	const size_t maxNeighbors = inputMap.get("maxNeighbors", 0); //if non-zero: limit neighbors per k by stochastic down-sampling and amplifying the Econserve weights
 	const string outFile = inputMap.has("outFile") ? inputMap.getString("outFile") : "ldbd.dat"; //output file name
+	const bool onlyElec = inputMap.get("onlyElec", 0);
+	const bool onlyHole = inputMap.get("onlyHole", 0);
+	bool notBothTrue = !(onlyElec && onlyHole); assert(notBothTrue);
+	bool assumeMetal = inputMap.get("assumeMetal", 0);
 	FeynWannParams fwp(&inputMap);
 	
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("NkMult = "); NkMult.print(globalLog, " %d ");
 	logPrintf("dmuMin = %lg\n", dmuMin);
 	logPrintf("dmuMax = %lg\n", dmuMax);
+	logPrintf("band_skipped = %d\n", band_skipped);
 	logPrintf("Tmax = %lg\n", Tmax);
+	logPrintf("nkBT = %lg\n", nkBT);
 	logPrintf("pumpOmegaMax = %lg\n", pumpOmegaMax);
+	logPrintf("pumpTau = %lg\n", pumpTau);
 	logPrintf("probeOmegaMax = %lg\n", probeOmegaMax);
 	logPrintf("ePhMode = %s\n", ePhMode.c_str());
-    logPrintf("defectName = %s\n", defectName.c_str());
+	logPrintf("modeStart = %d\n", modeStart);
+	logPrintf("modeStop = %d\n", modeStop);
+	logPrintf("defectName = %s\n", defectName.c_str());
 	logPrintf("ePhDelta = %lg\n", ePhDelta);
+	logPrintf("eIDelta = %lg\n", eIDelta);
 	logPrintf("maxNeighbors = %lu\n", maxNeighbors);
 	logPrintf("outFile = %s\n", outFile.c_str());
+	logPrintf("onlyElec = %d\n", onlyElec);
+	logPrintf("onlyHole = %d\n", onlyHole);
+	logPrintf("assumeMetal = %d\n", assumeMetal);
 	fwp.printParams();
 	
 	//Initialize FeynWann:
@@ -836,8 +887,14 @@ int main(int argc, char** argv)
 	}
 	
 	//Create and initialize lindblad calculator:
-	LindbladInit lb(fw, NkFine, dmuMin, dmuMax, Tmax, pumpOmegaMax, probeOmegaMax, ePhEnabled, ePhDelta, defectEnabled);
-	
+	LindbladInit lb(fw, NkFine, dmuMin, dmuMax, Tmax, pumpOmegaMax, pumpTau, probeOmegaMax, ePhEnabled, ePhDelta, eIDelta, defectEnabled);
+	lb.nkBT = nkBT;
+	lb.band_skipped = band_skipped;
+	lb.onlyElec = onlyElec;
+	lb.onlyHole = onlyHole;
+	lb.assumeMetal = assumeMetal;
+	lb.modeStart = modeStart; lb.modeStop = modeStop < 0 ? fw.nModes : modeStop; assert(modeStop <= fw.nModes);
+
 	//First pass (e only): select k-points
 	lb.kpointSelect(k0);
 	if(mpiWorld->isHead()) logPrintf("%lu active q-mesh offsets parallelized over %d process groups.\n", lb.offKuniq.size(), mpiGroupHead->nProcesses());

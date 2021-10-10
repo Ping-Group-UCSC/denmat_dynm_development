@@ -78,6 +78,7 @@ struct LindbladLinear
 	const double dE; //!< energy resolution for distribution functions
 	
 	const bool ePhEnabled; //!< whether e-ph coupling is enabled
+	bool detailBalance;
 	const double defectFraction; //!< defect fraction if present
 	const bool verbose; //!< whether to print more detailed stats during evolution
 	const string checkpointFile; //!< file name to save checkpoint data to
@@ -377,7 +378,10 @@ struct LindbladLinear
 						//Loop over all connections to the same ik2:
 						while((g != s.GePh.end()) and (g->jk == ik2))
 						{	g->G.init(nInner1, nInner2);
-							g->initA(T, defectFraction);
+							if (!detailBalance) //JX
+								g->initA(T, defectFraction);
+							else
+								g->initA(E1, E2, T, defectFraction);
 							//Loop over A- and A+
 							for(int pm=0; pm<2; pm++) 
 							{	const SparseMatrix& Acur = pm ? g->Ap : g->Am;
@@ -1045,7 +1049,8 @@ int main(int argc, char** argv)
 	ValleyMode valleyMode;
 	if(not valleyModeMap.getEnum(valleyModeStr.c_str(), valleyMode))
 		die("\nvalleyMode must be 'None' or 'Intra' or 'Inter'\n");
-	
+	const bool detailBalance = inputMap.get("detailBalance", 0);
+
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("dmu = %lg\n", dmu);
 	logPrintf("T = %lg\n", T);
@@ -1089,6 +1094,7 @@ int main(int argc, char** argv)
 	if(not spectrumMode) logPrintf("checkpointFile = %s\n", checkpointFile.c_str());
 	if(spectrumMode) logPrintf("evecFile = %s\n", evecFile.c_str());
 	logPrintf("valleyMode = %s\n", valleyModeMap.getString(valleyMode));
+	logPrintf("detailBalance = %d\n", detailBalance);
 	logPrintf("\n");
 	
 	//Initialize PETSc if necessary:
@@ -1104,6 +1110,7 @@ int main(int argc, char** argv)
 		pumpOmega, pumpA0, pumpTau, pumpPol, (pumpMode=="Bfield"), pumpB,
 		omegaMin, omegaMax, domega, tau, pol, dE,
 		ePhEnabled, defectFraction, verbose, checkpointFile, valleyMode);
+	lbl.detailBalance = detailBalance;
 	CHECKERR(lbl.initialize(inFile));
 	logPrintf("Initialization completed successfully at t[s]: %9.2lf\n\n", clock_sec());
 	logFlush();

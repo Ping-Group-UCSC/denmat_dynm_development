@@ -5,6 +5,7 @@
 struct elecelecParam{
 	string eeMode;
 	bool antisymmetry;
+	double degauss;
 };
 
 struct coulombParam{
@@ -49,6 +50,7 @@ struct elecimpParam{
 	std::vector<bool> partial_ionized;
 	std::vector<double> Eimp, g, lng;
 	double carrier_bvk_gs, ne_bvk_gs, nh_bvk_gs; // carrier_bvk = carrier_density * nk_full * latt->volume; gs - ground state
+	std::vector<double> degauss;
 
 	double carrier_bvk_ex(bool isHole, double n_bvk_ex){
 		if (ni.size() == 0 || (carrier_bvk_gs > 0 && isHole) || (carrier_bvk_gs < 0 && !isHole)) return n_bvk_ex;

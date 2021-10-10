@@ -44,7 +44,7 @@ kpair Information: (i) indeces of k and k' (ii) P1_kk' and P2_kk'
 //Reverse iterator for pointers:
 template<class T> constexpr std::reverse_iterator<T*> reverse(T* i) { return std::reverse_iterator<T*>(i); }
 
-static const double omegabyTCut_default = 1e-3;
+static const double omegabyTCut = 1e-3;
 static const double nEphDelta_default = 4.*sqrt(2); //number of ePhDelta to include in output
 static const double degthr_default = 1e-8;
 static const size_t ngrid = 200;
@@ -69,7 +69,7 @@ struct LindbladInit
 	bool ePhEnabled, onlyInterValley, onlyIntraValley, ePhOnlyElec, ePhOnlyHole; //!< whether e-ph coupling is enabled
 	string shole;
 	bool detailBalance, needConventional;
-	const double ePhDelta; double nEphDelta, omegabyTCut; //!< Gaussian energy conservation width
+	const double ePhDelta; double nEphDelta; //!< Gaussian energy conservation width
 	bool writegm, mergegm, write_sparseP;
 	int band_skipped;
 	int modeStart, modeStop;
@@ -602,7 +602,7 @@ struct LindbladInit
 	
 	int ikpairStart, ikpairStop, nkpairMine;
 	complex *P1, *P2, *App, *Apm, *Amp, *Amm, *A2pp, *A2pm, *A2mp, *A2mm;
-	double **imsig, **imsigflip, **imsigp;
+	double **imsig, **imsigp;
 	FILE *fpd;
 	
 	FILE* fopenP(string fname, string rw){
@@ -663,7 +663,7 @@ struct LindbladInit
 		App = alloc_array(nBandsSel*nBandsSel); Apm = alloc_array(nBandsSel*nBandsSel); Amp = alloc_array(nBandsSel*nBandsSel); Amm = alloc_array(nBandsSel*nBandsSel);
 		A2pp = alloc_array(nBandsSel*nBandsSel); A2pm = alloc_array(nBandsSel*nBandsSel); A2mp = alloc_array(nBandsSel*nBandsSel); A2mm = alloc_array(nBandsSel*nBandsSel);
 		P1 = alloc_array((int)std::pow(nBandsSel, 4)); P2 = alloc_array((int)std::pow(nBandsSel, 4));
-		imsig = alloc_real_array(k.size(), nBandsSel); imsigflip = alloc_real_array(k.size(), nBandsSel); imsigp = alloc_real_array(k.size(), nBandsSel);
+		imsig = alloc_real_array(k.size(), nBandsSel); imsigp = alloc_real_array(k.size(), nBandsSel);
 
 		logPrintf("Compute EPH: \n"); logFlush();
 		if (ldebug){
@@ -735,7 +735,6 @@ struct LindbladInit
 		}
 		for (size_t ik = 0; ik < k.size(); ik++){
 			mpiWorld->allReduce(&imsig[ik][0], nBandsSel, MPIUtil::ReduceSum);
-			mpiWorld->allReduce(&imsigflip[ik][0], nBandsSel, MPIUtil::ReduceSum);
 			mpiWorld->allReduce(&imsigp[ik][0], nBandsSel, MPIUtil::ReduceSum);
 		}
 		if (mpiWorld->isHead()){
@@ -761,8 +760,6 @@ struct LindbladInit
 		// compute_imshig should only be true for one of compute_P in subroutine compute_eph
 		double ethr = ePhDelta * nEphDelta;
 		zeros(P1, (int)std::pow(nBandsSel, 4)); zeros(P2, (int)std::pow(nBandsSel, 4));
-		matrix s1 = state_elec[ik].S[2](bStart, bStop, bStart, bStop), s2 = state_elec[jk].S[2](bStart, bStop, bStart, bStop);
-		matrix sdeg1 = degProj(s1, Ek, degthr), sdeg2 = degProj(s2, Ekp, degthr);
 
 		for (int alpha = modeStart; alpha < modeStop; alpha++){
 			double wqm = phm.omega[alpha], wqp = php.omega[alpha];
@@ -776,14 +773,11 @@ struct LindbladInit
 				prefac_delta = 1. / (ePhDelta * sqrt(2.*M_PI));
 			prefac_sqrtdelta = sqrt(prefac_delta);
 			double prefac_imsig = M_PI / nkTot * prefac_delta;
-			double prefac_imsigflip = 2 * prefac_imsig;
 
 			double nqm = bose(std::max(1e-3, wqm / Tmax)), nqp = bose(std::max(1e-3, wqp / Tmax));
 			if (ldebug) { fprintf(fpd, "alpha= %d wqm= %lg wqp= %lg nqm= %lg\n", alpha, wqm, wqp, nqm); fflush(fpd); }
 			matrix gp = dagger(mp.M[alpha](bStart, bStop, bStart, bStop)); // g^+_kk' = g^-_k'k^(dagger_n)
 			matrix gm = mm.M[alpha](bStart, bStop, bStart, bStop);
-			matrix sgpcomm = sdeg1 * gp - gp * sdeg2;
-			matrix sgmcomm = sdeg1 * gm - gm * sdeg2;
 			///*
 			if (ldebug){
 				//fprintf(fpd, "gp:");
@@ -822,13 +816,11 @@ struct LindbladInit
 					if (compute_imsig && (ik != jk || b1 != b2)){
 						const vector3<>& v1 = state_elec[ik].vVec[b1 + bStart]; const vector3<>& v2 = state_elec[jk].vVec[b2 + bStart];
 						double cosThetaScatter = dot(v1, v2) / sqrt(std::max(1e-16, v1.length_squared() * v2.length_squared()));
-						double dtmp1 = prefac_imsig * gp(b1, b2).norm() * (F[jk][b2] + nqp) * deltaplus;
+						double dtmp1 = prefac_imsig * gp(b1, b2).norm() * deltaplus * nqp * (nqp + 1) / (nqp + 1 - 0.5); //(nqp + 1 - F[ik][b1]);
 						imsig[ik][b1] += dtmp1; imsigp[ik][b1] += dtmp1 * (1. - cosThetaScatter);
-						imsigflip[ik][b1] += prefac_imsig * sgpcomm(b1, b2).norm() * (F[jk][b2] + nqp) * deltaplus;
 						if (ik < jk){
-							double dtmp2 = prefac_imsig * gp(b1, b2).norm() * (nqp + 1 - F[ik][b1]) * deltaplus;
+							double dtmp2 = prefac_imsig * gp(b1, b2).norm() * deltaplus * nqp * (nqp + 1) / (nqp + 0.5); //(nqp + F[jk][b2]);
 							imsig[jk][b2] += dtmp2; imsigp[jk][b2] += dtmp2 * (1. - cosThetaScatter);
-							imsigflip[jk][b2] += prefac_imsig * sgpcomm(b1, b2).norm() * (nqp + 1 - F[ik][b1]) * deltaplus;
 						}
 					}
 				}
@@ -856,13 +848,11 @@ struct LindbladInit
 					if (compute_imsig && (ik != jk || b1 != b2)){
 						const vector3<>& v1 = state_elec[ik].vVec[b1 + bStart]; const vector3<>& v2 = state_elec[jk].vVec[b2 + bStart];
 						double cosThetaScatter = dot(v1, v2) / sqrt(std::max(1e-16, v1.length_squared() * v2.length_squared()));
-						double dtmp1 = prefac_imsig * gm(b1, b2).norm() * (nqm + 1 - F[jk][b2]) * deltaminus;
+						double dtmp1 = prefac_imsig * gm(b1, b2).norm() * deltaminus * nqm * (nqm + 1) / (nqm + 0.5); //(nqm + F[ik][b1]);
 						imsig[ik][b1] += dtmp1; imsigp[ik][b1] += dtmp1 * (1. - cosThetaScatter);
-						imsigflip[ik][b1] += prefac_imsig * sgmcomm(b1, b2).norm() * (nqm + 1 - F[jk][b2]) * deltaminus;
 						if (ik < jk){
-							double dtmp2 = prefac_imsig * gm(b1, b2).norm() * (F[ik][b1] + nqm) * deltaminus;
+							double dtmp2 = prefac_imsig * gm(b1, b2).norm() * deltaminus * nqm * (nqm + 1) / (nqm + 1 - 0.5); //(nqm + 1 - F[jk][b2]);
 							imsig[jk][b2] += dtmp2; imsigp[jk][b2] += dtmp2 * (1. - cosThetaScatter);
-							imsigflip[ik][b1] += prefac_imsig * sgmcomm(b1, b2).norm() * (F[ik][b1] + nqm) * deltaminus;
 						}
 					}
 				}
@@ -938,15 +928,12 @@ struct LindbladInit
 		string fnamesigkn = dir_ldbd + "ldbd_imsigkn.out";
 		string fnamesigkn_bsq = dir_ldbd + "ldbd_imsigkn_bsq.out";
 		string fnamesigkn_intp = dir_ldbd + "ldbd_imsigkn_intp.out";
-		string fnamesigkn_flip = dir_ldbd + "ldbd_imsigkn_flip.out";
 		FILE *fpsigkn = fopen(fnamesigkn.c_str(), "w");
 		FILE *fpsigkn_bsq = fopen(fnamesigkn_bsq.c_str(), "w");
 		FILE *fpsigkn_intp; if (fw.fwp.needLinewidth_ePh) fpsigkn_intp = fopen(fnamesigkn_intp.c_str(), "w");
-		FILE *fpsigkn_flip = fopen(fnamesigkn_flip.c_str(), "w");
 		fprintf(fpsigkn, "E(Har) ImSigma_kn(Har) ImSigmaP(Har) dfde v*v\n");
 		fprintf(fpsigkn_bsq, "E(Har) ImSigma_kn(Har) b^2\n");
 		if (fw.fwp.needLinewidth_ePh) fprintf(fpsigkn_intp, "E(Har) ImSigma_kn(Har) Interpolated ImSigma\n");
-		fprintf(fpsigkn_flip, "E(Har) ImSigma_kn(Har) ImSigma_Flip\n");
 		double imsig_max = imsig[0][0], imsig_min = imsig[0][0];
 		for (size_t ik = 0; ik < k.size(); ik++){
 			diagMatrix Ek = state_elec[ik].E(bStart, bStop);
@@ -957,14 +944,13 @@ struct LindbladInit
 					fprintf(fpsigkn, "%14.7le %14.7le %14.7le %14.7le %14.7le %14.7le %14.7le\n", Ek[b], imsig[ik][b], imsigp[ik][b], dfde, v[0] * v[0], v[1] * v[1], v[2] * v[2]);
 					fprintf(fpsigkn_bsq, "%14.7le %14.7le %14.7le %14.7le %14.7le\n", Ek[b], imsig[ik][b], bsq[ik][b][0], bsq[ik][b][1], bsq[ik][b][2]);
 					if (fw.fwp.needLinewidth_ePh) fprintf(fpsigkn_intp, "%14.7le %14.7le %14.7le\n", Ek[b], imsig[ik][b], state_elec[ik].ImSigma_ePh(b + bStart, F[ik][b]));
-					fprintf(fpsigkn_flip, "%14.7le %14.7le %14.7le\n", Ek[b], imsig[ik][b], imsigflip[ik][b]);
 					if (imsig[ik][b] > imsig_max) imsig_max = imsig[ik][b];
 					if (imsig[ik][b] < imsig_min) imsig_min = imsig[ik][b];
 				}
 			}
 		}
 		logPrintf("\nimsig_min = %lg eV imsig_max = %lg eV\n", imsig_min / eV, imsig_max / eV); logFlush();
-		fclose(fpsigkn); fclose(fpsigkn_bsq); if (fw.fwp.needLinewidth_ePh){ fclose(fpsigkn_intp); } fclose(fpsigkn_flip);
+		fclose(fpsigkn); fclose(fpsigkn_bsq); if (fw.fwp.needLinewidth_ePh) fclose(fpsigkn_intp);
 
 		std::vector<double> imsige(102); std::vector<int> nstate(102);
 		double Estart_imsige = Estart, Estop_imsige = Estop;
@@ -1459,7 +1445,6 @@ int main(int argc, char** argv)
 	bool writeHEz = inputMap.get("writeHEz", 0);
 	bool assumeMetal = inputMap.get("assumeMetal", 0);
 	bool needConventional = inputMap.get("needConventional", 0);
-	double omegabyTCut = inputMap.get("omegabyTCut", omegabyTCut_default);
 
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("NkMult = "); NkMult.print(globalLog, " %d ");
@@ -1497,7 +1482,6 @@ int main(int argc, char** argv)
 	logPrintf("writeHEz = %d\n", writeHEz);
 	logPrintf("assumeMetal = %d\n", assumeMetal);
 	logPrintf("needConventional = %d\n", needConventional);
-	logPrintf("omegabyTCut = %lg\n", omegabyTCut);
 
 	//Initialize FeynWann:
 	FeynWannParams fwp(&inputMap);	fwp.printParams(); // Bext, EzExt and scissor
@@ -1578,7 +1562,6 @@ int main(int argc, char** argv)
 	lb.writeHEz = writeHEz;
 	lb.assumeMetal = assumeMetal;
 	lb.needConventional = needConventional;
-	lb.omegabyTCut = omegabyTCut;
 
 	//First pass (e only): select k-points and output electronic quantities
 	fw.eEneOnly = true;

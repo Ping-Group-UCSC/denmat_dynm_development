@@ -45,6 +45,7 @@ void dm_dynamics_jdftx(parameters* param){
 	param->mu = elec->set_mu_and_n(param->carrier_density); // if carrier_density is set (non-zero), recompute mu
 	elec->compute_dm_Bpert_1st(param->Bpert, param->t0);
 	if (elec->B.length() > 1e-10 || alg.read_Bso) elec->set_H_BS(mpk.varstart, mpk.varend);
+	if (abs(elec->scale_Ez) > 1e-10) elec->set_H_Ez(mpk.varstart, mpk.varend);
 	if ((alg.picture == "schrodinger" || param->t0 == 0) && param->Bpert.length() > 1e-12) elec->compute_DP_related(param->Bpert);
 	// phonon
 	phonon* ph = new phonon(latt, param);

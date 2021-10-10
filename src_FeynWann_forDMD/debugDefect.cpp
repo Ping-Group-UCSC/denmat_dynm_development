@@ -22,6 +22,7 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include "FeynWann.h"
 #include "InputMap.h"
 #include <core/Units.h>
+#include "help_lindbladInit_for-DMD.h"
 
 //Read a list of k-points from a file
 std::vector<vector3<>> readKpointsFile(string fname)
@@ -53,7 +54,7 @@ struct DebugDefect
 	//Previously computed quantities using single-k version to test against transformed ones:
 	FeynWann::StateE e1, e2;
 	FeynWann::MatrixDefect m;
-	bool spinAvailable;
+	bool spinAvailable, layerAvailable;
 	
 	DebugDefect(int bandStart, int bandStop)
 	: bandStart(bandStart), bandStop(bandStop)
@@ -64,6 +65,20 @@ struct DebugDefect
 		const diagMatrix& E2 = mD.e2->E;
 		
 		//---- Single k compute debug ----
+		if (layerAvailable){
+			logPrintf("|SL|:"); logFlush();
+			matrix SL = mD.e2->S[2] * mD.e2->layer;
+			for (int b1 = bandStart; b1 < bandStop; b1++)
+			for (int b2 = bandStart; b2 < bandStop; b2++)
+				logPrintf(" %lg", sqrt(SL(b1, b2).norm()));
+			logPrintf("\n"); logFlush();
+			logPrintf("|SLcomm|^2:"); logFlush();
+			matrix SLcomm = SL - mD.e2->layer * mD.e2->S[2];
+			for (int b1 = bandStart; b1 < bandStop; b1++)
+			for (int b2 = bandStart; b2 < bandStop; b2++)
+				logPrintf(" %lg", SLcomm(b1, b2).norm());
+			logPrintf("\n"); logFlush();
+		}
 		
 		//---- e-ph matrix element debug ----
 		logPrintf("|g_{}(k1,k2)|: ");
@@ -80,9 +95,7 @@ struct DebugDefect
 				logPrintf("%lg ", sqrt(m2/ndeg) / eV);
 			}
 		}
-
-		logPrintf("\n");
-		logFlush();
+		logPrintf("\n"); logFlush();
 		
 		//---- Spin commutator debug ---
 		if (spinAvailable)
@@ -153,9 +166,12 @@ int main(int argc, char** argv)
 	//Initialize FeynWann:
 	fwp.needDefect = defectName;
 	fwp.needSpin = true;
+	fwp.needLayer = exists("Wannier/wannier.mlwfW");
 	FeynWann fw(fwp);
 	if(!bandStop) bandStop = fw.nBands;
-	
+	matrix3<> Gvec = (2.*M_PI)*inv(fw.R);
+	matrix3<> GGT = Gvec * (~Gvec);
+
 	if(ip.dryRun)
 	{	logPrintf("Dry run successful: commands are valid and initialization succeeded.\n");
 		fw.free();
@@ -165,6 +181,7 @@ int main(int argc, char** argv)
 	logPrintf("\n");
 	DebugDefect src(bandStart, bandStop);
 	src.spinAvailable = fwp.needSpin;
+	src.layerAvailable = fwp.needLayer;
 	fw.eCalc(k1, src.e1);
 	if(mpiGroup->isHead())
 	{	logPrintf("E1[eV]: ");
@@ -173,6 +190,15 @@ int main(int argc, char** argv)
 	for(vector3<> k2: k2arr)
 	{	//Compute single k quantities:
 		fw.eCalc(k2, src.e2);
+
+		//---- Single k compute debug ----
+		logPrintf("|k-K|^2: %lg\n", GGT.metric_length_squared(wrap_around_Gamma(K - src.e2.k))); logFlush();
+
+		logPrintf("E2:");
+		for (int b2 = bandStart; b2 < bandStop; b2++)
+			logPrintf(" %lg", src.e2.E[b2] / eV);
+		logPrintf("\n"); logFlush();
+
 		fw.defectCalc(src.e1, src.e2, src.m);
 		
 		if(mpiGroup->isHead()) src.process(src.m); //directly use much faster single-k version (test of single-k skipped above)

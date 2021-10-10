@@ -23,7 +23,7 @@ struct elecimp_model
 		: iD(iD), latt(latt), elec(elec), nk(elec->nk), nk_full(elec->nk_full), 
 		bStart(bStart), bEnd(bEnd), nb(bEnd - bStart), nbpow4((int)std::pow(nb, 4)), bStart_wannier(bStart + elec->bStart_dm + elec->bskipped_wannier),
 		eStart(eStart), eEnd(eEnd),
-		degauss(param->degauss), ethr(param->degauss*param->ndegauss),
+		degauss(eip.degauss[iD]), ethr(param->degauss*param->ndegauss),
 		coul_model(coul_model)
 	{
 		if (ionode) printf("\nInitialize electron-impurity scattering: %s\n", eip.impMode[iD].c_str());

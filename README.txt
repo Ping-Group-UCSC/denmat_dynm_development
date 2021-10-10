@@ -1,12 +1,13 @@
 Note:
-Except sources files are new, all others are from older version 4.4.3.
+Except (i) DMD sources files (ii) FeynWann source files and (iii) Silicon example are new, 
+all others are from older version 4.4.3.
 They should be updated, e.g., an example of monolayer WSe2 using QE2JDFTx scripts and with e-imp scattering needs to be added.
 
 Folders and files:
 1. executables are in ./bin (github does not want an empty folder, so please create this folder)
-2. src_v4.4.3 : source codes
+2. src_v4.5.4 : source codes
 3. src_FeynWann_kgrids:
-        source files for the modified initialization program - lindbladInit_for-DMD-4.4
+        source files for the modified initialization program - lindbladInit_for-DMD-4.5.2
         there is a compilation script "make-FeynWann-mod_kairay.sh" for installation in Kairay cluster
 4. Examples:
         Silicon_T1-Rate-formula.tgz
@@ -32,7 +33,8 @@ to run:
                          Kerr (Faraday) roration at selected energies
 
 to install:
-1. GSL and MKL must be installed and ensure MKLROOT is correct
-2. modify GRL_DIR in make.inc and SRC_DIRS in Makefile, if necessary
-3. If there is no "bin" folder, create it
-4. type "make"
+1. Make sure intel mpi compiler exists and command "mpiicpc" exists
+2. GSL and MKL must be installed and ensure MKLROOT is correct
+3. modify GRL_DIR in make.inc and SRC_DIRS in Makefile, if necessary
+4. If there is no "bin" folder, create it
+5. type "make"

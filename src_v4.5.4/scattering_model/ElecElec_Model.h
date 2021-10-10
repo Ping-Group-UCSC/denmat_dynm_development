@@ -23,7 +23,7 @@ struct elecelec_model
 		: latt(latt), elec(elec), nk(elec->nk), nk_full(elec->nk_full), 
 		bStart(bStart), bEnd(bEnd), nb(bEnd - bStart), nbpow4((int)std::pow(nb, 4)), bStart_wannier(bStart + elec->bStart_dm + elec->bskipped_wannier),
 		eStart(eStart), eEnd(eEnd),
-		degauss(param->degauss), ethr(param->degauss*param->ndegauss),
+		degauss(eep.degauss), ethr(param->degauss*param->ndegauss),
 		coul_model(coul_model), kmap(nullptr)
 	{
 		if (ionode) printf("\nInitialize electron-electron scattering: %s\n", eep.eeMode.c_str());

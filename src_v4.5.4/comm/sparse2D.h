@@ -27,8 +27,11 @@ public:
 		: thrsh(thrsh), nk(nk), ni(ni), nj(nj), nij(ni*nj), ns_tot(0), is0(is0), mp(nullptr)
 	{
 		smat = new sparse_mat*[nk];
-		get_ns_tot(A, 1e-20);
-		get_ns_tot(A, thrsh);
+		if (A != nullptr){
+			get_ns_tot(A, 1e-20);
+			get_ns_tot(A, thrsh);
+		}
+		else alloc_empty();
 	}
 	sparse2D(mymp *mp, complex **A, int ni, int nj, double thrsh = 1e-40)
 		: mp(mp), thrsh(thrsh), nk(mp->varend - mp->varstart), ni(ni), nj(nj), nij(ni*nj), ns_tot(0), is0(is0)
@@ -36,9 +39,16 @@ public:
 		smat = new sparse_mat*[nk];
 		nk_glob = nk;
 		mp->allreduce(nk_glob);
-
-		get_ns_tot(A, 1e-20);
-		get_ns_tot(A, thrsh);
+		if (A != nullptr){
+			get_ns_tot(A, 1e-20);
+			get_ns_tot(A, thrsh);
+		}
+		else alloc_empty();
+	}
+	void alloc_empty(){
+		for (size_t ik = 0; ik < nk; ik++)
+			smat[ik] = new sparse_mat();
+		print_ns_tot(thrsh);
 	}
 	sparse2D(mymp *mp, string fnamens, string fnames, string fnamei, string fnamej, int ni, int nj)
 		: mp(mp), fnamens(fnamens), fnames(fnames), fnamei(fnamei), fnamej(fnamej), nk(mp->varend - mp->varstart), ni(ni), nj(nj), nij(ni*nj), ns_tot(0), is0(0), thrsh(1e-40)

@@ -9,7 +9,7 @@ void electronimpurity::read_ldbd_imp_P(int ik, complex *P1, complex *P2){
 			fname1 += (suffix + ".bin"); fname2 += (suffix + ".bin");
 
 			fp1 = fopen(fname1.c_str(), "rb"); fp2 = fopen(fname2.c_str(), "rb");
-			size_t expected_size = nkpair_glob * nbpow4 * 2 * sizeof(double);
+			size_t expected_size = nkpair_glob * (size_t)nbpow4 * 2 * sizeof(double);
 			check_file_size(fp1, expected_size, fname1 + " size does not match expected size");
 			check_file_size(fp2, expected_size, fname1 + " size does not match expected size");
 			fseek_bigfile(fp1, mp->varstart, nbpow4 * 2 * sizeof(double));

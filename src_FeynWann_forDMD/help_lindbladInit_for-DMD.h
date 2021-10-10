@@ -12,6 +12,7 @@ const complex cmi(0, -1);
 const double bohr2cm = 5.291772109038e-9;
 const double Tesla = eV*sec / (meter*meter);
 const vector3<> K = vector3<>(1. / 3, 1. / 3, 0), Kp = vector3<>(-1. / 3, -1. / 3, 0);
+const double ps = 1e3*fs; //picosecond
 
 template <typename T> int sgn(T val){
 	return (T(0) < val) - (val < T(0));
@@ -35,12 +36,26 @@ int dimension(FeynWann& fw);
 double cell_size(FeynWann& fw);
 void print_carrier_density(FeynWann& fw, double carrier_density);
 double cminvdim2au(FeynWann& fw);
+
 double find_mu(double ncarrier, double t, double mu0, std::vector<FeynWann::StateE>& e, int bStart, int bCBM, int bStop);
 double compute_ncarrier(bool isHole, double t, double mu, std::vector<diagMatrix>& Ek, int nb, int nv);
 double compute_ncarrier(bool isHole, double t, double mu, std::vector<FeynWann::StateE>& e, int bStart, int bCBM, int bStop);
 std::vector<diagMatrix> computeF(double t, double mu, std::vector<FeynWann::StateE>& e, int bStart, int bStop);
 
-vector3<> compute_bsq(std::vector<FeynWann::StateE>& e, int bStart, int bStop, double degthr, std::vector<diagMatrix> F);
+template <typename T> void average_dfde(std::vector<diagMatrix>& F, std::vector<std::vector<T>>& arr, T& avg){
+	double sum = 0;
+	T Ttmp; avg = 0 * Ttmp; // avg must be initialized to be zero
+	for (size_t ik = 0; ik < F.size(); ik++){
+		for (int b = 0; b < F[0].size(); b++){
+			double dfde = F[ik][b] * (1 - F[ik][b]);
+			sum += dfde;
+			avg += dfde * arr[ik][b];
+		}
+	}
+	avg = avg / sum;
+}
+
+std::vector<std::vector<vector3<>>> compute_bsq(std::vector<FeynWann::StateE>& e, int bStart, int bStop, double degthr, std::vector<diagMatrix> F);
 matrix degProj(matrix& M, diagMatrix& E, double degthr);
 void degProj(matrix& M, diagMatrix& E, double degthr, matrix& Mdeg);
 double compute_sz(complex **dm, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e);
@@ -84,6 +99,10 @@ double minval(std::vector<FeynWann::StateE>& e, int bStart, int bStop){
 	return r;
 }
 
+bool exists(string name){
+	struct stat buffer;
+	return (stat(name.c_str(), &buffer) == 0);
+}
 void check_file_size(FILE *fp, size_t expect_size, string message);
 void fseek_bigfile(FILE *fp, size_t count, size_t size, int origin = SEEK_SET);
 
