@@ -1,4 +1,4 @@
-#include "LindbladFile.h"
+#include "lindblad/LindbladFile.h"
 #include "InputMap.h"
 #include <core/Units.h>
 #include <core/Minimize.h>
@@ -206,7 +206,7 @@ int main(int argc, char** argv)
 	
 	//Temperature loop:
 	for(size_t iT=0; iT<Tcount; iT++)
-	{	const double T = Tmin + iT*(Tmax-Tmin)/(Tcount-1);
+	{	const double T = Tmin + iT*(Tmax-Tmin)/std::max(1, int(Tcount-1));
 		const double invT = 1./T;
 		
 		std::vector<matrix3<>> rhoMat(nBlocks);

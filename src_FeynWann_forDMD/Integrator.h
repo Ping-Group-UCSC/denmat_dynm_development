@@ -127,7 +127,7 @@ void Integrator<Vector>::stepRK45(const Vector& v, const Vector& vPrime, double 
 		b61= 0.233199508101852, b62=-2.158203125000000, b63= 2.634186921296296, b64=-0.895950882523148, b65=0.061767578125,
 		 c1= 0.09788359788359788,  c3= 0.4025764895330113,  c4= 0.21043771043771045,                            c6= 0.2891022021456804,
 		dc1= 0.00429377480158731, dc3=-0.0186685860938579, dc4= 0.03415502683080807, dc5= 0.01932198660714286, dc6=-0.0391022021456804;
-	//Test step 1 (at initial point, copute called externally with result in vPrime):
+	//Test step 1 (at initial point, compute called externally with result in vPrime):
 	Vector vTmp = clone(v);
 	const Vector& k1 = vPrime;
 	//Test step 2:

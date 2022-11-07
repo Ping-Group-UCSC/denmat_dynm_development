@@ -355,7 +355,6 @@ int main(int argc, char** argv)
 	InputMap inputMap(ip.inputFilename);
 	const int nOffsets = inputMap.get("nOffsets"); assert(nOffsets>0);
 	const int nBlocks = inputMap.get("nBlocks"); assert(nBlocks>0);
-	const double degeneracyThreshold = inputMap.get("degeneracyThreshold", 1e-6/eV) * eV;
 	const double neglectThreshold = inputMap.get("neglectThreshold", 1e-8); //relative threshold in occupation and energy conservation factors that can be neglected (determines Emargin)
 	const double EconserveWidth = inputMap.get("EconserveWidth") * eV;
 	const double Tmin = inputMap.get("Tmin") * Kelvin; //temperature; start of range
@@ -374,7 +373,6 @@ int main(int argc, char** argv)
 	logPrintf("Tmin = %lg\n", Tmin);
 	logPrintf("Tmax = %lg\n", Tmax);
 	logPrintf("Tcount = %lu\n", Tcount);
-	logPrintf("degeneracyThreshold = %lg\n", degeneracyThreshold);
 	logPrintf("neglectThreshold = %lg\n", neglectThreshold);
 	logPrintf("EconserveWidth = %lg\n", EconserveWidth);
 	logPrintf("dmuMin = %lg\n", dmuMin);
@@ -459,7 +457,7 @@ int main(int argc, char** argv)
 	std::vector<std::shared_ptr<SpinRelaxCollect>> srcArr(nBlocks);
 	for(int block=0; block<nBlocks; block++)
 	{	logPrintf("Working on block %d of %d: ", block+1, nBlocks); logFlush();
-		srcArr[block] = std::make_shared<SpinRelaxCollect>(dmu, T, omegaPhByTmin, nModes, degeneracyThreshold,
+		srcArr[block] = std::make_shared<SpinRelaxCollect>(dmu, T, omegaPhByTmin, nModes, fwp.degeneracyThreshold,
 			EconserveWidth, nKpairsPerBlock, nKtotPerBlock, fw.ePhEstart, fw.ePhEstop, valley, fw.R);
 		SpinRelaxCollect& src = *(srcArr[block]);
 		for(int o=0; o<noMine; o++)

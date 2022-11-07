@@ -52,10 +52,16 @@ struct PlanSet
 
 DistributedMatrix::DistributedMatrix(string fname, bool realOnly, const MPIUtil* mpiUtil, int nElemsTot,
 	const std::vector<vector3<int>>& cellMap, const vector3<int>& kfold, bool squared,
-	const std::shared_ptr<MPIUtil>  mpiInterGroup, const std::vector<matrix>* cellWeights, const vector3<int>* kfoldInPtr)
-: mpiUtil(mpiUtil), nElemsTot(nElemsTot), cellMap(cellMap), kfold(kfold), squared(squared)
+	const std::shared_ptr<MPIUtil>  mpiInterGroup, const std::vector<matrix>* cellWeights, const vector3<int>* kfoldInPtr,
+	int derivDir, const DistributedMatrix* derivData, const matrix3<>* R)
+: mpiUtil(mpiUtil), nElemsTot(nElemsTot), cellMap(cellMap), kfold(kfold), squared(squared), deriv(derivDir >= 0)
 {
 	if(squared) assert(cellWeights); //only unique cells supported in square dmode (e-ph elements)
+	if(deriv)
+	{	assert(not squared); //derivative only supported for non-squared mode
+		assert(R); //need lattice vectors for Caretsian conversion
+		derivRi = R->row(derivDir);
+	}
 	kfoldProd = kfold[0]*kfold[1]*kfold[2];
 	kfoldIn = kfold;
 	if(kfoldInPtr)
@@ -105,9 +111,19 @@ DistributedMatrix::DistributedMatrix(string fname, bool realOnly, const MPIUtil*
 	mat.init(nElems*nCellsTot);
 	buf.init(nTot); //nTot = max(nElems*nkTot, nElemsTot*nk)
 	
-	//Read matrix:
-	if(realOnly) readMatrix<double>(mpiUtil, mpiInterGroup, fname, nElemsTot, nElems, iElemStart, nCellsTot, mat.data());
-	else readMatrix<complex>(mpiUtil, mpiInterGroup, fname, nElemsTot, nElems, iElemStart, nCellsTot, mat.data());
+	//Read / copy matrix data:
+	if((derivDir >= 0) and derivData)
+	{	//Copy data:
+		assert(mpiUtil == derivData->mpiUtil);
+		assert(nElemsTot == derivData->nElemsTot);
+		assert(nCellsTot == derivData->nCellsTot);
+		mat = derivData->mat;
+	}
+	else
+	{	//Read from file
+		if(realOnly) readMatrix<double>(mpiUtil, mpiInterGroup, fname, nElemsTot, nElems, iElemStart, nCellsTot, mat.data());
+		else readMatrix<complex>(mpiUtil, mpiInterGroup, fname, nElemsTot, nElems, iElemStart, nCellsTot, mat.data());
+	}
 	
 	//Create FFTW plans:
 	complex* bufData = buf.data();
@@ -193,10 +209,7 @@ void DistributedMatrix::transform(vector3<> k0)
 {	static StopWatch watch("DistributedMatrix::transform1"); watch.start();
 	assert(!squared);
 	if(uniqueCells.size()) //Unique cell mode
-	{	//Initialize offset phases:
-		for(std::vector<Cell>& cells: uniqueCells)
-			for(Cell& cell: cells)
-				cell.phase01 = cis(2*M_PI*dot(cell.iR, k0));
+	{	initializePhase(k0);
 		//Apply cell weights and offset phases:
 		int matStride = nBands*nBands; //number of elements per matrix
 		int iMatStart = iElemStart / matStride;
@@ -229,12 +242,8 @@ void DistributedMatrix::transform(vector3<> k0)
 		}
 	}
 	else //Full cellMap mode:
-	{
-		//Initialize offset phases:
-		std::vector<complex> phase0(cellMap.size());
-		auto phaseIter = phase0.begin();
-		for(const vector3<int>& iR: cellMap)
-			*(phaseIter++) = cis(2*M_PI*dot(iR, k0));
+	{	std::vector<complex> phase0;
+		initializePhase(k0, phase0);
 		//Reduce from mat to buf (apply offset phases and combine equivalent cells):
 		buf.zero();
 		complex* bufData = buf.data();
@@ -328,11 +337,7 @@ void DistributedMatrix::compute(vector3<> k)
 {	static StopWatch watch("DistributedMatrix::compute1"); watch.start();
 	assert(!squared);
 	if(uniqueCells.size()) //Unique cell mode
-	{
-		//Initialize phases:
-		for(std::vector<Cell>& cells: uniqueCells)
-			for(Cell& cell: cells)
-				cell.phase01 = cis(2*M_PI*dot(cell.iR, k));
+	{	initializePhase(k);
 		//Discrete Fourier transform for k:
 		const complex* matData = mat.data();
 		complex* bufData = buf.data();
@@ -365,12 +370,8 @@ void DistributedMatrix::compute(vector3<> k)
 		}
 	}
 	else //Full cellMap mode:
-	{
-		//Initialize phases:
-		std::vector<complex> phase(cellMap.size());
-		auto phaseIter = phase.begin();
-		for(const vector3<int>& iR: cellMap)
-			*(phaseIter++) = cis(2*M_PI*dot(iR, k));
+	{	std::vector<complex> phase;
+		initializePhase(k, phase);
 		//Discrete Fourier transform for k (as a matrix-vector multiply):
 		const complex one = 1., zero = 0.;
 		cblas_zgemv(CblasColMajor, CblasTrans,
@@ -443,6 +444,35 @@ void DistributedMatrix::compute(vector3<> k1, vector3<> k2, int ik, int iProc)
 	collectProc(bufTmp.data(), ik, iProc);
 	watch.stop();
 }
+
+
+void DistributedMatrix::initializePhase(vector3<> k0)
+{	if(deriv)
+	{	for(std::vector<Cell>& cells: uniqueCells)
+			for(Cell& cell: cells)
+				cell.phase01 = cis(2*M_PI*dot(cell.iR, k0)) * complex(0., dot(cell.iR, derivRi));
+	}
+	else
+	{	for(std::vector<Cell>& cells: uniqueCells)
+			for(Cell& cell: cells)
+				cell.phase01 = cis(2*M_PI*dot(cell.iR, k0));
+	}
+}
+
+
+void DistributedMatrix::initializePhase(vector3<> k0, std::vector<complex>& phase0)
+{	phase0.resize(cellMap.size());
+	auto phaseIter = phase0.begin();
+	if(deriv)
+	{	for(const vector3<int>& iR: cellMap)
+			*(phaseIter++) = cis(2*M_PI*dot(iR, k0)) * complex(0., dot(iR, derivRi));
+	}
+	else
+	{	for(const vector3<int>& iR: cellMap)
+			*(phaseIter++) = cis(2*M_PI*dot(iR, k0));
+	}
+}
+
 
 void DistributedMatrix::collectProc(complex* bufSrc, int ik, int iProc)
 {

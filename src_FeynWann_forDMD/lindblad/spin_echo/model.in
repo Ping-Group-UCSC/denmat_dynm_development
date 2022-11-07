@@ -1,0 +1,2 @@
+nK      100      #number of spins
+sigmaB  0,0,0.1  #internal magnetic field fluctuations in Tesla

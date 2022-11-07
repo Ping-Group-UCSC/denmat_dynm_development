@@ -35,12 +35,14 @@ struct CollectBallisticConductance
 	matrix3<> G; //net ballistic conductance
 	vector3<> GL; //net Landauer conductance
 	std::vector<double> Gzz, GLz; //G_zz and GL_z at specific kx and ky
+	std::vector<double> vNum, vDen; //numerator and denominator for average |v| at each kx and ky
 	
 	CollectBallisticConductance(const FeynWann& fw, vector3<int> NkFine, double dmu, double smearWidth, std::vector<int> invertList)
 	: fw(fw), NkFine(NkFine), dmu(dmu), invSmearWidth(1./smearWidth), invertList(invertList),
 		prefacZZ(fw.spinWeight/(fw.Omega*fw.sym.size()*invertList.size()*NkFine[2])),
 		prefac(prefacZZ/(NkFine[0]*NkFine[1])),
-		Gzz(NkFine[0]*NkFine[1]), GLz(NkFine[0]*NkFine[1])
+		Gzz(NkFine[0]*NkFine[1]), GLz(NkFine[0]*NkFine[1]),
+		vNum(NkFine[0]*NkFine[1]), vDen(NkFine[0]*NkFine[1])
 	{
 		for(const SpaceGroupOp& op: fw.sym)
 			symCart.push_back(fw.R * op.rot * inv(fw.R));
@@ -65,7 +67,8 @@ struct CollectBallisticConductance
 			if(fabs(Ediff)<35.) //fermi prime non-zero at double precision
 			{	const vector3<>& vCur = state.vVec[b];
 				double mfPrime = 0.25*invSmearWidth * std::pow(cosh(0.5*Ediff), -2); //-df/dE
-				double weight = wOffsetCur * mfPrime / std::max(1e-6, vCur.length());
+				double vMag = vCur.length();
+				double weight = wOffsetCur * mfPrime / std::max(1e-6, vMag);
 				double weightL = wOffsetCur * mfPrime * 0.5; //weight for Landauer version
 				int* kIndexPtr = kIndex.data();
 				for(size_t iSym=0; iSym<symCart.size(); iSym++)
@@ -76,6 +79,8 @@ struct CollectBallisticConductance
 						GL += prefac * weightL * vAbs;
 						Gzz[*kIndexPtr] += prefacZZ * weight * v[2]*v[2];
 						GLz[*kIndexPtr] += prefacZZ * weightL * vAbs[2];
+						vNum[*kIndexPtr] += prefacZZ * weightL * vMag;
+						vDen[*kIndexPtr] += prefacZZ * weightL;
 						kIndexPtr++;
 					}
 			}
@@ -231,6 +236,8 @@ int main(int argc, char** argv)
 	mpiWorld->allReduce(cbc.GL, MPIUtil::ReduceSum);
 	mpiWorld->allReduceData(cbc.Gzz, MPIUtil::ReduceSum);
 	mpiWorld->allReduceData(cbc.GLz, MPIUtil::ReduceSum);
+	mpiWorld->allReduceData(cbc.vNum, MPIUtil::ReduceSum);
+	mpiWorld->allReduceData(cbc.vDen, MPIUtil::ReduceSum);
 	
 	//Report ballistic resistance:
 	double rhoLambdaUnit = 1E-16 * Ohm * pow(meter,2);
@@ -248,6 +255,12 @@ int main(int argc, char** argv)
 	if(mpiWorld->isHead())
 	{	writeProfile(cbc.Gzz, rhoLambdaUnit, NkFine, "ballisticConductance.dat");
 		writeProfile(cbc.GLz, rhoLambdaUnit, NkFine, "ballisticConductanceL.dat");
+
+		//Compute and output average velocity:
+		for(size_t i=0; i<cbc.vNum.size(); i++)
+			cbc.vNum[i] /= std::max(cbc.vDen[i], 1E-16); //regularize to v->0 for kx, ky with no Fermi states
+		const double nm = 10*Angstrom;
+		writeProfile(cbc.vNum, 1./(nm/fs), NkFine, "ballisticConductanceV.dat");
 	}
 	
 	//Cleanup:

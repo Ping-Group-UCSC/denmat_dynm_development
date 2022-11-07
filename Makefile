@@ -1,9 +1,9 @@
 DIRBIN = ./bin
 TARGET = $(DIRBIN)/$(EXE)
-EXE = denmat_dynm_v4.5.4
-SRC_DIRS = ./src_v4.5.4
+EXE = denmat_dynm_v4.5.7
+SRC_DIRS = ./src_v4.5.7
 
-all: $(TARGET) rm_d_files
+all: $(TARGET)
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(addsuffix .o,$(basename $(SRCS)))

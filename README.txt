@@ -5,10 +5,10 @@ They should be updated, e.g., an example of monolayer WSe2 using QE2JDFTx script
 
 Folders and files:
 1. executables are in ./bin (github does not want an empty folder, so please create this folder)
-2. src_v4.5.4 : source codes
-3. src_FeynWann_kgrids:
-        source files for the modified initialization program - lindbladInit_for-DMD-4.5.2
-        there is a compilation script "make-FeynWann-mod_kairay.sh" for installation in Kairay cluster
+2. src_v4.5.7 : source codes
+3. src_FeynWann_forDMD:
+        source files for the modified initialization program - lindbladInit_for-DMD-4.5.6
+        there is a compilation script "make-FeynWann-Kairay.sh" for installation in Kairay cluster
 4. Examples:
         Silicon_T1-Rate-formula.tgz
         Silicene_Real-Time_DMD.tgz
@@ -17,7 +17,7 @@ Folders and files:
 to run:
 1. Initialization
    After finish JDFTx electron, phonon and wannier calculations,
-   run initialization using the modified initialization code - lindbladInit_for-DMD-4.4
+   run initialization using the modified initialization code - lindbladInit_for-DMD-4.5.6/init_for-DMD
    the input of this modified code is similar to Shankar's lindbladInit program
    (see README_initialization_input.txt)
    after finished, all files required by dynamics code are written in folder "ldbd_data"

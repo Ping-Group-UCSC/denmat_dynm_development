@@ -7,6 +7,12 @@
 #include <mkl_scalapack.h>
 #include <mkl_lapack.h>
 
+EnumStringMap<BlockCyclicMatrix::DiagMethod> BlockCyclicMatrix::diagMethodMap(
+	BlockCyclicMatrix::UsePDGEEVX, "PDGEEVX",
+	BlockCyclicMatrix::UsePDHSEQR, "PDHSEQR",
+	BlockCyclicMatrix::UsePDHSEQRm, "PDHSEQRm"
+);
+
 //Return list of indices in a given dimension (row or column) that belong to me in block-cyclic distribution
 std::vector<int> distributedIndices(int nTotal, int blockSize, int iProcDim, int nProcsDim)
 {	int zero = 0;

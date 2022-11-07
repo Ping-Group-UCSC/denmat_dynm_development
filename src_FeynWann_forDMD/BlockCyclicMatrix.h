@@ -21,7 +21,7 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #define FEYNWANN_BLOCKCYCLICMATRIX_H
 #ifdef SCALAPACK_ENABLED
 
-#include <core/MPIUtil.h>
+#include <core/Util.h>
 #include <algorithm>
 
 //Wrapper to and extension of ScaLAPACK diagonalization routines
@@ -54,6 +54,8 @@ public:
 		UsePDHSEQR, //!< Call pdhseqr along with Hessenberg and custom eigenvector extraction calls
 		UsePDHSEQRm //!< Use a modified version of pdhseqr that reports intermediate progress
 	};
+	static EnumStringMap<DiagMethod> diagMethodMap;
+
 	//! Diagonalize non-symmetric matrix A, returning eigenvalues and setting right and left eigenvectors in VR and VL.
 	//! Balance the matrix for numerical stability if shouldBalance=true.
 	//! The eigenvectors VR and VL are distributed the same way as A, and contain

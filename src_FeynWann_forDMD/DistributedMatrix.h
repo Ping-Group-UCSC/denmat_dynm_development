@@ -51,10 +51,13 @@ public:
 	//! If cellWeights is non-null, then read in only unique cells and use cellWeights in interpolation (required in squared mode)
 	//! (remaining parameters are as specified in the class)
 	//! If kfoldInPtr is also non-null, unique cells in the file are on a mesh of dimensions kfoldIn different from kfold used
-	//! for the Fourier transforms; this is only allowed for single k (not squared) mode
+	//! for the Fourier transforms; this is only allowed for single k (not squared) mode.
+	//! If derivDir >= 0, compute d/dk of the distributed matrix given by derivData instead (fname not used in that case).
+	//! The lattice vectors R must be specified for the derivative to compute Cartesian components.
 	DistributedMatrix(string fname, bool realOnly, const MPIUtil* mpiUtil, int nElemsTot,
 		const std::vector<vector3<int>>& cellMap, const vector3<int>& kfold, bool squared,
-		const std::shared_ptr<MPIUtil> mpiInterGroup=0, const std::vector<matrix>* cellWeights=0, const vector3<int>* kfoldInPtr=0);
+		const std::shared_ptr<MPIUtil> mpiInterGroup=0, const std::vector<matrix>* cellWeights=0, const vector3<int>* kfoldInPtr=0,
+		int derivDir=-1, const DistributedMatrix* derivData=0, const matrix3<>* R=0);
 	~DistributedMatrix();
 	
 	void transform(vector3<> k0); //!< prepare results for k-point mesh offset by k0 (squared=false only)
@@ -83,6 +86,10 @@ private:
 	};
 	std::vector<std::vector<Cell>> uniqueCells;
 	int nAtoms, nBands, nModesPerAtom;
+	vector3<> derivRi; //direction of derivative in lattice coordinates (dot with iR to extract current component)
+	bool deriv; //whether derivative is being computed
+	void initializePhase(vector3<> k0); //initialize phases in phase01 of cells
+	void initializePhase(vector3<> k0, std::vector<complex>& phase0); //initialize phases in provided array
 	void collectProc(complex* bufSrc=0, int ik=0, int iProc=0); //!< collect buf results, optionally from a different source bufSrc
 		//!< at offset ik (default 0) on process iProc of mpiUtil (default head) for compute (single k-point versions of transform)
 };

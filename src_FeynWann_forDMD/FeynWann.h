@@ -31,14 +31,16 @@ struct FeynWannParams
 	bool needSymmetries; //!< whether to read symmetries from .sym file from JDFTx (default: false)
 	bool needPhonons; //!< whether to initialize phonon-related quantities (default: false)
 	bool needVelocity; //!< whether to initialize velocity (momentum) matrix elements
-	bool needSpin; //!< whether to initialize spin matrix elements (will be reset to false if not relativstic)
-	bool needLayer; //JX
-	bool needHEz; //JX
+	bool needSpin; //!< whether to initialize spin matrix elements (will be reset to false if not relativistic)
+	bool needL; //!< whether to initialize angular momentum matrix elements
+	bool needQ; //!< whether to initialize r*p electric quadrupole matrix elements
 	bool needLinewidth_ee; //!< whether to provide e-e line-width (default: false)
 	bool needLinewidth_ePh; //!< whether to provide e-ph line-width (default: false)
 	bool needLinewidthP_ePh; //!< whether to provide momentum-relaxation e-ph line-width (default: false)
 	bool ePhHeadOnly; //!< if true, only evaluate ePh callback function at head of each offset for debugging (default: false)
 	bool maskOptimize; //!< if true, optimize for heavily masked loops by switching between transform and compute based on a benchmark performed at startup
+	bool bandSumLQ; //!< if true, use sum over bands to compute L and Q
+	
 	static const std::vector<double> fGrid_ePh; //!< fillings grid used for e-ph linewidths
 	
 	string needDefect; //!< if non-null, read matrix elements for defect with name specified by this string
@@ -46,12 +48,26 @@ struct FeynWannParams
 	string needLinewidthP_D; //!< if non-null, provide e-defect momentum-relaxation line-width for defect with name specified by this string
 	
 	vector3<> Bext; //!< external magentic field (added as a Zeeman perturbation to hamiltonian in FeynWann:setState)
+	bool orbitalZeeman; //!< whether to include orbital magnetic moment from L in Zeeman perturbation
 	double EzExt; //!< external electric field (added as a Stark perturbation to hamiltonian in FeynWann:setState)
 	double scissor; //!< scissor operator to move conduction band states up in energy to fix band gap in post-processing
 	double EshiftWeight; //!< if non-zero, apply this energy shift to the region of space selected by wannier slab weight (in mlwfW)
+	bool enforceKramerDeg; //!< whether to enforce Kramer degeneracy in eigenvalues	
+	double degeneracyThreshold; //!< threshold within which to treat Wannier bands as degenerate
 	
 	FeynWannParams(class InputMap* inputMap=0); //!< If specified, look for optional parameters Bext (in Tesla), EzExt (in eV/nm), scissor (in eV) and EshiftWeight (in eV) from in inputMap
 	void printParams() const; //!< Print the parameters read from inputMap (in atomic units)
+	
+	inline bool needRP() const { return (needL or needQ) and (not bandSumLQ); } //!< whether Wannierized RP matrix elements are needed
+	
+	//! Apply scissor operator correction to eigenvalues
+	inline void applyScissor(diagMatrix& E) const
+	{	for(double& Ei: E)
+			if(Ei > degeneracyThreshold)
+				Ei += scissor;
+	}
+
+	bool needLayer, trunc_iDi_outer;//JX
 };
 
 //! Wannier interpolator for electrons and phonons
@@ -62,7 +78,7 @@ public:
 	static void finalize(); //!< wrap finalizeSystem from JDFTx
 	static vector3<> randomVector(MPIUtil* mpiUtil=0); //!< uniformly random vector in [0,1)^3, constant across mpi instance, if any
 
-	const FeynWannParams& fwp;
+	FeynWannParams& fwp;//JX
 	FeynWann(FeynWannParams& fwp);
 	void free(); //!< free matrices
 	inline bool isRelativistic() const { return nSpinor==2; }
@@ -77,17 +93,26 @@ public:
 		std::vector<vector3<>> vVec; //!< band velocities (diagonal part of v) in Cartesian coordinates, available if needVelocity = true
 		matrix S[3]; //!< Spin matrix elements in Cartesian coordinates, available if needSpin = true
 		std::vector<vector3<>> Svec; //!< band spins (diagonal part of S) in Cartesian coordinates, available if needSpin = true
-		matrix layer, HEz; //JX
+		matrix L[3]; //!< Angular momentum matrix elements in Cartesian coordinates, available if needL = true
+		matrix Q[5]; //!< Electric quadrupole r*p matrix elements (xy, yz, zx, xxr, yyr), available if needQ = true
 		diagMatrix ImSigma_ee; //!< e-e linewidth, available if needLinewidth_ee = true
 		double ImSigma_ePh(int n, double f) const; //!< get e-ph linewidth for band n given its occupation f, available if needLinewidth_ePh = true
 		double ImSigmaP_ePh(int n, double f) const; //!< get e-ph linewidth for band n given its occupation f, available if needLinewidthP_ePh = true
 		diagMatrix ImSigma_D; //!< e-defect linewidth, available if needLinewidth_D is set
 		diagMatrix ImSigmaP_D; //!< e-defect momentum-relaxing linewidth, available if needLinewidthP_D is set
+		matrix layer, dHePhSum;//JX layer - layer occupation; dHePhSum - nBands*nBands x 3 matrix used internally to enforce e-ph matrix element sum rule at all k's
 	private:
 		std::vector<diagMatrix> logImSigma_ePhArr; //!< e-ph linewidth for each f in fGrid_ePh
 		std::vector<diagMatrix> logImSigmaP_ePhArr; //!< e-ph momentum-relaxation linewidth for each f in fGrid_ePh
-		matrix dHePhSum; //!< nBands*nBands x 3 matrix used internally to enforce e-ph matrix element sum rule at all k's
+		//matrix dHePhSum;//JX //!< nBands*nBands x 3 matrix used internally to enforce e-ph matrix element sum rule at all k's
 		bool withinRange; //!< whether any bands in E are within ePhEstart and ePhEstop (used to filter ePhLoop)
+		matrix getMatrixRotated(const std::shared_ptr<DistributedMatrix>& mat, int iMat=0) const;
+		void computeLQ(const FeynWannParams& fwp,
+			const std::shared_ptr<DistributedMatrix> RPw,
+			const std::shared_ptr<DistributedMatrix> HprimeW[3]); //!< calculate L and Q
+		void compute_dHePhSum(const std::shared_ptr<DistributedMatrix> Dw,
+			const std::shared_ptr<DistributedMatrix> HePhSumW); //!< calculate phonon sum rule correction
+		static void extractDiagonal(const matrix (&X)[3], std::vector<vector3<>>& Xvec); //!< used to initialize vVev, Svec
 		friend class FeynWann;
 	};
 	
@@ -124,14 +149,14 @@ public:
 	//! Optional array mask selects which indices within the offset to actually calculate, skipping the rest for efficiency.
 	void eLoop(const vector3<>& k0, eProcessFunc eProcess, void* params, const std::vector<bool>* mask=0);
 	void eCalc(const vector3<>& k, StateE& e); //!< Calculate electronic properties for a single k and store results in e on group head
+	void eTransformNeeded(const vector3<>& k0); //!< Helper to transform all needed matrix elements at offset k0
+	void eComputeNeeded(const vector3<>& k); //!< Helper to compute all needed matrix elements at single k
 	size_t eCountPerOffset() const { return Hw->nkTot; } //!< number of k's sampled per offset = prod(offsetDim)
 	
 	//! Calculate phonon properties for each q-point in a mesh offset by q0
 	//! Calls provided callback function phProcess on each of them, along with provided params
 	void phLoop(const vector3<>& q0, phProcessFunc phProcess, void* params);
 	void phCalc(const vector3<>& q, StatePh& ph); //!< Calculate phonon properties for a single q and store results in ph on group head
-	void phLoop_masstest(const vector3<>& q0, phProcessFunc phProcess, void* params);
-	void phCalc_masstest(const vector3<>& q, StatePh& ph); //!< Calculate phonon properties for a single q and store results in ph on group head
 	size_t phCountPerOffset() const { return OsqW->nkTot; } //!< number of q's sampled per offset = prod(offsetDim)
 	
 	//! Calculate electronic properties for each pair of k-points between two meshes offset by k01 and k02,
@@ -173,22 +198,20 @@ public:
 	int nSpins, nSpinor, spinWeight; //!< number of spin channels, spinor components and weight per spin channel
 	bool realPartOnly; //!< whether wannier Hamiltonians / matrix elements in files are stored with real parts alone
 	string spinSuffix; //filename suffix for current spin channel (if any)
-	bool isMetal; //JX
 	double mu; //!< chemical potential if DFT calculation had smearing, else VBM
 	double nElectrons; //!< number of electrons per unit cell in DFT calculation
-	double eMinMain, eMaxMain; //!< energy range for main window (within which eigenvalues should be exact compared to DFT)
+	double EminInner, EmaxInner; //!< energy range for inner window (within which eigenvalues should be exact compared to DFT)
 	int nModes; //!< number of phonon modes (polarizations)
 	
 	//Electrons:
-	std::vector< vector3<int> > cellMap; //electron Wannier cell map
-	matrix cellWeights; //corresponding weights (nBands*nBands x nCells)
-	std::shared_ptr<DistributedMatrix> Hw, Pw, Sw, Zw, Layerw; //Wannier hamiltonian, momentum, spin and z matrix elements
+	std::vector<vector3<int>> cellMap; //electron Wannier cell map
+	std::vector<matrix> cellWeights; //corresponding weights (nBands x nBands for each cell)
+	std::shared_ptr<DistributedMatrix> Hw, Pw, Sw, RPw, Zw; //Wannier hamiltonian, momentum, spin, R*P and z matrix elements
+	std::shared_ptr<DistributedMatrix> HprimeW[3]; //d/dk of Wannier hamiltonian in each Cartesian direction
 	std::shared_ptr<DistributedMatrix> ImSigma_eeW, ImSigma_ePhW, ImSigmaP_ePhW, ImSigma_DW, ImSigmaP_DW; //linewidths in wannier basis
 	void setState(StateE& state); //!< set requested properties for ik in state
 	void bcastState(StateE& state, MPIUtil* mpiUtil, int root); //!< broadcast specified state on specified MPI instance
-	void bcastState_inEphLoop(StateE& state, MPIUtil* mpiUtil, int root); //JX, !< broadcast specified state on specified MPI instance
-	bool eEneOnly; //JX, if true, setState will only interpolation E and U
-
+	
 	//Phonons:
 	std::vector<vector3<int>> phononCellMap; //cell map for phonon force matrix
 	diagMatrix invsqrtM; //!< 1/sqrt(M) per nuclear displacement mode
@@ -201,9 +224,8 @@ public:
 	std::shared_ptr<class LongRangeSum> lrs; //long range sum corrector for e-ph matrix elements
 	std::shared_ptr<class LongRangeSum2D> lrs2D; //long range sum corrector for e-ph matrix elements (2D)
 	matrix phononCellWeights; //corresponding weights (nAtoms*nAtoms x nCells), available if polar
-	std::shared_ptr<DistributedMatrix> OsqW, OsqW_masstest; bool masstest; //phonon omega-squared matrix
+	std::shared_ptr<DistributedMatrix> OsqW; //phonon omega-squared matrix
 	void setState(StatePh& state); //!< set requested properties for iq in state
-	void setState_masstest(StatePh& state); //!< set requested properties for iq in state
 	void bcastState(StatePh& state, MPIUtil* mpiUtil, int root); //!< broadcast specified state on specified MPI instance
 	
 	//Electron-phonon interaction:
@@ -223,18 +245,37 @@ public:
 	int tTransformByComputeD; //benchmark ratio of transform time to compute time used to switch between transform and compute in ePhLoop (if maskOptimize = true)
 	void setMatrix(const StateE& e1, const StateE& e2, int ikPair, MatrixDefect& m); //set defect properties for e1.ik and e2.ik in m
 	
+	//JX
+	int nBandsDFT, nStatesDFT;
+	bool isMetal;
+	std::shared_ptr<DistributedMatrix> Layerw; //Wannier layer matrix elements
+	void bcastState_inEphLoop(StateE& state, MPIUtil* mpiUtil, int root); //!< broadcast specified state on specified MPI instance
+	void bcastState_JX(StateE& state, MPIUtil* mpiUtil, int root, bool need_dHePhSum); //!< broadcast specified state on specified MPI instance
+	bool eEneOnly;//if true, setState will only interpolation E and U
+	vector3<> Bso;
+	matrix3<> gfac;//g-factor tensor. Diagonal and about 2 by default
+	void copy_stateE(const StateE& e, StateE& eout);
+	void trunc_stateE(StateE& e, StateE& eTrunc, int b0_eph, int b1_eph, int b0_dm, int b1_dm, int b0_probe, int b1_probe);
+	double omegaPhCut;
+	bool is_state_withinRange(StateE& e);
+	//JX
+
 private:
 	bool inEphLoop; //flag used internally by setState etc. for special handling of sum rule quantities within an ePhLoop
+	std::shared_ptr<MPIUtil> mpiInterGroup; //inter-group communicator used for matrix element initialization
+	std::shared_ptr<DistributedMatrix> readE(string varname, int nVars=1) const; //read electronic matrix elements (vetcor size nVars)
+	matrix restrictInnerWindow(const matrix& mat, const diagMatrix& E) const; //prokect out contributions beyond the inner window
 };
 
 //Utility functions for printing with error estimates:
 void reportResult(const std::vector<matrix3<>>& result, string resultName, double unit, string unitName, FILE* fp=globalLog, bool invAvg=false); //!< report a tensor result with error bars
+void reportResult(const std::vector<vector3<>>& result, string resultName, double unit, string unitName, FILE* fp=globalLog, bool invAvg=false); //!< report a vector result with error bars
 void reportResult(const std::vector<double>& result, string resultName, double unit, string unitName, FILE* fp=globalLog, bool invAvg=false); //!< report a scalar result with error bars
 
 //Fermi and Bose functions with overflow/underflow handling:
 inline double fermi(double EminusMuByT) //!< Fermi function with overflow/underflow handling
-{	if(EminusMuByT < -46.) return 1.;
-	else if(EminusMuByT > 46.) return 0.;
+{	if(EminusMuByT < -46.) return 1.;//JX 36->46
+	else if(EminusMuByT > 46.) return 0.;//JX 36->46
 	else return 1./(1. + exp(EminusMuByT));
 }
 inline void fermi(double EminusMuByT, double& f, double& fbar) //!< version that computes both f and fbar=1-f without loss of precision
@@ -250,11 +291,11 @@ inline void fermi(double EminusMuByT, double& f, double& fbar) //!< version that
 	}
 }
 inline double fermiPrime(double EminusMuByT) //!< Fermi function derivative w.r.t E/T (multiply by 1/T for df/dE)
-{	if(fabs(EminusMuByT) > 46.) return 0.;
+{	if(fabs(EminusMuByT) > 46.) return 0.;//JX 36->46
 	else return 0.25*(std::pow(tanh(0.5*EminusMuByT), 2) - 1.);
 }
 inline double bose(double omegaByT) //!< Bose function with overflow/underflow handling
-{	if(omegaByT > 46.) return 0.;
+{	if(omegaByT > 46.) return 0.;//JX 36->46
 	else return 1./(exp(omegaByT) - 1.);
 }
 

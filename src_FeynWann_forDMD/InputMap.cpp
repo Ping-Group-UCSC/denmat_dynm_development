@@ -78,9 +78,21 @@ vector3<> InputMap::getVector(string key, vector3<> defaultVal) const
 	return result;
 }
 
-string InputMap::getString(string key) const
+bool InputMap::getBool(string key, bool defaultVal) const
 {	auto iter = find(key);
 	if(iter == end()) //not found
-		die("\nCould not find required entry '%s' in input.\n", key.c_str())
+		return defaultVal;
+	else
+	{	string input = iter->second;
+		if((input != "yes") and (input != "no"))
+			die("\n%s must be 'yes' or 'no'\n", key.c_str());
+		return (input == "yes");
+	}
+}
+
+string InputMap::getString(string key, string defaultVal) const
+{	auto iter = find(key);
+	if (iter == end()) return defaultVal; //not found
+	//if (iter == end()) die("\nCould not find required entry '%s' in input.\n", key.c_str())
 	return iter->second;
 }
