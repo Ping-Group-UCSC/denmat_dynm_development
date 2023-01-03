@@ -65,6 +65,10 @@ void mymp::allreduce(complex **m, int n1, int n2, MPI_Op op){
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 }
+void mymp::allreduce(complex ***a, int n1, int n2, int n3, MPI_Op op){
+	for (int i = 0; i < n1; i++)
+		allreduce(a[i], n2, n3, op);
+}
 void mymp::allreduce(vector<vector<double>>& m, MPI_Op op){
 	MPI_Barrier(MPI_COMM_WORLD);
 	for (size_t i = 0; i < m.size(); i++){
@@ -91,6 +95,10 @@ void mymp::allreduce(double **m, int n1, int n2, MPI_Op op){
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
+}
+void mymp::allreduce(double ***a, int n1, int n2, int n3, MPI_Op op){
+	for (int i = 0; i < n1; i++)
+		allreduce(a[i], n2, n3, op);
 }
 
 void mymp::collect(int comm, int nprocs_lv, int varstart, int nvar, int *disp_proc, int *nvar_proc){

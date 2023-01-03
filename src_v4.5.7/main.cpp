@@ -54,11 +54,11 @@ void dm_dynamics_jdftx(parameters* param){
 	// phonon
 	phonon* ph = new phonon(latt, param, elec); // may need elec->kmesh and elec->kvec to construct qvec
 
-	// electron-light or pump
+	// electron-light or laser
 	electronlight* elight;
 	if (pmp.active()){
 		elight = new electronlight(latt, param, elec, &mpk);
-		if (param->pumpMode == "perturb") elight->pump_pert();
+		if (pmp.laserAlg == "perturb") elight->pump_pert();
 	}
 
 	// electron-phonon

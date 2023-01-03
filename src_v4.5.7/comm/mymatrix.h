@@ -54,6 +54,9 @@ void set_mat(complex *b, complex *a, int n, int i0, int i1, int j0, int j1);
 complex** trunc_alloccopy_arraymat(complex** arr, int n1, int n2, int bStart, int bEnd);
 void trunc_copy_arraymat(complex** A, complex **B, int n1, int n2, int bStart, int bEnd);
 
+void zeros_off_diag(complex* a, int n);
+void zeros_off_diag(complex** arr, int n1, int n2);
+
 void transpose(complex *m, complex *t, int n);
 void transpose(complex *a, complex *t, int m, int n);
 void hermite(complex *m, complex *h, int n);

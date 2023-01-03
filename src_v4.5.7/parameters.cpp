@@ -52,11 +52,15 @@ void parameters::read_param(){
 	std::map<std::string, std::string> param_map = map_input(fin);
 
 	if (ionode) printf("\n");
-	if (ionode) printf("reading parameters\n");
-	
+	if (ionode) printf("==================================================\n");
+	if (ionode) printf("==================================================\n");
+	if (ionode) printf("reading input parameters\n");
+	if (ionode) printf("==================================================\n");
+	if (ionode) printf("==================================================\n");
+
 	if (ionode) printf("\n**************************************************\n");
 	if (ionode) printf("Code control parameters:\n");
-	if (ionode) printf("\n**************************************************\n");
+	if (ionode) printf("**************************************************\n");
 	DEBUG = get(param_map, "DEBUG", false);
 	if (ionode && DEBUG && !is_dir("debug_info")) system("mkdir debug_info");
 	restart = get(param_map, "restart", false);
@@ -70,7 +74,7 @@ void parameters::read_param(){
 
 	if (ionode) printf("\n**************************************************\n");
 	if (ionode) printf("Master equation control parameters:\n");
-	if (ionode) printf("\n**************************************************\n");
+	if (ionode) printf("**************************************************\n");
 	alg.scatt_enable = get(param_map, "alg_scatt_enable", true);
 	alg.eph_enable = get(param_map, "alg_eph_enable", true);
 	modeStart = get(param_map, "modeStart", 0);
@@ -94,6 +98,7 @@ void parameters::read_param(){
 		alg.eph_need_hole = get(param_map, "alg_eph_need_hole", false);
 	}
 
+	alg.semiclassical = get(param_map, "alg_semiclassical", 0);
 	alg.summode = get(param_map, "alg_summode", 1);
 	alg.ddmdteq = get(param_map, "alg_ddmdteq", 0);
 	alg.expt = get(param_map, "alg_expt", 1);
@@ -136,7 +141,7 @@ void parameters::read_param(){
 
 	if (ionode) printf("\n**************************************************\n");
 	if (ionode) printf("System and external condition parameters:\n");
-	if (ionode) printf("\n**************************************************\n");
+	if (ionode) printf("**************************************************\n");
 	if (material_model != "none"){
 		temperature = get(param_map, "temperature", 300, Kelvin);
 
@@ -158,6 +163,7 @@ void parameters::read_param(){
 	}
 	dim = get(param_map, "dim", dim_default);
 	if (dim == 2) thickness = get(param_map, "thickness", 0);
+	scissor = get(param_map, "scissor", 0, eV);
 
 	mu = get(param_map, "mu", mu_input / eV, eV);
 	carrier_density = get(param_map, "carrier_density", 0, std::pow(bohr2cm, dim));
@@ -181,7 +187,7 @@ void parameters::read_param(){
 
 	if (ionode) printf("\n**************************************************\n");
 	if (ionode) printf("Screening and model e-i and e-e parameters:\n");
-	if (ionode) printf("\n**************************************************\n");
+	if (ionode) printf("**************************************************\n");
 	if (ionode) printf("\nscreening parameters:\n");
 	clp.scrMode = getString(param_map, "scrMode", "none");
 	clp.scrFormula = getString(param_map, "scrFormula", "RPA");
@@ -226,12 +232,16 @@ void parameters::read_param(){
 
 	if (ionode) printf("\n**************************************************\n");
 	if (ionode) printf("Spin generation and measurement parameters:\n");
-	if (ionode) printf("\n**************************************************\n");
-	// pump and probe
+	if (ionode) printf("**************************************************\n");
+	// laser and probe
 	if (ionode) printf("\npump and probe parameters:\n");
-	pumpMode = getString(param_map, "pumpMode", "perturb");
-	pmp.pumpA0 = get(param_map, "pumpA0", 0.);
-	pmp.pumpE = get(param_map, "pumpE", 0., eV);
+	pmp.laserMode = getString(param_map, "laserMode", "pump");
+	string pumpMode = getString(param_map, "pumpMode", "perturb"); //to be consistent with previous version
+	pmp.laserAlg = getString(param_map, "laserAlg", pumpMode);
+	double pumpA0 = get(param_map, "pumpA0", 0.); //to be consistent with previous version
+	pmp.laserA = get(param_map, "laserA", pumpA0);
+	double pumpE = get(param_map, "pumpE", 0., eV); //to be consistent with previous version
+	pmp.laserE = get(param_map, "laserE", pumpE / eV, eV);
 	pmp.pumpTau = get(param_map, "pumpTau", 0., fs);
 	if (!restart){
 		if (material_model == "none"){
@@ -250,10 +260,11 @@ void parameters::read_param(){
 		else
 			error_message("restart needs restart/pump_tcenter.dat");
 	}
-	if (pmp.pumpA0 > 0){
-		pmp.pumpPoltype = getString(param_map, "pumpPoltype", "NONE");
-		pmp.pumpPol = pmp.set_Pol(pmp.pumpPoltype);
-		if (ionode) { pmp.print(pmp.pumpPol); }
+	if (pmp.laserA > 0){
+		string pumpPoltype = getString(param_map, "pumpPoltype", "NONE");
+		pmp.laserPoltype = getString(param_map, "laserPoltype", pumpPoltype);
+		pmp.laserPol = pmp.set_Pol(pmp.laserPoltype);
+		if (ionode) { pmp.print(pmp.laserPol); }
 		while (true){
 			int iPol = int(pmp.probePol.size()) + 1;
 			ostringstream oss; oss << iPol;
@@ -300,10 +311,12 @@ void parameters::read_param(){
 	}
 	tend = get(param_map, "tend", 0., fs);
 	tstep = get(param_map, "tstep", 1., fs);
-	if (pumpMode == "lindblad" || pumpMode == "coherent")
-		tstep_pump = get(param_map, "tstep_pump", tstep / fs, fs);
+	if (pmp.laserAlg == "lindblad" || pmp.laserAlg == "coherent"){
+		double tstep_pump = get(param_map, "tstep_pump", tstep / fs, fs);
+		tstep_laser = get(param_map, "tstep_laser", tstep_pump / fs, fs);
+	}
 	else
-		tstep_pump = tstep;
+		tstep_laser = tstep;
 
 	if (ionode) printf("\nOther measurement parameters:\n");
 	print_tot_band = get(param_map, "print_tot_band", 0);
@@ -334,23 +347,26 @@ void parameters::read_param(){
 	}
 	type_q_ana = getString(param_map, "type_q_ana", "wrap_around_valley");
 
-	sdir1_t2 = normalize(getVector(param_map, "sdir1_t2", vector3<>(1., 0., 0.)));
-	sdir2_t2 = normalize(getVector(param_map, "sdir2_t2", vector3<>(0., 1., 0.)));
-	if (fabs(dot(sdir1_t2, sdir2_t2)) > 1e-10)
-		error_message("sdir1_t2 and sdir2_t2 must be orthogonal", "read_param");
-	vector3<> sdir3_t2 = normalize(cross(sdir1_t2, sdir2_t2));
-	if (ionode) printf("sdir3_t2: %lg %lg %lg\n", sdir3_t2[0], sdir3_t2[1], sdir3_t2[2]);
+	rotate_spin_axes = get(param_map, "rotate_spin_axes", 0);
+	sdir_z = normalize(getVector(param_map, "sdir_z", vector3<>(0., 0., 1.)));
+	sdir_x = normalize(getVector(param_map, "sdir_x", vector3<>(1., 0., 0.)));
+	if (fabs(dot(sdir_z, sdir_x)) > 1e-10)
+		error_message("sdir_z and sdir_x must be orthogonal", "read_param");
+	vector3<> sdir_y = normalize(cross(sdir_z, sdir_x));
+	if (ionode) printf("sdir_y: %lg %lg %lg\n", sdir_y[0], sdir_y[1], sdir_y[2]);
+	sdir_rot.set_rows(sdir_x, sdir_y, sdir_z);
 
 	if (ionode) printf("\nODE parameters:\n");
 	alg.ode_method = getString(param_map, "alg_ode_method", "rkf45");
 	// ODE (ordinary derivative equation) parameters
 	ode.hstart = get(param_map, "ode_hstart", 1e-3, fs);
 	ode.hmin = get(param_map, "ode_hmin", 0, fs);
-	ode.hmax = get(param_map, "ode_hmax", std::max(tstep, tstep_pump) / fs, fs);
-	double dtmp = pumpMode == "coherent" ? 1 : tstep_pump / fs;
-	ode.hmax_pump = get(param_map, "ode_hmax_pump", dtmp, fs);
+	ode.hmax = get(param_map, "ode_hmax", std::max(tstep, tstep_laser) / fs, fs);
+	double dtmp = pmp.laserAlg == "coherent" ? 1 : tstep_laser / fs;
+	ode.hmax_laser = get(param_map, "ode_hmax_laser", dtmp, fs);
 	ode.epsabs = get(param_map, "ode_epsabs", 1e-8);
 
+	/*
 	if (ionode) printf("\nkpath realted parameters:\n");
 	print_along_kpath = get(param_map, "print_along_kpath", false);
 	if (ionode && !restart && print_along_kpath){
@@ -369,7 +385,9 @@ void parameters::read_param(){
 		kpath_end.push_back(kend);
 	}
 	if (print_along_kpath && kpath_start.size() == 0) error_message("print_along_kpath && kpath_start.size() == 0");
+	*/
 
+	/*
 	if (!needL){
 		if (ionode) printf("\nDP mechanism analysis parameters:\n");
 		alg.use_dmDP_taufm_as_init = get(param_map, "alg_use_dmDP_taufm_as_init", false);
@@ -377,11 +395,13 @@ void parameters::read_param(){
 		alg.mix_tauneq = get(param_map, "alg_mix_tauneq", 0.2);
 		alg.positive_tauneq = get(param_map, "alg_positive_tauneq", false);
 		alg.use_dmDP_in_evolution = get(param_map, "alg_use_dmDP_in_evolution", false);
-		if (ionode) printf("\n");
 	}
+	*/
 
+	if (ionode) printf("\nother parameters:\n");
 	degthr = get(param_map, "degthr", 1e-6);
 	band_skipped = get(param_map, "band_skipped", 0);
+	if (ionode) printf("\n\n");
 
 	//////////////////////////////////////////////////
 	// check availability of input parameters
@@ -393,8 +413,8 @@ void parameters::read_param(){
 	if (material_model == "mos2" || material_model == "gaas"){
 		if (!alg.eph_sepr_eh)
 			error_message("if material_model is mos2 or gaas, alg_eph_sepr_eh must be true", "read_param");
-		if (pmp.pumpA0 > 0)
-			error_message("for model, pump is not allowed", "read_param");
+		if (pmp.laserA > 0)
+			error_message("for model, laser is not allowed", "read_param");
 	}
 	if (alg.DP_beyond_carrierlifetime && restart)
 		error_message("alg_DP_beyond_carrierlifetime && param->restart", "read_param");
@@ -409,8 +429,8 @@ void parameters::read_param(){
 		error_message("if master equation is linearized, ddmdt_eq is not needed", "read_param");
 	if (alg.linearize && !alg.summode)
 		error_message("linearization is only supported when we use the generalized scattering-rate matrices P?", "read_param");
-	if (alg.linearize && (pumpMode == "lindblad" || pumpMode == "coherent"))
-		error_message("linearization is not allowed for real-time pump", "read_param");
+	if (alg.linearize && (pmp.laserAlg == "lindblad" || pmp.laserAlg == "coherent"))
+		error_message("linearization is not allowed for real-time laser", "read_param");
 	if (alg.linearize && (alg.Pin_is_sparse || alg.sparseP))
 		error_message("linearization does not support sparse matrices", "read_param");
 	if (alg.linearize && alg.linearize_dPee)
@@ -479,19 +499,27 @@ void parameters::read_param(){
 	if (!alg.linearize && freq_update_eimp_model != freq_update_ee_model)
 		error_message("freq_update_eimp_model is the same as freq_update_ee_model in current version", "read_param");
 
-	if (ode.hstart < 0 || ode.hmin < 0 || ode.hmax < 0 || ode.hmax_pump < 0 || ode.epsabs < 0)
-		error_message("ode_hstart < 0 || ode_hmin < 0 || ode_hmax < 0 || ode_hmax_pump < 0 || ode_epsabs < 0 is not allowed", "read_param");
-	if (ode.hmin > std::max(ode.hmax, ode.hmax_pump) || ode.hstart > std::max(ode.hmax, ode.hmax_pump))
-		error_message("ode.hmin > std::max(ode.hmax, ode.hmax_pump) || ode.hstart > std::max(ode.hmax, ode.hmax_pump) is unreasonable", "read_param");
+	if (ode.hstart < 0 || ode.hmin < 0 || ode.hmax < 0 || ode.hmax_laser < 0 || ode.epsabs < 0)
+		error_message("ode_hstart < 0 || ode_hmin < 0 || ode_hmax < 0 || ode_hmax_laser < 0 || ode_epsabs < 0 is not allowed", "read_param");
+	if (ode.hmin > std::max(ode.hmax, ode.hmax_laser) || ode.hstart > std::max(ode.hmax, ode.hmax_laser))
+		error_message("ode.hmin > std::max(ode.hmax, ode.hmax_laser) || ode.hstart > std::max(ode.hmax, ode.hmax_laser) is unreasonable", "read_param");
 
-	if (pumpMode != "perturb" && pumpMode != "lindblad" && pumpMode != "coherent")
-		error_message("pumpMode must be perturb or lindblad or coherent in this version", "read_param");
-	if (pmp.pumpA0 < 0)
-		error_message("pumpA0 must not < 0", "read_param");
-	if (pmp.pumpA0 > 0 && pmp.pumpPoltype == "NONE")
-		error_message("pumpPoltype == NONE when pumpA0 > 0", "read_param");
-	if (pmp.pumpA0 > 0 && Bpert.length() > 1e-12)
-		error_message("if pumpA0 > 0, Bpert must be 0", "read_param");
+	if (pmp.laserMode != "pump" and pmp.laserMode != "constant")
+		error_message("laserMode must be pump or constant in this version", "read_param");
+	if (pmp.laserMode != "pump" and pmp.laserAlg == "perturb")
+		error_message("laserAlg perturb requires that laserMode must be pump", "read_param");
+	if (pmp.laserAlg != "perturb" && pmp.laserAlg != "lindblad" && pmp.laserAlg != "coherent")
+		error_message("laserAlg must be perturb or lindblad or coherent in this version", "read_param");
+	if (pmp.laserA < 0)
+		error_message("laserA must not < 0", "read_param");
+	if (pmp.laserA > 0 and pmp.laserE <= 0)
+		error_message("if laserA > 0, laserE must be > 0", "read_param");
+	if (pmp.laserA > 0 and pmp.pumpTau <= 0)
+		error_message("if laserA > 0, pumpTau must be > 0", "read_param");
+	if (pmp.laserA > 0 && pmp.laserPoltype == "NONE")
+		error_message("laserPoltype == NONE when laserA > 0", "read_param");
+	if (pmp.laserA > 0 && Bpert.length() > 1e-12)
+		error_message("if laserA > 0, Bpert must be 0", "read_param");
 
 	if (!gfac_k_resolved)
 		error_message("currently, g factor should not have band dependence", "read_param");

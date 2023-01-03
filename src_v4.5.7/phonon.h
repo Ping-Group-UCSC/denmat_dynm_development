@@ -16,7 +16,13 @@ public:
 	phonon(lattice *latt, parameters *param) :latt(latt), temperature(param->temperature), modeStart(param->modeStart), modeEnd(param->modeEnd){ init(); }
 	phonon(lattice *latt, parameters *param, electron *elec) :latt(latt), temperature(param->temperature), modeStart(param->modeStart), modeEnd(param->modeEnd){ init(elec); }
 	void init(electron *elec = nullptr){
-		if (ionode) printf("\ninitialize phonon\n");
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("phonon\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
 		if (material_model == "none") read_jdftx();
 		qmin = 100; qmax = 0;
 		if (elec != nullptr){

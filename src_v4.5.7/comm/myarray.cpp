@@ -36,6 +36,34 @@ void axbyc(double **y, double **x, int n1, int n2, double a, double b, double c)
 			y[i1][i2] += a * x[i1][i2] + c;
 	}
 }
+void axbyc(double ***y, double ***x, int n1, int n2, int n3, double a, double b, double c){
+	if (b == 0)
+		zeros(y, n1, n2, n3);
+	else if (b != 1){
+		for (int i1 = 0; i1 < n1; i1++)
+		for (int i2 = 0; i2 < n2; i2++)
+		for (int i3 = 0; i3 < n3; i3++)
+			y[i1][i2][i3] *= b;
+	}
+	if (x == nullptr || a == 0){
+		for (int i1 = 0; i1 < n1; i1++)
+		for (int i2 = 0; i2 < n2; i2++)
+		for (int i3 = 0; i3 < n3; i3++)
+			y[i1][i2][i3] += c;
+	}
+	else if (a == 1){
+		for (int i1 = 0; i1 < n1; i1++)
+		for (int i2 = 0; i2 < n2; i2++)
+		for (int i3 = 0; i3 < n3; i3++)
+			y[i1][i2][i3] += x[i1][i2][i3] + c;
+	}
+	else{
+		for (int i1 = 0; i1 < n1; i1++)
+		for (int i2 = 0; i2 < n2; i2++)
+		for (int i3 = 0; i3 < n3; i3++)
+			y[i1][i2][i3] += a * x[i1][i2][i3] + c;
+	}
+}
 void axbyc(complex **y, complex **x, int n1, int n2, complex a, complex b, complex c){
 	if (b.real() == 0 && b.imag() == 0)
 		zeros(y, n1, n2);
@@ -161,6 +189,12 @@ void dealloc_array(complex**& arr){
 	delete[] arr;     // remove the pointers
 	arr = nullptr;
 }
+void dealloc_array(complex***& arr){
+	delete[] arr[0][0];
+	delete[] arr[0];  // remove the pool
+	delete[] arr;     // remove the pointers
+	arr = nullptr;
+}
 
 double maxval(double *arr, int bStart, int bEnd){
 	double r = -DBL_MAX;
@@ -200,6 +234,10 @@ void zeros(double* arr, int n1){
 void zeros(double** arr, int n1, int n2){
 	for (int i1 = 0; i1 < n1; i1++)
 		zeros(arr[i1], n2);
+}
+void zeros(double*** arr, int n1, int n2, int n3){
+	for (int i1 = 0; i1 < n1; i1++)
+		zeros(arr[i1], n2, n3);
 }
 void zeros(complex* arr, int n1){
 	for (int i1 = 0; i1 < n1; i1++)

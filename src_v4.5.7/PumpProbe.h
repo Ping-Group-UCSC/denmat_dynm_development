@@ -3,9 +3,10 @@
 
 struct pumpprobeParameters{
 public:
-	double pumpA0, pumpE, pumpTau, pump_tcenter;
-	string pumpPoltype;
-	vector3<complex> pumpPol;
+	string laserAlg, laserMode;
+	double laserA, laserE, pumpTau, pump_tcenter;
+	string laserPoltype;
+	vector3<complex> laserPol;
 
 	int probeNE;
 	double probeEmin, probeEmax, probeDE, probeTau;
@@ -13,7 +14,7 @@ public:
 	std::vector<vector3<complex>> probePol;
 
 	bool active(){
-		return fabs(pumpA0) > 1e-10;
+		return fabs(laserA) > 1e-10;
 	}
 
 	vector3<complex> set_Pol(string s){
@@ -26,7 +27,7 @@ public:
 		else if (s == "Ey")
 			return normalize(complex(1, 0)*vector3<>(0, 1, 0));
 		else
-			error_message("pumpPoltype must be LC, RC, Ex or Ey");
+			error_message("laserPoltype must be LC, RC, Ex or Ey");
 	}
 
 	inline void print(const vector3<complex>& v, const char* format = "%lg "){

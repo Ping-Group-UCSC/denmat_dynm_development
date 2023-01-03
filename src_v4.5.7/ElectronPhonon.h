@@ -62,6 +62,13 @@ public:
 		coul_model(nullptr), eimp(nullptr), f_eq(nullptr), ee_model(nullptr), sP1(nullptr), sP2(nullptr),
 		dP1ee(nullptr), dP2ee(nullptr)
 	{
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("electron scattering: e-ph, e-i, e-e\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
 		if (!alg.scatt_enable) return;
 		nb_expand = elec->nb_dm;
 		get_brange(sepr_eh, isHole);
@@ -120,7 +127,10 @@ public:
 	bool need_imsig;
 	void compute_imsig();
 	void compute_imsig(string what);
-	matrix3<> compute_mobility_brange(double **imsigp, double ***v, double **f, int bStart, int bEnd, string scarr);//return conductivity
+	matrix3<> compute_conductivity_brange(double **imsigp, double ***v, double **f, int bStart, int bEnd);//return conductivity
+	matrix3<> compute_conductivity_brange(double ***dfdEfield, double ***v, int bStart, int bEnd);//return conductivity
+	matrix3<> compute_mobility_brange(matrix3<> cond, double **f, int bStart, int bEnd, string scarr, bool print = true);//return conductivity
+	void write_conductivity(matrix3<> cond);
 	void analyse_g2(double de, double degauss, double degthr);
 	void analyse_g2_ei(double de, double degauss, double degthr);
 

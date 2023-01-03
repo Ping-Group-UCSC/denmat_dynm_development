@@ -40,7 +40,7 @@ extern string dir_debug;
 class algorithm{
 public:
 	string picture, scatt, ode_method;
-	bool expt, expt_elight, ddmdteq, summode, eph_sepr_eh, eph_need_elec, eph_need_hole, sparseP, Pin_is_sparse, set_scv_zero;
+	bool expt, expt_elight, ddmdteq, summode, eph_sepr_eh, eph_need_elec, eph_need_hole, sparseP, Pin_is_sparse, set_scv_zero, semiclassical;
 	bool modelH0hasBS, read_Bso, scatt_enable, eph_enable, phenom_relax, only_eimp, only_ee, only_intravalley, only_intervalley, linearize, linearize_dPee;
 	bool use_dmDP_taufm_as_init, DP_beyond_carrierlifetime, positive_tauneq, use_dmDP_in_evolution;
 	double thr_sparseP, mix_tauneq;
@@ -69,6 +69,7 @@ public:
 		sparseP = false;
 		thr_sparseP = 1e-40;
 		set_scv_zero = false;
+		semiclassical = false;
 		modelH0hasBS = true;
 		use_dmDP_taufm_as_init = false;
 		DP_beyond_carrierlifetime = false;

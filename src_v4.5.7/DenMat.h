@@ -9,9 +9,9 @@ class denmat{
 public:
 	FILE *fil;
 	int nt; // number of time steps
-	double t, t0, tend, dt, dt_pump; // atomic units, 40 is about 1fs
+	double t, t0, tend, dt, dt_laser; // atomic units, 40 is about 1fs
 	denmat(parameters *param)
-		:t0(param->t0), tend(param->tend), dt(param->tstep), dt_pump(param->tstep_pump), t(param->t0){}
+		:t0(param->t0), tend(param->tend), dt(param->tstep), dt_laser(param->tstep_laser), t(param->t0){}
 };
 
 // not used now!!! size (nk*nb)x(nk*nb)
@@ -39,6 +39,13 @@ public:
 		nk_glob(elec->nk), ik0_glob(mp->varstart), ik1_glob(mp->varend), nk_proc(ik1_glob - ik0_glob), nb(elec->nb_dm),
 		mue(param->mu), muh(param->mu)
 	{
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("k-diagonal single-particle density matrix\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
 		dm = alloc_array(nk_glob, nb*nb);
 		oneminusdm = alloc_array(nk_glob, nb*nb);
 		ddmdt = alloc_array(nk_glob, nb*nb);
@@ -57,8 +64,8 @@ public:
 
 	complex **ddm_eq, **ddm_neq;
 	double *trace_sq_ddm_eq, *trace_sq_ddm_neq;
-	void init_dmDP(complex **ddm_eq, complex **ddm_neq);
-	void use_dmDP(double **f);
+	//void init_dmDP(complex **ddm_eq, complex **ddm_neq);
+	//void use_dmDP(double **f);
 
 	void set_dm_eq(double t, double **e, int nv);
 	void set_dm_eq(bool isHole, double t, double mu0, double **e, int bStart, int bEnd);

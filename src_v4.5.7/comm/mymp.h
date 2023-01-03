@@ -71,9 +71,11 @@ public:
 	void allreduce(double *v, int n, MPI_Op op = MPI_SUM);
 	void allreduce(complex *v, int n, MPI_Op op = MPI_SUM);
 	void allreduce(complex **m, int n1, int n2, MPI_Op op = MPI_SUM);
+	void allreduce(complex ***m, int n1, int n2, int n3, MPI_Op op = MPI_SUM);
 	void allreduce(vector<vector<double>>& m, MPI_Op op = MPI_SUM);
 	void allreduce(vector<vector<complex>>& m, MPI_Op op = MPI_SUM);
 	void allreduce(double **m, int n1, int n2, MPI_Op op = MPI_SUM);
+	void allreduce(double ***a, int n1, int n2, int n3, MPI_Op op = MPI_SUM);
 	void collect(int, int, int, int, int*, int*);
 	void varstart_from_nvar(size_t& varstart, size_t nvar);
 	void bcast(size_t*, int, int root = 0);

@@ -17,7 +17,7 @@ static void copy_real_from_complex(double b[], complex **a, size_t n){ // n is s
 struct ODEparameters{
 public:
 	int ncalls;
-	double hstart, hmin, hmax, hmax_pump, epsabs;
+	double hstart, hmin, hmax, hmax_laser, epsabs;
 };
 
 extern ODEparameters ode;

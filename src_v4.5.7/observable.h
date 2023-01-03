@@ -9,15 +9,15 @@ public:
 	Te* elec;
 	int dim;
 	double t0;
-	int freq_measure, freq_measure_ene, freq_compute_tau, it_start_ddm;
+	int freq_measure, freq_measure_ene, freq_compute_tau;// it_start_ddm;
 	bool print_tot_band, print_layer_occ, print_layer_spin;
 	observable(Tl* latt, parameters* param, Te* elec)
 		:latt(latt), elec(elec), dim(latt->dim), t0(param->restart ? param->t0 : param->t0 - 1),
 		freq_measure(param->freq_measure), freq_measure_ene(param->freq_measure_ene), freq_compute_tau(param->freq_compute_tau),
 		print_tot_band(param->print_tot_band), print_layer_occ(elec->print_layer_occ), print_layer_spin(elec->print_layer_spin)
 	{
-		it_start_ddm = last_file_index("ddm_along_kpath_results/ddm.", ".dat");
-		if (ionode) { printf("\nit_start_ddm = %d\n", it_start_ddm); fflush(stdout); }
+		//it_start_ddm = last_file_index("ddm_along_kpath_results/ddm.", ".dat");
+		//if (ionode) { printf("\nit_start_ddm = %d\n", it_start_ddm); fflush(stdout); }
 	}
 };
 
@@ -26,11 +26,10 @@ template<class Tl, class Te>
 class ob_1dmk:public observable<Tl, Te>{
 public:
 	int nk_glob, nb, nv, bStart_eph, bEnd_eph; // nb = nb_dm in class electron
-	double prefac, prefac_per_cell;
+	double prefac_per_cell_size_cmd, prefac_per_cell_size, prefac_per_cell, prefac_cmby_per_cell_size_cmd;
 	double **e, **f;
-	complex ***s, **layer, **layerspin, ***l;
+	complex ***s, **layer, **layerspin, ***l, ***v;
 	bool needL;
-	vector3<double> sdir1_t2, sdir2_t2;
 	GaussianSmapling *gauss_elec, *gauss_hole, *gauss_dot_elec, *gauss_dot_hole;
 	double *obk, *tot_band, *tot_valley, **tot_valley_band;
 	std::vector<int> ik_kpath;
@@ -42,9 +41,18 @@ public:
 		nk_glob(elec->nk), nb(elec->nb_dm), nv(elec->nv_dm), prefac_per_cell(1. / elec->nk_full), e(elec->e_dm), f(elec->f_dm),
 		ik_kpath(elec->ik_kpath), trace_sq_ddm_tot(elec->trace_sq_ddm_tot), trace_sq_ddmneq_tot(0),
 		ddm_eq(elec->ddm_Bpert), ddm_neq(elec->ddm_Bpert_neq), bStart_eph(bStart_eph), bEnd_eph(bEnd_eph),
-		sdir1_t2(param->sdir1_t2), sdir2_t2(param->sdir2_t2), needL(param->needL)
+		needL(param->needL)
 	{
-		prefac = prefac_per_cell / latt->cell_size_cmd;
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("observable\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
+		prefac_per_cell_size = prefac_per_cell / latt->cell_size; //density in a.u.
+		prefac_per_cell_size_cmd = prefac_per_cell / latt->cell_size_cmd; //density in cm^{-d}
+		prefac_cmby_per_cell_size_cmd = prefac_per_cell_size_cmd / cmbys; //current density in cm^{-d} * cm/s
 
 		if (nb > nv){
 			gauss_elec = new GaussianSmapling(elec->ecmin, param->de_measure, elec->emax, param->degauss_measure);
@@ -56,11 +64,20 @@ public:
 		}
 		this->s = elec->s; this->layer = elec->layer; this->layerspin = elec->layerspin;
 		if (needL) this->l = elec->l;
+		if (elec->v != nullptr){
+			this->v = v = alloc_array(nk_glob, 3, nb*nb);
+			for (int ik_glob = 0; ik_glob < nk_glob; ik_glob++)
+			for (int iDir = 0; iDir < 3; iDir++)
+				trunc_copy_mat(this->v[ik_glob][iDir], elec->v[ik_glob][iDir], elec->nb, 0, elec->nb_dm, elec->bStart_dm, elec->bEnd_dm);
+		}
+		else
+			this->v = nullptr;
 		obk = new double[nk_glob]; zeros(obk, nk_glob);
 		tot_band = new double[nb]; zeros(tot_band, nb);
 		tot_valley = new double[(int)latt->vpos.size()]; zeros(tot_valley, (int)latt->vpos.size());
 		tot_valley_band = alloc_real_array((int)latt->vpos.size(), nb);
 
+		/*
 		if (ddm_eq != nullptr){
 			trace_sq_ddm_eq = new double[nk_glob];
 			for (int ik_glob = 0; ik_glob < nk_glob; ik_glob++)
@@ -84,6 +101,7 @@ public:
 				if (ionode) printf("trace_sq_ddm_neq = %14.7le\n", trace_sq_ddm_neq[ik_glob]); fflush(stdout);
 			}
 		}
+		*/
 	}
 
 	void measure(string what, string label, bool diff, bool print_ene, double t, complex **dm, complex **ddmdt = nullptr, double dt = 0);
@@ -113,13 +131,16 @@ template<class Tl, class Te>
 void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, double t, complex **dm, complex **ddmdt, double dt, int bStart, int bEnd, string scarr, GaussianSmapling *gauss, GaussianSmapling *gauss_dot){
 	if (!ionode) return;
 
-	std::vector<string> obSet{ "sx", "sy", "sz", "lx", "ly", "lz", "layer", "layerspin", "s-t2-wu", "s-t2-mani", "s-t2star", "entropy_vN", "entropy_bloch" };
-	std::vector<string> obSet1{ "sx", "sy", "sz", "lx", "ly", "lz" };
+	std::vector<string> obSet{ "sx", "sy", "sz", "lx", "ly", "lz", "layer", "layerspin", "s-t2-wu", "s-t2-mani", "s-t2star", "entropy_vN", "entropy_bloch", "jx", "jy", "jz" };
+	std::vector<string> obSet1{ "sx", "sy", "sz", "lx", "ly", "lz", "jx", "jy", "jz" };
 	std::vector<string> obSet1s{ "sx", "sy", "sz" };
 	std::vector<string> obSet1l{ "lx", "ly", "lz" };
 	std::vector<string> obSet2{ "layer", "layerspin" };
 	std::vector<string> obSet3{ "s-t2-wu", "s-t2-mani", "s-t2star" };
 	std::vector<string> obSet4{ "entropy_vN", "entropy_bloch" };
+	std::vector<string> obSet1j{ "jx", "jy", "jz" };
+
+	if (in_obSet(obSet1j, what) and v == nullptr) return;
 
 	// open files
 	bool isHole = scarr.substr(1, 4) == "hole";
@@ -142,9 +163,9 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 		if ((!in_obSet(obSet1, what)) && (print_ene || ddmdt))
 			error_message("print_ene is not allowed for layer population/spin currently");
 		if (print_ene && !diff) error_message("print_ene && !diff is not allowed currently");
-		if (what == "sx" || what == "lx") idir = 0;
-		else if (what == "sy" || what == "ly") idir = 1;
-		else if (what == "sz" || what == "lz") idir = 2;
+		if (what == "sx" || what == "lx" || what == "jx") idir = 0;
+		else if (what == "sy" || what == "ly" || what == "jy") idir = 1;
+		else if (what == "sz" || what == "lz" || what == "jz") idir = 2;
 		if (!ddmdt && diff){
 			fname = what + scarr + "_ene.out";
 			if (in_obSet(obSet1, what)) fil = fopen(fname.c_str(), "a");
@@ -153,6 +174,7 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 				filtot = fopen(fname.c_str(), "a");
 				if (in_obSet(obSet1s, what)) fprintf(filtot, "#time(au), s(t), s(t) without exp(iwt)\n");
 				else if (in_obSet(obSet1l, what)) fprintf(filtot, "#time(au), l(t), l(t) without exp(iwt)\n");
+				else if (in_obSet(obSet1j, what)) fprintf(filtot, "#time(au), j(t), j(t) without exp(iwt)\n");
 				else if (what == "s-t2-wu" || what == "s-t2star") fprintf(filtot, "#time(au), s-t2(t)\n");
 				else if (in_obSet(obSet4, what)) fprintf(filtot, "#time(au), sqrt(entropy)(t)\n");
 				else if (what == "s-t2-mani") fprintf(filtot, "#time(au), sqrt(spin part of entropy)(t)\n");
@@ -172,6 +194,7 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 	else if (what == "dos"){ fname = what + scarr + ".out"; fil = fopen(fname.c_str(), "a"); }
 
 	// initialization
+	double prefac = in_obSet(obSet1j, what) ? prefac_cmby_per_cell_size_cmd : prefac_per_cell_size_cmd;
 	double tot = 0, tot_amp = 0, dottot = 0, dottot_amp = 0, tot_tplusdt = 0, dottot_term2 = 0;
 	vector3<double> tot_t2star(0, 0, 0);
 	double entropy = 0, entropy_eq = 0;
@@ -284,6 +307,8 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 							ob_kib = s[ik_glob][idir][i*nb + b];
 						else if (in_obSet(obSet1l, what))
 							ob_kib = l[ik_glob][idir][i*nb + b];
+						else if (in_obSet(obSet1j, what))
+							ob_kib = v[ik_glob][idir][i*nb + b];
 						complex ob_kib_t = (i == b || alg.picture == "schrodinger") ? ob_kib : (ob_kib * cis((e[ik_glob][i] - e[ik_glob][b])*t));
 						complex dm_kbi = (i == b) ? (dm[ik_glob][b*nb + i] - f[ik_glob][i]) : dm[ik_glob][b*nb + i];
 						if (diff){
@@ -319,8 +344,8 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 
 	// total quantities
 	if (in_obSet(obSet4, what)){
-		if (diff) tot = sqrt(prefac*fabs(entropy - entropy_eq));
-		else tot = sqrt(prefac*entropy_eq);
+		if (diff) tot = sqrt(prefac * fabs(entropy - entropy_eq));
+		else tot = sqrt(prefac * entropy_eq);
 	}
 	else if (what == "s-t2star")
 		tot = prefac * tot_t2star.length();
@@ -382,8 +407,7 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 	if (!ddmdt && print_ene) fprintf(fil, "**************************************************\n");
 	if (!ddmdt && print_ene) fprintf(fil, "time = %10.3e, print energy and ob(e)\n", t);
 	if (!ddmdt && print_ene) fprintf(fil, "--------------------------------------------------\n");
-	if (!ddmdt && print_ene) gauss->print(fil, 1.0, prefac_per_cell, prefac);
-	//if (!ddmdt && print_ene && (what == "sx" || what == "sy" || what == "sz")) gauss->print2(fil, 1.0, prefac);
+	if (!ddmdt && print_ene) gauss->print(fil, 1.0, prefac);
 	if (!ddmdt && print_ene && what != "dos"){
 		if (fabs(t) < 1e-30) fprintf(fil, "time and density:  0.00000000000000e+01 %21.14le\n", tot);
 		else fprintf(fil, "time and density:  %21.14le %21.14le\n", t, tot); // carrier density in fn_ene.out
@@ -392,7 +416,7 @@ void ob_1dmk<Tl, Te>::measure_brange(string what, bool diff, bool print_ene, dou
 	if (what == "fn" || what == "dos" || (!ddmdt &&  diff && in_obSet(obSet1, what))) fflush(fil); fflush(stdout);
 	if (what == "fn" || what == "dos" || (!ddmdt &&  diff && in_obSet(obSet1, what))) fclose(fil);
 }
-
+/*
 template<class Tl, class Te>
 void ob_1dmk<Tl, Te>::ddmk_ana_drive(int it, double t, complex **dm){
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -494,3 +518,4 @@ void ob_1dmk<Tl, Te>::ddmk_ana(int it, double t, complex **dm){
 	fclose(fildecompavg);
 	printf("debug ddmk_ana 7"); fflush(stdout);
 }
+*/

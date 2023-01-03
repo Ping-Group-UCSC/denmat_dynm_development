@@ -1,5 +1,5 @@
 #include "electron.h"
-
+/*
 void electron::compute_DP_related(vector3<> Bpert){
 	if (dm_Bpert == nullptr) error_message("compute_DP_related requires matrix dm_pert");
 	//if (alg.picture != "schrodinger") error_message("compute_DP_related works in schrodinger picture");
@@ -78,12 +78,7 @@ void electron::compute_DP_related(vector3<> Bpert){
 	// dm_neq = f + ddm_eq + ddm_neq
 	trunc_copy_arraymat(dm_Bpert_neq, dm_Bpert, nk, nb_dm, 0, nb_dm);
 	axbyc(dm_Bpert_neq, ddm_Bpert_neq, nk, nb_dm*nb_dm, c1, c1); // y=ax+by+c, void axbyc(complex **y, complex **x, int n1, int n2, complex a = c1, complex b = c0, complex c = c0);
-	/*
-	trunc_copy_arraymat(dm_Bpert_neq, ddm_Bpert_neq, nk, nb_dm, 0, nb_dm);
-	for (int ik = 0; ik < nk; ik++)
-	for (int ibb = 0; ibb < nb_dm; ibb++)
-		dm_Bpert_neq[ik][ibb] += dm_Bpert[ik][ibb];
-	*/
 
 	if (ionode) printf("**************************************************\n");
 }
+*/

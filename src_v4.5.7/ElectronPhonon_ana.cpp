@@ -4,7 +4,10 @@ void electronphonon::analyse_g2(double de, double degauss, double degthr){
 	int nfile_gm = last_file_index("ldbd_data/ldbd_gm.bin.", "") + 1,
 		nfile_wq = last_file_index("ldbd_data/ldbd_wq_kpair.bin.", "") + 1;
 	if (!exists("ldbd_data/ldbd_gm.bin.0") || mp->nprocs != nfile_gm || mp->nprocs != nfile_wq) return;
-	if (ionode) printf("\nenter analyse_g2\n");
+	if (ionode) printf("\n");
+	if (ionode) printf("**************************************************\n");
+	if (ionode) printf("analyse g2 for e-ph\n");
+	if (ionode) printf("**************************************************\n");
 	if (ionode && !is_dir("eph_analysis")) system("mkdir eph_analysis");
 
 	// read electron energy range
@@ -410,7 +413,10 @@ void electronphonon::analyse_g2(double de, double degauss, double degthr){
 void electronphonon::analyse_g2_ei(double de, double degauss, double degthr){
 	int nfile_g = last_file_index("ldbd_data/ldbd_g.bin.", "") + 1;
 	if (!exists("ldbd_data/ldbd_g.bin.0") || mp->nprocs != nfile_g) return;
-	if (ionode) printf("\nenter eimp::analyse_g2\n");
+	if (ionode) printf("\n");
+	if (ionode) printf("**************************************************\n");
+	if (ionode) printf("analyse g2 for e-i\n");
+	if (ionode) printf("**************************************************\n");
 	if (ionode && !is_dir("eimp_analysis")) system("mkdir eimp_analysis");
 
 	// read electron energy range
@@ -718,8 +724,11 @@ void electronphonon::compute_imsig(string what){
 	//	if (ionode) printf("\ncompute_imsig does not work with alg.linearize currently:\n");
 	//	return;
 	//}
-	if (ionode) printf("\nCompute carrier relaxation and transport properties for %s scattering:\n", what.c_str());
+	if (ionode) printf("\n");
+	if (ionode) printf("**************************************************\n");
+	if (ionode) printf("Compute carrier relaxation and transport properties for %s scattering:\n", what.c_str());
 	if (ionode) printf("Please ensure the system is treated as a semiconductor, otherwise calculated mobility is meaningless:\n");
+	if (ionode) printf("**************************************************\n");
 
 	double prefac_imsig = M_PI / elec->nk_full;
 	double **imsig = alloc_real_array(nk_glob, nb);
@@ -750,14 +759,8 @@ void electronphonon::compute_imsig(string what){
 		int ik_glob = k1st[ikpair_local];
 		int ikp_glob = k2nd[ikpair_local];
 
-		// intravalley/intervalley selection
-		bool isIntravellay = latt->isIntravalley(elec->kvec[ik_glob], elec->kvec[ikp_glob]);
-		if (isIntravellay && alg.only_intervalley) continue;
-		if (!isIntravellay && alg.only_intravalley) continue;
-
-		int iv1 = latt->whichvalley(elec->kvec[ik_glob]);
-		int iv2 = latt->whichvalley(elec->kvec[ikp_glob]);
-		if (iv1 >= 0 && iv2 >= 0 && !latt->vtrans[iv1][iv2]) continue;
+		int iv1, iv2;
+		if (!latt->kpair_is_allowed(elec->kvec[ik_glob], elec->kvec[ikp_glob], iv1, iv2)) continue;
 
 		if (P1 != nullptr && sP1 == nullptr){ P1_ = P1[ikpair_local]; P2_ = P2[ikpair_local]; }
 		else if (sP1 != nullptr){
@@ -783,17 +786,17 @@ void electronphonon::compute_imsig(string what){
 				double cosThetaScatter = dot(v1, v2) / sqrt(std::max(1e-16, v1.length_squared() * v2.length_squared()));
 
 				if (e[ik_glob][i1] >= eStart && e[ik_glob][i1] <= eEnd){
-					double dtmp1 = P1_[n11 + i22].real() * f[ikp_glob][i2] + (1 - f[ikp_glob][i2]) * P2_[n22 + i11].real();
-					imsig[ik_glob][i1] += dtmp1; if (has_v) imsigp[ik_glob][i1] += dtmp1 * (1. - cosThetaScatter);
+					double imsig_12 = P1_[n11 + i22].real() * f[ikp_glob][i2] + (1 - f[ikp_glob][i2]) * P2_[n22 + i11].real();
+					imsig[ik_glob][i1] += imsig_12; if (has_v) imsigp[ik_glob][i1] += imsig_12 * (1. - cosThetaScatter);
 				}
 				if (ik_glob < ikp_glob && e[ikp_glob][i2] >= eStart && e[ikp_glob][i2] <= eEnd){
-					double dtmp2 = P2_[n22 + i11].real() * f[ik_glob][i1] + (1 - f[ik_glob][i1]) * P1_[n11 + i22].real();
-					imsig[ikp_glob][i2] += dtmp2; if (has_v) imsigp[ikp_glob][i2] += dtmp2 * (1. - cosThetaScatter);
+					double imsig_21 = P2_[n22 + i11].real() * f[ik_glob][i1] + (1 - f[ik_glob][i1]) * P1_[n11 + i22].real();
+					imsig[ikp_glob][i2] += imsig_21; if (has_v) imsigp[ikp_glob][i2] += imsig_21 * (1. - cosThetaScatter);
 				}
 			}
 		}
 	}
-	if (sP1 != nullptr){ delete[] P1_; delete[] P2_; P1_ = nullptr; P2_ = nullptr; }
+	if (not has_v and sP1 != nullptr){ delete[] P1_; delete[] P2_; P1_ = nullptr; P2_ = nullptr; }
 	mp->allreduce(imsig, nk_glob, nb, MPI_SUM);
 	if (has_v) mp->allreduce(imsigp, nk_glob, nb, MPI_SUM);
 
@@ -818,7 +821,7 @@ void electronphonon::compute_imsig(string what){
 			//else if (has_v && imsigp[ik][b] > 1e-40 && imsig[ik][b] > 1e-40) 
 			if (!has_v) fprintf(fpimsig, "%14.7le %14.7le %14.7le\n", e[ik][b], dfde, imsig[ik][b]);
 			else
-				fprintf(fpimsig, "%14.7le %14.7le %14.7le %14.7le %14.7le %14.7le %14.7le\n", 
+				fprintf(fpimsig, "%14.7le %14.7le %14.7le %14.7le %14.7le %14.7le %14.7le\n",
 				e[ik][b], dfde, imsig[ik][b], imsigp[ik][b], std::pow(v[ik][b][0], 2), std::pow(v[ik][b][1], 2), std::pow(v[ik][b][2], 2));
 		}
 		fclose(fpimsig);
@@ -840,34 +843,152 @@ void electronphonon::compute_imsig(string what){
 		if (ionode) printf("momentum lifetime (time avg.) = %lg fs\n", taum_avg / fs);
 
 		// mobility (Eq. S8 of Nano Lett. 21, 9594 (2021))
-		matrix3<> cond(matrix3<>(0, 0, 0));
-		if (nb > nv) cond += compute_mobility_brange(imsigp, v, f, nv, nb, "electrons");
-		if (nv > 0) cond += compute_mobility_brange(imsigp, v, f, 0, nv, "holes");
-		if (ionode && latt->dim >= 2){
-			if (latt->dim == 3){
-				cond = (1e-9*Ohm*meter) * cond;
-				cond.print(stdout, "Conductivity tensor ((nOhm m)^-1):", latt->dim, "  %10.3le", false, true);
-				inv(cond).print(stdout, "Resistivity tnesor (nOhm m):", latt->dim, "  %10.3le", false, true);
-			}
-			if (latt->dim == 2){
-				cond = Ohm * cond;
-				cond.print(stdout, "Conductivity tensor (Ohm^-1):", latt->dim, "  %10.3le", false, true);
-				cond.set(0, 2, 0); cond.set(1, 2, 0); cond.set(2, 0, 0); cond.set(2, 1, 0);
-				inv(cond).print(stdout, "Resistivity tnesor (Ohm):", latt->dim, "  %10.3le", false, true);
-			}
-		}
-
-		dealloc_real_array(v);
-		dealloc_real_array(imsigp);
+		matrix3<> cond_e(matrix3<>(0, 0, 0)), cond_h(matrix3<>(0, 0, 0)), cond(matrix3<>(0, 0, 0));
+		if (nb > nv) cond_e = compute_conductivity_brange(imsigp, v, f, nv, nb);
+		if (nv > 0) cond_h = compute_conductivity_brange(imsigp, v, f, 0, nv);
+		cond = cond_e + cond_h;
+		write_conductivity(cond);
+		if (nb > nv) matrix3<> mob_e = compute_mobility_brange(cond_e, f, nv, nb, "electrons");
+		if (nv > 0) matrix3<> mob_h = compute_mobility_brange(cond_h, f, 0, nv, "holes");
 	}
 
+	if (ionode) { printf("\n"); fflush(stdout); } MPI_Barrier(MPI_COMM_WORLD);
+	if (not has_v){
+		dealloc_real_array(f);
+		dealloc_real_array(imsig);
+		return;
+	}
+
+	//Iterative solution of linearized Boltzmann transport equation
+	//(-df / dEfield)_1 = -v_1 dfde_1 tau_1 - tau_1 tau^(-1)_{21} (df / dEfield)_2
+	//tau^(-1)_{21} = P_{2211} f_1 + P_{1122} (1-f_1)
+	//Initial (-df / dEfield) = -v dfde tau_m
+	//So define x = (-df / dEfield)_1, A = I - Ap, Ap = tau_1 tau^(-1)_{21}, b = -v_1 dfde_1 tau_1,
+	//we have A x = b or the iterative equation x^{n+1} = Ap x^{n} + b
+	if (ionode) { printf("\nIterative solution of linearized Boltzmann transport equation:\n"); fflush(stdout); }
+	double prefac_lbte = 2*M_PI / elec->nk_full, **tau_p = alloc_real_array(nk_glob, nb);
+	double ***B = alloc_real_array(nk_glob, nb, 3), ***dfdEfield = alloc_real_array(nk_glob, nb, 3);
+	for (int ik = 0; ik < nk_glob; ik++)
+	for (int b = 0; b < nb; b++){
+		double dfde = f[ik][b] * (1 - f[ik][b]) / elec->temperature;
+		double tau_m = imsigp[ik][b] > 1e-40 ? 0.5 / imsigp[ik][b] : 0;
+		tau_p[ik][b] = imsigp[ik][b] > 1e-40 ? 0.5 / imsig[ik][b] : 0;
+		for (int idir = 0; idir < 3; idir++){
+			B[ik][b][idir] = v[ik][b][idir] * dfde * tau_m;
+			dfdEfield[ik][b][idir] = v[ik][b][idir] * dfde * tau_m; //note that dfde is actually -df/de and dfdEfield is -df/dEfield
+		}
+	}
+
+	matrix3<> cond_e(matrix3<>(0, 0, 0)), cond_h(matrix3<>(0, 0, 0)), cond(matrix3<>(0, 0, 0));
+	if (nb > nv) cond_e += compute_conductivity_brange(dfdEfield, v, nv, nb);
+	if (nv > 0) cond_h += compute_conductivity_brange(dfdEfield, v, 0, nv);
+	cond = cond_e + cond_h;
+	//if (ionode) { printf("Initial results:\n"); fflush(stdout); }
+	//write_conductivity(cond);
+	matrix3<> mob_e(matrix3<>(0, 0, 0)), mob_h(matrix3<>(0, 0, 0));
+	if (nb > nv) mob_e = compute_mobility_brange(cond_e, f, nv, nb, "electrons", false);
+	if (nv > 0) mob_h = compute_mobility_brange(cond_h, f, 0, nv, "holes", false);
+	double sum_mob_abs = 0;
+	for (int idir = 0; idir < 3; idir++)
+	for (int jdir = 0; jdir < 3; jdir++)
+		sum_mob_abs += fabs(mob_e(idir, jdir)) + fabs(mob_h(idir, jdir));
+
+	double ***ApX = alloc_real_array(nk_glob, nb, 3);
+	int iter = 0;
+	while (iter < 1000){
+
+		zeros(ApX, nk_glob, nb, 3);
+		for (int ikpair_local = 0; ikpair_local < nkpair_proc; ikpair_local++){
+			int ik_glob = k1st[ikpair_local];
+			int ikp_glob = k2nd[ikpair_local];
+
+			int iv1, iv2;
+			if (!latt->kpair_is_allowed(elec->kvec[ik_glob], elec->kvec[ikp_glob], iv1, iv2)) continue;
+
+			if (P1 != nullptr && sP1 == nullptr){ P1_ = P1[ikpair_local]; P2_ = P2[ikpair_local]; }
+			else if (sP1 != nullptr){
+				sP1->smat[ikpair_local]->todense(P1_, nb*nb, nb*nb); sP2->smat[ikpair_local]->todense(P2_, nb*nb, nb*nb);
+			}
+
+			for (int i1 = 0; i1 < nb; i1++){
+				int i11 = i1*nb + i1;
+				int n11 = i11*nb*nb;
+				double f1 = f[ik_glob][i1], taup1 = tau_p[ik_glob][i1], *x1 = dfdEfield[ik_glob][i1];
+
+				for (int i2 = 0; i2 < nb; i2++){
+					if (ik_glob == ikp_glob && i1 == i2) continue;
+
+					int i22 = i2*nb + i2;
+					int n22 = i22*nb*nb;
+					double f2 = f[ikp_glob][i2], taup2 = tau_p[ikp_glob][i2], *x2 = dfdEfield[ikp_glob][i2];
+
+					double P1122 = P1_[n11 + i22].real(), P2211 = P2_[n22 + i11].real();
+
+					//tau^(-1)_{21} = P_{2211} f_1 + P_{1122} (1-f_1)
+					//x = (-df / dEfield)_1, A = I - Ap, Ap = tau_1 tau^(-1)_{21}, b = -v_1 dfde_1 tau_1,
+					//we have A x = b or the iterative equation x^{n+1} = Ap x^{n} + b
+					if (e[ik_glob][i1] >= eStart && e[ik_glob][i1] <= eEnd){
+						double tauinv_12 = P1122 * f2 + (1 - f2) * P2211;
+						for (int idir = 0; idir < 3; idir++)
+							ApX[ikp_glob][i2][idir] += taup2 * tauinv_12 * x1[idir];
+					}
+					if (ik_glob < ikp_glob && e[ikp_glob][i2] >= eStart && e[ikp_glob][i2] <= eEnd){
+						double tauinv_21 = P2211 * f1 + (1 - f1) * P1122;
+						for (int idir = 0; idir < 3; idir++)
+							ApX[ik_glob][i1][idir] += taup1 * tauinv_21 * x2[idir];
+					}
+				}
+			}
+		}
+		mp->allreduce(ApX, nk_glob, nb, 3, MPI_SUM);
+
+		//x^{ n + 1 } = Ap x^{ n } +b
+		axbyc(dfdEfield, B, nk_glob, nb, 3);
+		axbyc(dfdEfield, ApX, nk_glob, nb, 3, prefac_lbte, 1);
+
+		//compute conductivity and mobility
+		matrix3<> cond_e_new(matrix3<>(0, 0, 0)), cond_h_new(matrix3<>(0, 0, 0)), cond_new(matrix3<>(0, 0, 0));
+		if (nb > nv) cond_e_new += compute_conductivity_brange(dfdEfield, v, nv, nb);
+		if (nv > 0) cond_h_new += compute_conductivity_brange(dfdEfield, v, 0, nv);
+		cond_new = cond_e_new + cond_h_new;
+		matrix3<> mob_e_new(matrix3<>(0, 0, 0)), mob_h_new(matrix3<>(0, 0, 0));
+		if (nb > nv) mob_e_new = compute_mobility_brange(cond_e_new, f, nv, nb, "electrons", false);
+		if (nv > 0) mob_h_new = compute_mobility_brange(cond_h_new, f, 0, nv, "holes", false);
+
+		//check if mobilities are converged
+		double error = 0, rel_error = 0, sum_mob_abs_new = 0;
+		for (int idir = 0; idir < 3; idir++)
+		for (int jdir = 0; jdir < 3; jdir++){
+			sum_mob_abs_new += fabs(mob_e_new(idir, jdir)) + fabs(mob_h_new(idir, jdir));
+			error += fabs(mob_e_new(idir, jdir) - mob_e(idir, jdir)) + fabs(mob_h_new(idir, jdir) - mob_h(idir, jdir));
+		}
+		rel_error = sum_mob_abs < 1e-20 ? 0 : error / sum_mob_abs;
+
+		iter++;
+		if (ionode and(iter <= 5 or(iter < 100 and iter % 10 == 0) or iter % 100 == 0)) printf("iter = %d  error = %8.1le (%11.4le)\n", iter, error, sum_mob_abs);
+		cond_e = cond_e_new; cond_h = cond_h_new; cond = cond_new; mob_e = mob_e_new; mob_h = mob_h_new; sum_mob_abs = sum_mob_abs_new;
+
+		if (error < 1e-6 or rel_error < 1e-6) break;
+	}
+	if (not has_v and sP1 != nullptr){ delete[] P1_; delete[] P2_; P1_ = nullptr; P2_ = nullptr; }
+
+	if (ionode) { printf("\nConverged results (iter %d):\n", iter); fflush(stdout); }
+	write_conductivity(cond);
+	if (nb > nv) compute_mobility_brange(cond_e, f, nv, nb, "electrons");
+	if (nv > 0) compute_mobility_brange(cond_h, f, 0, nv, "holes");
+
+	dealloc_real_array(ApX);
+	dealloc_real_array(v);
+	dealloc_real_array(imsigp);
 	dealloc_real_array(f);
 	dealloc_real_array(imsig);
+	dealloc_real_array(B);
+	dealloc_real_array(dfdEfield);
 	if (ionode) { printf("\n"); fflush(stdout); } MPI_Barrier(MPI_COMM_WORLD);
 }
 
-matrix3<> electronphonon::compute_mobility_brange(double **imsigp, double ***v, double **f, int bStart, int bEnd, string scarr){
-	if (ionode) printf("Compute mobility of %s:\n", scarr.c_str());
+matrix3<> electronphonon::compute_conductivity_brange(double **imsigp, double ***v, double **f, int bStart, int bEnd){
+	if (ionode) printf("Compute conductivity for bands [%d, %d]:\n", bStart, bEnd);
 	matrix3<> cond, mob, Diffusion_Einstein, Diffusion, Diffusion_smaller_dmu;
 	for (int ik = 0; ik < nk_glob; ik++)
 	for (int b = bStart; b < bEnd; b++){
@@ -877,8 +998,27 @@ matrix3<> electronphonon::compute_mobility_brange(double **imsigp, double ***v, 
 			cond(idir, jdir) += dtmp * v[ik][b][idir] * v[ik][b][jdir];
 	}
 	cond *= 0.5 / (elec->nk_full * latt->cell_size * elec->temperature);
+	return cond;
+}
+
+matrix3<> electronphonon::compute_conductivity_brange(double ***dfdEfield, double ***v, int bStart, int bEnd){
+	matrix3<> cond;
+	for (int ik = 0; ik < nk_glob; ik++)
+	for (int b = bStart; b < bEnd; b++){
+		for (int idir = 0; idir < 3; idir++)
+		for (int jdir = 0; jdir < 3; jdir++)
+			cond(idir, jdir) += v[ik][b][idir] * dfdEfield[ik][b][jdir];
+	}
+	cond *= 1. / (elec->nk_full * latt->cell_size);
+	return cond;
+}
+
+matrix3<> electronphonon::compute_mobility_brange(matrix3<> cond, double **f, int bStart, int bEnd, string scarr, bool print){
+	if (ionode and print) printf("Compute mobility of %s:\n", scarr.c_str());
+	matrix3<> mob, Diffusion_Einstein, Diffusion, Diffusion_smaller_dmu;
 	double dmu = elec->temperature / 10., dmu_smaller = elec->temperature / 20.;
 	if (scarr == "electrons"){
+		if (elec->ne < 1e-20) return matrix3<>();
 		mob = cond * (1. / elec->ne);
 		double ne_dmu = elec->compute_nfree(false, elec->temperature, elec->mu - dmu) / elec->nk_full / latt->cell_size,
 			ne_smaller_dmu = elec->compute_nfree(false, elec->temperature, elec->mu - dmu_smaller) / elec->nk_full / latt->cell_size;
@@ -886,7 +1026,8 @@ matrix3<> electronphonon::compute_mobility_brange(double **imsigp, double ***v, 
 		Diffusion = (elec->ne / dnedmu) * mob; Diffusion_smaller_dmu = (elec->ne / dne_smaller_dmu) * mob;
 		Diffusion_Einstein = elec->temperature * mob;
 	}
-	else if	(scarr == "holes"){
+	else if (scarr == "holes"){
+		if (fabs(elec->nh) < 1e-20) return matrix3<>();
 		mob = cond * (1. / fabs(elec->nh));
 		double nh_dmu = elec->compute_nfree(true, elec->temperature, elec->mu + dmu) / elec->nk_full / latt->cell_size,
 			nh_smaller_dmu = elec->compute_nfree(true, elec->temperature, elec->mu + dmu_smaller) / elec->nk_full / latt->cell_size;
@@ -895,9 +1036,9 @@ matrix3<> electronphonon::compute_mobility_brange(double **imsigp, double ***v, 
 		Diffusion_Einstein = elec->temperature * mob;
 	}
 	else error_message("scarr is not right", "compute_mobility_brange");
-	if (ionode){
-		mob = (1 / cm2byVs2au) * mob;
-		mob.print(stdout, "Mobility tensor (cm2/V/s):", latt->dim, "  %10.3le", false, true);
+	if (ionode and print){
+		matrix3<> mob_SI = (1 / cm2byVs2au) * mob;
+		mob_SI.print(stdout, "Mobility tensor (cm2/V/s):", latt->dim, "  %10.3le", false, true);
 		Diffusion = (1 / cm2bys2au) * Diffusion;
 		Diffusion.print(stdout, "Diffusion tensor (cm2/s):", latt->dim, "  %10.3le", false, true);
 		Diffusion_smaller_dmu = (1 / cm2bys2au) * Diffusion_smaller_dmu;
@@ -905,5 +1046,21 @@ matrix3<> electronphonon::compute_mobility_brange(double **imsigp, double ***v, 
 		Diffusion_Einstein = (1 / cm2bys2au) * Diffusion_Einstein;
 		Diffusion_Einstein.print(stdout, "Diffusion tensor (Einstein, cm2/s):", latt->dim, "  %10.3le", false, true);
 	}
-	return cond;
+	return mob;
+}
+
+void electronphonon::write_conductivity(matrix3<> cond){
+	if (ionode && latt->dim >= 2){
+		if (latt->dim == 3){
+			cond = (1e-9*Ohm*meter) * cond;
+			cond.print(stdout, "Conductivity tensor ((nOhm m)^-1):", latt->dim, "  %10.3le", false, true);
+			inv(cond).print(stdout, "Resistivity tnesor (nOhm m):", latt->dim, "  %10.3le", false, true);
+		}
+		if (latt->dim == 2){
+			cond = Ohm * cond;
+			cond.print(stdout, "Conductivity tensor (Ohm^-1):", latt->dim, "  %10.3le", false, true);
+			cond.set(0, 2, 0); cond.set(1, 2, 0); cond.set(2, 0, 0); cond.set(2, 1, 0);
+			inv(cond).print(stdout, "Resistivity tnesor (Ohm):", latt->dim, "  %10.3le", false, true);
+		}
+	}
 }

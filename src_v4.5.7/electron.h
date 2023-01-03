@@ -21,7 +21,7 @@ public:
 	int nkpath;
 	std::vector<int> ik_kpath;
 	double **e, **f, **e_dm, **f_dm, **e_morek, **f_morek, **e_dm_morek, **f_dm_morek; // ocuupation number
-	double emin, emax, evmax, ecmin, emid;
+	double emin, emax, evmax, ecmin, emid, scissor;
 	vector3<> B; double scale_Ez;
 	bool gfac_normal_dist, gfac_k_resolved;
 	double gfac_mean, gfac_sigma, gfac_cap;
@@ -34,15 +34,21 @@ public:
 	complex **ddm_Bpert, **dm_Bpert, **ddm_Bpert_neq, **dm_Bpert_neq; // store ddm_eq and ddm_neq for later analysis of ddm
 	bool *has_precess;
 	double trace_sq_ddm_tot;
-	double *DP_precess_fac;
+	//double *DP_precess_fac;
 	double **imsig_eph_kn, *imsig_eph_k, imsig_eph_avg;
 	double ***b2kn, ***b2ew; double **b2w_avg; // b2ew, b2w_avg: frequency-dependent "scattering" spin-mixing
+
+	bool rotate_spin_axes;
+	vector3<double> sdir_z;
+	matrix3<double> sdir_rot; // redefined spin directions
 
 	electron(parameters *param)
 		:temperature(param->temperature), mu(param->mu), carrier_density(param->carrier_density), carrier_density_means_excess_density(param->carrier_density_means_excess_density),
 		kmesh(vector3<int>(param->nk1, param->nk2, param->nk3)), nk_full((double)param->nk1*(double)param->nk2*(double)param->nk3), B(param->B),
 		print_along_kpath(param->print_along_kpath), kpath_start(param->kpath_start), kpath_end(param->kpath_end), nkpath(param->kpath_start.size()),
-		needL(param->needL){}
+		needL(param->needL), scissor(param->scissor),
+		rotate_spin_axes(param->rotate_spin_axes), sdir_z(param->sdir_z), sdir_rot(param->sdir_rot),
+		v(nullptr){}
 	electron(mymp *mp, mymp *mp_morek, lattice *latt, parameters *param)
 		:mp(mp), mp_morek(mp_morek), latt(latt), temperature(param->temperature), mu(param->mu), carrier_density(param->carrier_density), carrier_density_means_excess_density(param->carrier_density_means_excess_density),
 		kmesh(vector3<int>(param->nk1, param->nk2, param->nk3)), nk_full((double)param->nk1*(double)param->nk2*(double)param->nk3), B(param->B), scale_Ez(param->scale_Ez),
@@ -50,16 +56,27 @@ public:
 		H_BS(nullptr), H_Ez(nullptr), ddm_Bpert(nullptr), ddm_Bpert_neq(nullptr), dm_Bpert_neq(nullptr),
 		imsig_eph_kn(nullptr), imsig_eph_k(nullptr), imsig_eph_avg(0),
 		gfack(nullptr), gfac_normal_dist(param->gfac_normal_dist), gfac_k_resolved(param->gfac_k_resolved), gfac_mean(param->gfac_mean), gfac_sigma(param->gfac_sigma), gfac_cap(param->gfac_cap),
-		needL(param->needL)
+		needL(param->needL), scissor(param->scissor),
+		rotate_spin_axes(param->rotate_spin_axes), sdir_z(param->sdir_z), sdir_rot(param->sdir_rot),
+		v(nullptr)
 	{
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("electron\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
 		if (code == "jdftx"){
 			read_ldbd_size();
+			bool alloc_v = exists("ldbd_data/ldbd_vmat.bin"); //false;
+			if (pmp.laserA > 0 and !alloc_v) error_message("laserA > 0 and !alloc_v", "electron constructor");
 			bool alloc_U = exists("ldbd_data/ldbd_Umat.bin"); //false;
 			print_layer_occ = exists("ldbd_data/ldbd_layermat.bin");
 			print_layer_spin = exists("ldbd_data/ldbd_layerspinmat.bin");
 			//for (int iD = 0; iD < eip.ni.size(); iD++)
 			//	if (eep.eeMode != "none" || (eip.ni[iD] != 0 && eip.impMode[iD] == "model_ionized")) alloc_U = true;
-			alloc_mat(pmp.pumpA0 > 0, alloc_U);
+			alloc_mat(alloc_v, alloc_U);
 			read_ldbd_kvec();
 			if (print_along_kpath && kvec.size() > 0) get_kpath();
 			read_ldbd_ek();
@@ -70,14 +87,14 @@ public:
 			if (needL) read_ldbd_lmat();
 			if (print_layer_occ) read_ldbd_layermat();
 			if (print_layer_occ) read_ldbd_layerspinmat();
-			if (pmp.pumpA0 > 0) read_ldbd_vmat();
+			if (pmp.laserA > 0) read_ldbd_vmat();
 			if (alloc_U) read_ldbd_Umat();
 			if (alg.read_Bso) read_ldbd_Bso();
 		}
 		emax = maxval(e_dm, nk, nv_dm, nb_dm);
 		ecmin = minval(e_dm, nk, nv_dm, nb_dm);
 		if (ionode) printf("\nElectronic states energy range:\n");
-		if (nb_dm > nv_dm && ionode) printf("\nemax = %lg ecmin = %lg\n", emax, ecmin);
+		if (nb_dm > nv_dm && ionode) printf("emax = %lg ecmin = %lg\n", emax, ecmin);
 		for (int iD = 0; iD < eip.ni.size(); iD++)
 			if (nb_dm > nv_dm && eip.partial_ionized[iD] && eip.Eimp[iD] > ecmin) error_message("Impurity level should not be higher than CBM", "electron constructor");
 		evmax = maxval(e_dm, nk, 0, nv_dm);
@@ -159,10 +176,12 @@ public:
 	void print_mat_atk(complex **m, int n, string s = "");
 
 	void compute_dm_Bpert_1st(vector3<> Bpert, double t0);
-	void compute_DP_related(vector3<> Bpert);
+	//void compute_DP_related(vector3<> Bpert);
 	void deg_proj(complex *m, double *e, int n, double thr, complex *mdeg);
 	void compute_b2(double de, double degauss, double degthr);
+	void compute_b2(double de, double degauss, double degthr, bool rotate_spin_axes);
 	void compute_Bin2();
+	void compute_Bin2(bool rotate_spin_axes);
 	double average_dfde(double **arr, double **f, int n1, int nb, bool inv = false);
 
 	void set_gfac();

@@ -59,7 +59,11 @@ struct GaussianSmapling
 		}
 	}
 
-	void print(FILE* fp, double Escale = 1.0, double histScale = 1.0, double histScale_2 = 1.0) const{
+	void print(FILE* fp, double Escale = 1.0, double histScale = 1.0) const{
+		for (size_t i = 0; i < out.size(); i++)
+			fprintf(fp, "%14.7le %14.7le\n", (emin + i*de)*Escale, out[i] * histScale);
+	}
+	void print(FILE* fp, double Escale, double histScale, double histScale_2) const{
 		for (size_t i = 0; i < out.size(); i++)
 			fprintf(fp, "%14.7le %14.7le\n", (emin + i*de)*Escale, out[i] * histScale, out[i] * histScale_2);
 	}

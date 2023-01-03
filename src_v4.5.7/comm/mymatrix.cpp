@@ -143,6 +143,16 @@ void trunc_copy_arraymat(complex** A, complex **B, int n1, int n2, int bStart, i
 	}
 }
 
+void zeros_off_diag(complex* a, int n){
+	for (int i = 0; i < n; i++)
+	for (int j = 0; j < n; j++)
+		if (i != j) a[i*n + j] = c0;
+}
+void zeros_off_diag(complex** arr, int n1, int n2){
+	for (int i1 = 0; i1 < n1; i1++)
+		zeros_off_diag(arr[i1], n2);
+}
+
 void transpose(complex *m, complex *t, int n){
 	transpose(m, t, n, n);
 }

@@ -2,82 +2,94 @@
 
 pumpprobeParameters pmp;
 
-void electronlight::evolve_pump(double t, complex** dm, complex** dm1, complex** ddmdt_pump){
-	if (pumpMode == "lindblad")
-		evolve_pump_lindblad(t, dm, dm1, ddmdt_pump);
-	else if (pumpMode == "coherent")
-		evolve_pump_coh(t, dm, dm1, ddmdt_pump);
+void electronlight::evolve_laser(double t, complex** dm, complex** dm1, complex** ddmdt_laser){
+	if (pmp.laserAlg == "lindblad")
+		evolve_laser_lindblad(t, dm, dm1, ddmdt_laser);
+	else if (pmp.laserAlg == "coherent")
+		evolve_laser_coh(t, dm, dm1, ddmdt_laser);
 }
-inline void electronlight::compute_pumpPt(double t, complex *Pk, double *ek){
+inline void electronlight::compute_laserPt(double t, complex *Pk, double *ek){
 	for (int i = 0; i < nb_dm; i++)
 	for (int j = 0; j < nb_dm; j++)
 	if (alg.expt_elight)
-		pumpPt[i*nb_dm + j] = Pk[i*nb_dm + j] * cis((ek[i] - ek[j])*t);
+		laserPt[i*nb_dm + j] = Pk[i*nb_dm + j] * cis((ek[i] - ek[j])*t);
 	else
-		pumpPt[i*nb_dm + j] = Pk[i*nb_dm + j];
+		laserPt[i*nb_dm + j] = Pk[i*nb_dm + j];
 }
-inline void electronlight::compute_pumpPt_coh(double t, complex *Pk, double *ek){
+inline void electronlight::compute_laserPt_coh(double t, complex *Pk, double *ek){
 	for (int i = 0; i < nb_dm; i++)
 	for (int j = i; j < nb_dm; j++) // only upper triangle part is needed
 	if (alg.picture == "interaction" && i != j)
-		pumpPt[i*nb_dm + j] = Pk[i*nb_dm + j] * cis((ek[i] - ek[j] - pmp.pumpE)*t) + Pk[j*nb_dm + i].conj() * cis((ek[i] - ek[j] + pmp.pumpE)*t);
+		laserPt[i*nb_dm + j] = Pk[i*nb_dm + j] * cis((ek[i] - ek[j] - pmp.laserE)*t) + Pk[j*nb_dm + i].conj() * cis((ek[i] - ek[j] + pmp.laserE)*t);
 	else
-		pumpPt[i*nb_dm + j] = Pk[i*nb_dm + j] * cis(-pmp.pumpE*t) + Pk[j*nb_dm + i].conj() * cis(pmp.pumpE*t);
+		laserPt[i*nb_dm + j] = Pk[i*nb_dm + j] * cis(-pmp.laserE*t) + Pk[j*nb_dm + i].conj() * cis(pmp.laserE*t);
 }
-void electronlight::evolve_pump_coh(double t, complex** dm, complex** dm1, complex** ddmdt_pump){
-	double trel = t - pmp.pump_tcenter;
-	complex prefac = cmi * pmp.pumpA0 * exp( - std::pow(trel / pmp.pumpTau, 2) / 2) / sqrt(sqrt(M_PI)*pmp.pumpTau);
-	zeros(ddmdt_pump, nk_glob, nb_dm*nb_dm);
+void electronlight::evolve_laser_coh(double t, complex** dm, complex** dm1, complex** ddmdt_laser){
+	//double trel = t - pmp.pump_tcenter;
+	//complex prefac = cmi * pmp.laserA * exp( - std::pow(trel / pmp.pumpTau, 2) / 2) / sqrt(sqrt(M_PI)*pmp.pumpTau);
+	complex prefac = cmi * pmp.laserA;
+	if (pmp.laserMode == "pump"){
+		double trel = t - pmp.pump_tcenter;
+		prefac = prefac * exp(-std::pow(trel / pmp.pumpTau, 2) / 2) / sqrt(sqrt(M_PI)*pmp.pumpTau);
+	}
+	zeros(ddmdt_laser, nk_glob, nb_dm*nb_dm);
 
 	for (int ik_local = 0; ik_local < nk_proc; ik_local++){
 		int ik_glob = ik_local + ik0_glob;
-		compute_pumpPt_coh(t, pumpP[ik_local], e_dm[ik_glob]);
+		compute_laserPt_coh(t, laserP[ik_local], e_dm[ik_glob]);
 
 		// H * dm - dm * H
-		//zhemm_interface(ddmdt_pump[ik_glob], false, pumpPt, dm[ik_glob], nb_dm);
-		//zhemm_interface(ddmdt_pump[ik_glob], true, pumpPt, dm[ik_glob], nb_dm, c1, cm1);
+		//zhemm_interface(ddmdt_laser[ik_glob], false, laserPt, dm[ik_glob], nb_dm);
+		//zhemm_interface(ddmdt_laser[ik_glob], true, laserPt, dm[ik_glob], nb_dm, c1, cm1);
 		
 		//for (int i = 0; i < nb_dm; i++)
 		//for (int j = i; j < nb_dm; j++) // only upper triangle part is needed
-		//	ddmdt_pump[ik_glob][i] *= prefac;
+		//	ddmdt_laser[ik_glob][i] *= prefac;
 
 		// ddm / dt = -i (H * dm - dm * H)
-		zhemm_interface(ddmdt_contrib, true, pumpPt, dm[ik_glob], nb_dm);
+		zhemm_interface(ddmdt_contrib, true, laserPt, dm[ik_glob], nb_dm);
 		for (int i = 0; i < nb_dm; i++)
 		for (int j = i; j < nb_dm; j++){ // only upper triangle part is needed
 			ddmdt_contrib[i*nb_dm + j] -= ddmdt_contrib[j*nb_dm + i].conj(); // (dm * H)^dagger = H * dm
-			ddmdt_pump[ik_glob][i*nb_dm + j] = prefac * ddmdt_contrib[i*nb_dm + j];
-			ddmdt_pump[ik_glob][j*nb_dm + i] = ddmdt_pump[ik_glob][i*nb_dm + j].conj(); // ddmdt is hermite
+			ddmdt_laser[ik_glob][i*nb_dm + j] = prefac * ddmdt_contrib[i*nb_dm + j];
+			ddmdt_laser[ik_glob][j*nb_dm + i] = ddmdt_laser[ik_glob][i*nb_dm + j].conj(); // ddmdt is hermite
 		}
 	}
 
-	mp->allreduce(ddmdt_pump, nk_glob, nb_dm*nb_dm, MPI_SUM);
+	mp->allreduce(ddmdt_laser, nk_glob, nb_dm*nb_dm, MPI_SUM);
 }
-void electronlight::evolve_pump_lindblad(double t, complex** dm, complex** dm1, complex** ddmdt_pump){
-	double trel = t - pmp.pump_tcenter;
-	double prefac = (M_PI*pmp.pumpA0*pmp.pumpA0)
-		* (exp(-(trel*trel) / (pmp.pumpTau*pmp.pumpTau)) / (sqrt(M_PI)*pmp.pumpTau));
-	zeros(ddmdt_pump, nk_glob, nb_dm*nb_dm);
+void electronlight::evolve_laser_lindblad(double t, complex** dm, complex** dm1, complex** ddmdt_laser){
+	//double trel = t - pmp.pump_tcenter;
+	//double prefac = (M_PI*pmp.laserA*pmp.laserA)
+	//	* (exp(-(trel*trel) / (pmp.pumpTau*pmp.pumpTau)) / (sqrt(M_PI)*pmp.pumpTau));
+	double prefac = M_PI*pmp.laserA*pmp.laserA;
+	if (pmp.laserMode == "pump"){
+		double trel = t - pmp.pump_tcenter;
+		prefac = prefac
+			* (exp(-(trel*trel) / (pmp.pumpTau*pmp.pumpTau)) / (sqrt(M_PI)*pmp.pumpTau));
+	}
+	zeros(ddmdt_laser, nk_glob, nb_dm*nb_dm);
 
+	//(1-rho) P rho + rho P^* (1-rho)
 	for (int ik_local = 0; ik_local < nk_proc; ik_local++){
 		int ik_glob = ik_local + ik0_glob;
 		zeros(ddmdt_contrib, nb_dm*nb_dm);
 
-		compute_pumpPt(t, pumpP[ik_local], e_dm[ik_glob]);
-		hermite(pumpPt, pumpPdag, nb_dm);
+		compute_laserPt(t, laserP[ik_local], e_dm[ik_glob]);
+		hermite(laserPt, laserPdag, nb_dm);
 
-		term_plus(dm1[ik_glob], pumpPt, dm[ik_glob], pumpPdag);
-		term_minus(pumpPdag, dm1[ik_glob], pumpPt, dm[ik_glob]);
+		term_plus(dm1[ik_glob], laserPt, dm[ik_glob], laserPdag);
+		term_minus(laserPdag, dm1[ik_glob], laserPt, dm[ik_glob]);
 
-		term_plus(dm1[ik_glob], pumpPdag, dm[ik_glob], pumpPt);
-		term_minus(pumpPt, dm1[ik_glob], pumpPdag, dm[ik_glob]);
+		term_plus(dm1[ik_glob], laserPdag, dm[ik_glob], laserPt);
+		term_minus(laserPt, dm1[ik_glob], laserPdag, dm[ik_glob]);
 
 		for (int i = 0; i < nb_dm; i++)
 		for (int j = 0; j < nb_dm; j++)
-			ddmdt_pump[ik_glob][i*nb_dm + j] += prefac * (ddmdt_contrib[i*nb_dm + j] + conj(ddmdt_contrib[j*nb_dm + i]));
+			ddmdt_laser[ik_glob][i*nb_dm + j] += prefac * (ddmdt_contrib[i*nb_dm + j] + conj(ddmdt_contrib[j*nb_dm + i]));
 	}
 
-	mp->allreduce(ddmdt_pump, nk_glob, nb_dm*nb_dm, MPI_SUM);
+	mp->allreduce(ddmdt_laser, nk_glob, nb_dm*nb_dm, MPI_SUM);
 }
 inline void electronlight::term_plus(complex *dm1, complex *a, complex *dm, complex *b){
 	// + (1-dm) * a * dm * b
@@ -97,16 +109,16 @@ inline void electronlight::term_minus(complex *a, complex *dm1, complex *b, comp
 		ddmdt_contrib[i] -= maux1_dm[i];
 }
 
-void electronlight::compute_pumpP(){
+void electronlight::compute_laserP(){
 	for (int ik_local = 0; ik_local < nk_proc; ik_local++){
 		int ik_glob = ik_local + ik0_glob;
-		// v are not distributed through cores but pumpP are
+		// v are not distributed through cores but laserP are
 		for (int iDir = 0; iDir < 3; iDir++)
 			trunc_copy_mat(v_dm[iDir], v[ik_glob][iDir], nb, 0, nb_dm, bStart_dm, bEnd_dm);
-		vec3_dot_vec3array(pumpP[ik_local], pmp.pumpPol, v_dm, nb_dm*nb_dm);
+		vec3_dot_vec3array(laserP[ik_local], pmp.laserPol, v_dm, nb_dm*nb_dm);
 	}
 
-	if (pumpMode == "perturb" || pumpMode == "lindblad"){ // not needed for pumpMode == "coherent"
+	if (pmp.laserAlg == "perturb" || pmp.laserAlg == "lindblad"){ // not needed for pmp.laserAlg == "coherent"
 		double prefac_exp = -0.5*pmp.pumpTau*pmp.pumpTau,
 			prefac_delta = sqrt(pmp.pumpTau / sqrt(M_PI));
 
@@ -114,8 +126,8 @@ void electronlight::compute_pumpP(){
 			int ik_glob = ik_local + ik0_glob;
 			for (int i = 0; i < nb_dm; i++)
 			for (int j = 0; j < nb_dm; j++){
-				double de = e_dm[ik_glob][i] - e_dm[ik_glob][j] - pmp.pumpE;
-				pumpP[ik_local][i*nb_dm + j] *= (prefac_delta * exp(prefac_exp * de*de));
+				double de = e_dm[ik_glob][i] - e_dm[ik_glob][j] - pmp.laserE;
+				laserP[ik_local][i*nb_dm + j] *= (prefac_delta * exp(prefac_exp * de*de));
 			}
 		}
 	}
@@ -124,19 +136,19 @@ void electronlight::compute_pumpP(){
 void electronlight::pump_pert(){
 	if (ionode) printf("\nenter pump_pert\n");
 	zeros(dm_pump, nk_glob, nb_dm*nb_dm);
-	double prefac = M_PI * pmp.pumpA0 * pmp.pumpA0;
+	double prefac = M_PI * pmp.laserA * pmp.laserA;
 
 	for (int ik_local = 0; ik_local < nk_proc; ik_local++){
 		int ik_glob = ik_local + ik0_glob;
 		zeros(deltaRho, nb_dm*nb_dm);
 
-		hermite(pumpP[ik_local], pumpPdag, nb_dm); // void hermite(complex *m, complex *h, int n); in mymatrix.h
+		hermite(laserP[ik_local], laserPdag, nb_dm); // void hermite(complex *m, complex *h, int n); in mymatrix.h
 
-		term_plus(fbar_dm[ik_glob], pumpP[ik_local], f_dm[ik_glob], pumpPdag);
-		term_minus(pumpPdag, fbar_dm[ik_glob], pumpP[ik_local], f_dm[ik_glob]);
+		term_plus(fbar_dm[ik_glob], laserP[ik_local], f_dm[ik_glob], laserPdag);
+		term_minus(laserPdag, fbar_dm[ik_glob], laserP[ik_local], f_dm[ik_glob]);
 
-		term_plus(fbar_dm[ik_glob], pumpPdag, f_dm[ik_glob], pumpP[ik_local]);
-		term_minus(pumpP[ik_local], fbar_dm[ik_glob], pumpPdag, f_dm[ik_glob]);
+		term_plus(fbar_dm[ik_glob], laserPdag, f_dm[ik_glob], laserP[ik_local]);
+		term_minus(laserP[ik_local], fbar_dm[ik_glob], laserPdag, f_dm[ik_glob]);
 
 		for (int i = 0; i < nb_dm; i++)
 		for (int j = 0; j < nb_dm; j++)

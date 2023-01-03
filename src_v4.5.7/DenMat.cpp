@@ -103,14 +103,14 @@ void singdenmat_k::set_dm_eq(double temperature, double **e, int nv){
 	compute_f(temperature, mue, muh, e, nv);
 	if (ionode && t == t0){
 		printf("\ne: ");
-		for (int ik = 0; ik < std::min(nk_glob, 20); ik++){
+		for (int ik = 0; ik < std::min(nk_glob, 10); ik++){
 			printf("ik= %d:", ik);
 			for (int i = 0; i < nb; i++)
 				printf(" %lg", e[ik][i]);
 			printf("\n");
 		}
 		printf("f: ");
-		for (int ik = 0; ik < std::min(nk_glob, 20); ik++){
+		for (int ik = 0; ik < std::min(nk_glob, 10); ik++){
 			printf("ik= %d:", ik);
 			for (int i = 0; i < nb; i++)
 				printf(" %lg", f_eq[ik][i]);
@@ -259,6 +259,7 @@ void singdenmat_k::set_oneminusdm(){
 	}
 	zeros(ddmdt, nk_glob, nb*nb);
 }
+/*
 void singdenmat_k::init_dmDP(complex **ddm_eq, complex **ddm_neq){
 	if (ddm_eq == nullptr || ddm_neq == nullptr) return;
 	this->ddm_eq = ddm_eq;
@@ -295,6 +296,7 @@ void singdenmat_k::use_dmDP(double **f){
 			dm[ik_glob][i*nb + b] = (alg.picture == "schrodinger") ? ddm[i*nb + b] : ddm[i*nb + b] * cis((e[ik_glob][i] - e[ik_glob][b])*t);
 	}
 }
+*/
 
 void singdenmat_k::read_dm_restart(){
 	if (ionode) printf("\nread denmat_restart.bin:\n");

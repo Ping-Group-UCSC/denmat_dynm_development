@@ -12,29 +12,35 @@ public:
 	electron* elec;
 	mymp *mp;
 	bool active;
-	string pumpMode;
 	int nk_glob, ik0_glob, ik1_glob, nk_proc, nb, bStart_dm, bEnd_dm, nb_dm, it_start; double nk_full;
 	double sys_size, dt;
 	double **e, **f, **e_dm, **f_dm, **fbar_dm;
 	double **imEpsGS, **imEps;
-	complex ***v, **v_dm, *vdag, **v_full, **pumpP, **probePpol, *probeP; // probeP0 is the energy-independent part of probeP
+	complex ***v, **v_dm, *vdag, **v_full, **laserP, **probePpol, *probeP; // probeP0 is the energy-independent part of probeP
 	complex **dm_pump, *ddmdt_contrib;
 
 	electronlight(lattice *latt, parameters *param, electron *elec, mymp *mp)
-		: latt(latt), elec(elec), mp(mp), active(fabs(pmp.pumpA0) > 1e-10), pumpMode(param->pumpMode), dt(param->tstep_pump),
+		: latt(latt), elec(elec), mp(mp), active(fabs(pmp.laserA) > 1e-10), dt(param->tstep_laser),
 		nk_glob(elec->nk), nk_full(elec->nk_full), nb(elec->nb), nb_dm(elec->nb_dm), bStart_dm(elec->bStart_dm), bEnd_dm(elec->bEnd_dm),
 		e(elec->e), f(elec->f), e_dm(elec->e_dm), f_dm(elec->f_dm), v(elec->v),
 		ik0_glob(mp->varstart), ik1_glob(mp->varend), nk_proc(ik1_glob - ik0_glob)
 	{
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("electron-light\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
 		fbar_dm = alloc_real_array(nk_glob, nb_dm);
 		for (int ik = 0; ik < nk_glob; ik++)
 		for (int ib = 0; ib < nb_dm; ib++)
 			fbar_dm[ik][ib] = 1. - f_dm[ik][ib];
 
 		v_dm = alloc_array(3, nb_dm*nb_dm);
-		pumpP = alloc_array(nk_proc, nb_dm*nb_dm); // notice that not all k points are needed for one cpu
-		pumpPt = new complex[nb_dm*nb_dm]; zeros(pumpPt, nb_dm*nb_dm);
-		pumpPdag = new complex[nb_dm*nb_dm]; zeros(pumpPdag, nb_dm*nb_dm);
+		laserP = alloc_array(nk_proc, nb_dm*nb_dm); // notice that not all k points are needed for one cpu
+		laserPt = new complex[nb_dm*nb_dm]; zeros(laserPt, nb_dm*nb_dm);
+		laserPdag = new complex[nb_dm*nb_dm]; zeros(laserPdag, nb_dm*nb_dm);
 		maux1_dm = new complex[nb_dm*nb_dm]; zeros(maux1_dm, nb_dm*nb_dm);
 		maux2_dm = new complex[nb_dm*nb_dm]; zeros(maux2_dm, nb_dm*nb_dm);
 		deltaRho = new complex[nb_dm*nb_dm]; zeros(deltaRho, nb_dm*nb_dm);
@@ -57,9 +63,9 @@ public:
 			deltaf = new double[nb]; zeros(deltaf, nb);
 		}
 
-		compute_pumpP();
+		compute_laserP();
 
-		if (pumpMode == "perturb") 
+		if (pmp.laserAlg == "perturb") 
 			dm_pump = alloc_array(nk_glob, nb_dm*nb_dm);
 
 		if (ionode && pmp.probePol.size() > 0 && pmp.probeNE > 0){
@@ -72,29 +78,32 @@ public:
 		}
 	}
 
-	void compute_pumpP();
+	void compute_laserP();
 
-	complex *pumpPt, *pumpPdag, *probePt, *probePdag, *maux1, *maux2, *maux1_dm, *maux2_dm, *deltaRho, *dm_expand, *dm1_expand;
+	complex *laserPt, *laserPdag, *probePt, *probePdag, *maux1, *maux2, *maux1_dm, *maux2_dm, *deltaRho, *dm_expand, *dm1_expand;
 	double *deltaf, *delta;
 	void pump_pert();
 	inline void term_plus(double *d1, complex *m1, double *d2, complex *m2);
 	inline void term_minus(complex *m1, double *d1, complex *m2, double *d2);
 
-	bool during_pump(double t){
-		return (pumpMode == "lindblad" || pumpMode == "coherent") && fabs(t - pmp.pump_tcenter) <= 6.1 * pmp.pumpTau;
+	bool during_laser(double t){
+		if (pmp.laserMode == "constant") return true; //laserMode is either pump or constant
+		return (pmp.laserAlg == "lindblad" || pmp.laserAlg == "coherent") && fabs(t - pmp.pump_tcenter) <= 6.1 * pmp.pumpTau;
 	}
-	bool enter_pump(double t, double tnext){
-		return !during_pump(t) && during_pump(tnext);
+	bool enter_laser(double t, double tnext){
+		if (pmp.laserMode == "constant") return false;
+		return !during_laser(t) && during_laser(tnext);
 	}
-	bool leave_pump(double t, double tnext){
-		if (pumpMode != "lindblad" && pumpMode != "coherent") return false;
-		return during_pump(t) && !during_pump(tnext);
+	bool leave_laser(double t, double tnext){
+		if (pmp.laserMode == "constant") return false;
+		if (pmp.laserAlg != "lindblad" && pmp.laserAlg != "coherent") return false;
+		return during_laser(t) && !during_laser(tnext);
 	}
-	void evolve_pump(double t, complex** dm, complex** dm1, complex** ddmdt_pump);
-	void evolve_pump_coh(double t, complex** dm, complex** dm1, complex** ddmdt_pump);
-	void evolve_pump_lindblad(double t, complex** dm, complex** dm1, complex** ddmdt_pump);
-	inline void compute_pumpPt_coh(double t, complex *Pk, double *ek);
-	inline void compute_pumpPt(double t, complex *Pk, double *ek);
+	void evolve_laser(double t, complex** dm, complex** dm1, complex** ddmdt_laser);
+	void evolve_laser_coh(double t, complex** dm, complex** dm1, complex** ddmdt_laser);
+	void evolve_laser_lindblad(double t, complex** dm, complex** dm1, complex** ddmdt_laser);
+	inline void compute_laserPt_coh(double t, complex *Pk, double *ek);
+	inline void compute_laserPt(double t, complex *Pk, double *ek);
 	inline void term_plus(complex *dm1, complex *a, complex *dm, complex *b);
 	inline void term_minus(complex *a, complex *dm1, complex *b, complex *dm);
 

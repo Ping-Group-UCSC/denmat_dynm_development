@@ -53,14 +53,14 @@ void electron::set_H_Ez(int ik0_glob, int ik1_glob){ // seems not to work proper
 	fread(H_Ez[0], 2 * sizeof(double), nk_proc*nb_dm*nb_dm, fp);
 	axbyc(H_Ez, nullptr, nk_proc, nb_dm*nb_dm, c0, complex(scale_Ez, 0));
 	if (ionode){
-		for (int ik = 0; ik < std::min(nk_proc, 20); ik++)
+		for (int ik = 0; ik < std::min(nk_proc, 10); ik++)
 			printf_complex_mat(H_Ez[ik], nb_dm, nb_dm, "");
 	}
 	fclose(fp);
 }
 
 void electron::compute_dm_Bpert_1st(vector3<> Bpert, double t0){
-	if (ionode) printf("\nenter compute_dm_Bpert_1st\n");
+	if (ionode) printf("\ncompute magnectic-field-perturbed density matrix\n");
 	degthr = 1e-8;
 
 	dm_Bpert = alloc_array(nk, nb_dm*nb_dm);
@@ -94,7 +94,7 @@ void electron::compute_dm_Bpert_1st(vector3<> Bpert, double t0){
 		for (int i = 0; i < nb_dm; i++)
 			dm_Bpert[ik][i*nb_dm + i] += f_dm[ik][i];
 	}
-	if (ionode) printf("Tr[ddm_Bpert ddm_Bpert] = %lg\n", trace_sq_ddm_tot / nk);
+	//if (ionode) printf("Tr[ddm_Bpert ddm_Bpert] = %lg\n", trace_sq_ddm_tot / nk);
 }
 
 void electron::read_ldbd_size(){
@@ -169,15 +169,18 @@ void electron::read_ldbd_Bso(){
 	fclose(fp);
 }
 void electron::read_ldbd_ek(){
-	if (ionode) printf("\nread ldbd_ek(_morek£©.bin:\n");
+	if (ionode) printf("\nread ldbd_ek(_morek).bin:\n");
 	FILE *fp = fopen("ldbd_data/ldbd_ek.bin", "rb");
 	size_t expected_size = nk*nb*sizeof(double);
 	check_file_size(fp, expected_size, "ldbd_ek.bin size does not match expected size");
-	for (int ik = 0; ik < nk; ik++){
+	for (int ik = 0; ik < nk; ik++)
 		fread(e[ik], sizeof(double), nb, fp);
-		for (int i = 0; i < nb; i++)
-			f[ik][i] = fermi(temperature, mu, e[ik][i]);
-	}
+	if (scissor != 0)
+	for (int ik = 0; ik < nk; ik++)
+		axbyc(&e[ik][nv], nullptr, nb - nv, 0, 1, scissor);
+	for (int ik = 0; ik < nk; ik++)
+	for (int i = 0; i < nb; i++)
+		f[ik][i] = fermi(temperature, mu, e[ik][i]);
 	if (ionode) print_array_atk(e, nb, "ek:");
 	if (ionode) print_array_atk(f, nb, "fk:");
 	fclose(fp);
@@ -188,11 +191,14 @@ void electron::read_ldbd_ek(){
 	fp = fopen("ldbd_data/ldbd_ek_morek.bin", "rb");
 	expected_size = nk_morek*nb*sizeof(double);
 	check_file_size(fp, expected_size, "ldbd_ek_morek.bin size does not match expected size");
-	for (int ik = 0; ik < nk_morek; ik++){
+	for (int ik = 0; ik < nk_morek; ik++)
 		fread(e_morek[ik], sizeof(double), nb, fp);
-		for (int i = 0; i < nb; i++)
-			f_morek[ik][i] = fermi(temperature, mu, e_morek[ik][i]);
-	}
+	if (scissor != 0)
+	for (int ik = 0; ik < nk_morek; ik++)
+		axbyc(&e_morek[ik][nv], nullptr, nb - nv, 0, 1, scissor);
+	for (int ik = 0; ik < nk_morek; ik++)
+	for (int i = 0; i < nb; i++)
+		f_morek[ik][i] = fermi(temperature, mu, e_morek[ik][i]);
 	e_dm_morek = trunc_alloccopy_array(e_morek, nk_morek, bStart_dm, bEnd_dm);
 	if (ionode) print_array_atk(e_morek, nb, "ek_morek:");
 	f_dm_morek = trunc_alloccopy_array(f_morek, nk_morek, bStart_dm, bEnd_dm);
@@ -298,7 +304,7 @@ void electron::read_ldbd_smat(){
 				printf_complex_mat(s[ik_kpath[ik]][2], nb_dm, "");
 			}
 		else
-			for (int ik = 0; ik < std::min(nk, 20); ik++){
+			for (int ik = 0; ik < std::min(nk, 10); ik++){
 				printf("ik= %d:", ik);
 				printf_complex_mat(s[ik][2], nb_dm, "");
 			}
@@ -329,7 +335,7 @@ void electron::read_ldbd_lmat(){
 			printf_complex_mat(l[ik_kpath[ik]][2], nb_dm, "");
 		}
 		else
-		for (int ik = 0; ik < std::min(nk, 20); ik++){
+		for (int ik = 0; ik < std::min(nk, 10); ik++){
 			printf("ik= %d:", ik);
 			printf_complex_mat(l[ik][2], nb_dm, "");
 		}
@@ -346,7 +352,7 @@ void electron::read_ldbd_layermat(){
 	for (int ik = 0; ik < nk; ik++)
 		fread(layer[ik], 2 * sizeof(double), nb_dm*nb_dm, fp);
 	if (ionode){
-		for (int ik = 0; ik < std::min(nk, 20); ik++)
+		for (int ik = 0; ik < std::min(nk, 10); ik++)
 			printf_complex_mat(layer[ik], nb_dm, nb_dm, "");
 	}
 	fclose(fp);
@@ -360,7 +366,7 @@ void electron::read_ldbd_layerspinmat(){
 	for (int ik = 0; ik < nk; ik++)
 		fread(layerspin[ik], 2 * sizeof(double), nb_dm*nb_dm, fp);
 	if (ionode){
-		for (int ik = 0; ik < std::min(nk, 20); ik++)
+		for (int ik = 0; ik < std::min(nk, 10); ik++)
 			printf_complex_mat(layerspin[ik], nb_dm, nb_dm, "");
 	}
 	fclose(fp);
@@ -374,7 +380,7 @@ void electron::read_ldbd_vmat(){
 	for (int idir = 0; idir < 3; idir++)
 		fread(v[ik][idir], 2 * sizeof(double), nb_dm*nb, fp);
 	//if (ionode){
-	//	for (int ik = 0; ik < std::min(nk, 20); ik++)
+	//	for (int ik = 0; ik < std::min(nk, 10); ik++)
 	//		printf_complex_mat(v[ik][2], nb_dm, nb, "");
 	//}
 	fclose(fp);
@@ -408,7 +414,7 @@ void electron::print_array_atk(double *a, string s, double unit){
 		for (int ik = 0; ik < ik_kpath.size(); ik++)
 			printf("ik= %d: %lg\n", ik_kpath[ik], a[ik_kpath[ik]]/unit);
 	else
-		for (int ik = 0; ik < std::min(nk, 20); ik++)
+		for (int ik = 0; ik < std::min(nk, 10); ik++)
 			printf("ik= %d: %lg\n", ik, a[ik]/unit);
 }
 void electron::print_array_atk(bool *a, string s){
@@ -417,7 +423,7 @@ void electron::print_array_atk(bool *a, string s){
 	for (int ik = 0; ik < ik_kpath.size(); ik++)
 		printf("ik= %d: %d\n", ik_kpath[ik], a[ik_kpath[ik]]);
 	else
-	for (int ik = 0; ik < std::min(nk, 20); ik++)
+	for (int ik = 0; ik < std::min(nk, 10); ik++)
 		printf("ik= %d: %d\n", ik, a[ik]);
 }
 void electron::print_array_atk(double **a, int n, string s, double unit){
@@ -430,7 +436,7 @@ void electron::print_array_atk(double **a, int n, string s, double unit){
 			printf("\n");
 		}
 	else
-		for (int ik = 0; ik < std::min(nk, 20); ik++){
+		for (int ik = 0; ik < std::min(nk, 10); ik++){
 			printf("ik= %d:", ik);
 			for (int i = 0; i < n; i++)
 				printf(" %lg", a[ik][i]/unit);
@@ -445,7 +451,7 @@ void electron::print_mat_atk(complex **m, int n, string s){
 			printf_complex_mat(m[ik_kpath[ik]], n, "");
 		}
 	else
-		for (int ik = 0; ik < std::min(nk, 20); ik++){
+		for (int ik = 0; ik < std::min(nk, 10); ik++){
 			printf("ik= %d:", ik);
 			printf_complex_mat(m[ik], n, "");
 		}

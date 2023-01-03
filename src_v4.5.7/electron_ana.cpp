@@ -19,7 +19,39 @@ double electron::average_dfde(double **arr, double **f, int n1, int n2, bool inv
 }
 
 void electron::compute_b2(double de, double degauss, double degthr){
+	compute_b2(de, degauss, degthr, false);
+	if (this->rotate_spin_axes) compute_b2(de, degauss, degthr, true);
+}
+
+void electron::compute_b2(double de, double degauss, double degthr, bool rotate_spin_axes){
+	if (ionode) printf("\n");
+	if (ionode) printf("\n**************************************************\n");
+	if (ionode) printf("electron: Analysis spin mixing, spin axis, spin-flip angle, etc.:\n");
+	if (ionode && rotate_spin_axes){ printf("with rotated spin axes:\n"); sdir_rot.print(stdout, " %lg", true); }
+	if (ionode) printf("**************************************************\n");
 	if (ionode && !is_dir("electron_analysis")) system("mkdir electron_analysis");
+
+	//rotate the spin axes if needed
+	complex ***s_rot = nullptr;
+	string str_rot = rotate_spin_axes ? "rotated_" : "";
+	if (rotate_spin_axes){
+		s_rot = alloc_array(nk, 3, nb_dm*nb_dm);
+		for (int ik = mp->varstart; ik < mp->varend; ik++){
+			//if (rotate_spin_axes) Sexp = sdir_rot * Sexp;
+			for (int id = 2; id >= 0; id--){
+				complex *s_rot_kd = s_rot[ik][id];
+				for (int jd = 2; jd >= 0; jd--){
+					double sdir_rot_ij = sdir_rot(id, jd);
+					for (int b1 = 0; b1 < nb_dm; b1++)
+					for (int b2 = 0; b2 < nb_dm; b2++)
+						s_rot_kd[b1*nb_dm + b2] += sdir_rot_ij * s[ik][jd][b1*nb_dm + b2];
+				}
+			}
+		}
+		mp->allreduce(s_rot, nk, 3, nb_dm*nb_dm, MPI_SUM);
+	}
+	else
+		s_rot = s;
 
 	// read electron energy range and maximum phonon energy
 	double ebot_dm, etop_dm, omega_max;
@@ -76,7 +108,7 @@ void electron::compute_b2(double de, double degauss, double degthr){
 	vector3<double> b2_avg; double sum_dfde = 0;
 	for (int ik = 0; ik < nk; ik++){
 		for (int id = 2; id >= 0; id--){
-			deg_proj(s[ik][id], e_dm[ik], nb_dm, degthr, sdeg);
+			deg_proj(s_rot[ik][id], e_dm[ik], nb_dm, degthr, sdeg);
 			aij_bji(sisi, sdeg, sdeg, nb_dm);
 			for (int b = 0; b < nb_dm; b++){
 				b2kn[ik][id][b] = 0.5 - sqrt(sisi[b]);
@@ -90,10 +122,10 @@ void electron::compute_b2(double de, double degauss, double degthr){
 
 	// output spin-mixing
 	if (ionode){
-		printf("\nb2_avg (method for Kramers degenerate system):\n %lg %lg %lg\n", b2_avg[0], b2_avg[1], b2_avg[2]);
+		printf("b2 (thermal averaged; method for Kramers degenerate system):\n %lg %lg %lg\n", b2_avg[0], b2_avg[1], b2_avg[2]);
 		string sdir[3]; sdir[0] = "x"; sdir[1] = "y"; sdir[2] = "z";
 		for (int id = 2; id >= 0; id--){
-			string fname = "electron_analysis/b2_" + sdir[id] + "_kn.out";
+			string fname = "electron_analysis/b2_" + str_rot + sdir[id] + "_kn.out";
 			FILE *fp = fopen(fname.c_str(), "w");
 			fprintf(fp, "# energy (eV) b2");
 			for (int ik = 0; ik < nk; ik++)
@@ -129,12 +161,12 @@ void electron::compute_b2(double de, double degauss, double degthr){
 		for (int id = 2; id >= 0; id--){
 			for (int ik = mp->varstart; ik < mp->varend; ik++){
 				// diagonalize spin matrices in energy-degenerate subspaces
-				bool isI_ik = diagonalize_deg(s[ik][id], e_dm[ik], nb_dm, degthr, eig_ik_sdeg, Ui_sdeg);
+				bool isI_ik = diagonalize_deg(s_rot[ik][id], e_dm[ik], nb_dm, degthr, eig_ik_sdeg, Ui_sdeg);
 				if (id == 2 && !isI_ik) count_nk_deg++;
 				if (ionode && !isI_ik){
 					printf("id= %d ik= %d\n", id, ik);
 					printf_real_array(e_dm[ik], nb_dm, "e_dm: ");
-					printf_complex_mat(s[ik][id], nb_dm, "s: ");
+					printf_complex_mat(s_rot[ik][id], nb_dm, "s: ");
 					printf_real_array(eig_ik_sdeg, nb_dm, "eig_sdeg: ");
 					printf_complex_mat(Ui_sdeg, nb_dm, "U_sdeg: ");
 				}
@@ -172,7 +204,7 @@ void electron::compute_b2(double de, double degauss, double degthr){
 					int iv1, iv2;
 					if (!latt->kpair_is_allowed(kvec[ik], kvec[jk], iv1, iv2)) continue;
 					// diagonalize spin matrices in energy-degenerate subspaces
-					bool isI_jk = diagonalize_deg(s[jk][id], e_dm[jk], nb_dm, degthr, eig_jk_sdeg, Uj_sdeg);
+					bool isI_jk = diagonalize_deg(s_rot[jk][id], e_dm[jk], nb_dm, degthr, eig_jk_sdeg, Uj_sdeg);
 
 					// compute overlap matrix
 					zgemm_interface(ovlp, U[ik], U[jk], nb_dm, nb_dm, nb_wannier, c1, c0, CblasConjTrans);
@@ -240,7 +272,7 @@ void electron::compute_b2(double de, double degauss, double degthr){
 		// double check spin-mixing again
 		b2_avg_2 = b2_avg_2 / sum_dfde;
 		for (int id = 2; id >= 0; id--){
-			printf("id= %d b2 by two methods (S^2 / diagonalization): %14.7le %14.7le\n", id, b2_avg[id], b2_avg_2[id]);
+			if (ionode) printf("id= %d b2 by two methods (S^2 / diagonalization): %14.7le %14.7le\n", id, b2_avg[id], b2_avg_2[id]);
 			//if (ionode && fabs(b2_avg_2[id] - b2_avg[id]) > 1e-6){
 			//	printf("id= %d b2: %14.7le %14.7le\n", id, b2_avg[id], b2_avg_2[id]);
 			//	error_message("|b2_avg_2[id] - b2_avg[id]| > 1e-6", "compute_b2");
@@ -271,8 +303,8 @@ void electron::compute_b2(double de, double degauss, double degthr){
 		if (ionode){
 			string sdir[3]; sdir[0] = "x"; sdir[1] = "y"; sdir[2] = "z";
 			for (int id = 2; id >= 0; id--){
-				string fnamesf = "electron_analysis/osf2w_" + sdir[id] + ".out",
-					fnamesc = "electron_analysis/osc2w_" + sdir[id] + ".out";
+				string fnamesf = "electron_analysis/osf2w_" + str_rot + sdir[id] + ".out",
+					fnamesc = "electron_analysis/osc2w_" + str_rot + sdir[id] + ".out";
 				FILE *fpsf = fopen(fnamesf.c_str(), "w"),
 					*fpsc = fopen(fnamesc.c_str(), "w");
 				fprintf(fpsf, "# transition energy (meV) osf2w Nsfw osf2*Nsf/Nf\n");
@@ -284,8 +316,8 @@ void electron::compute_b2(double de, double degauss, double degthr){
 				fclose(fpsf); fclose(fpsc);
 
 				for (int iw = 0; iw < nw; iw++){
-					string fnamesf = "electron_analysis/osf2ew_" + sdir[id] + "_w" + int2str(iw) + ".out",
-						fnamesc = "electron_analysis/osc2ew_" + sdir[id] + "_w" + int2str(iw) + ".out";
+					string fnamesf = "electron_analysis/osf2ew_" + str_rot + sdir[id] + "_w" + int2str(iw) + ".out",
+						fnamesc = "electron_analysis/osc2ew_" + str_rot + sdir[id] + "_w" + int2str(iw) + ".out";
 					FILE *fpsf = fopen(fnamesf.c_str(), "w"),
 						*fpsc = fopen(fnamesc.c_str(), "w");
 					fprintf(fpsf, "# elec. energy (eV) osf2ew Nsfew osf2e*Nsfe (for transition energy: %lg meV)\n", wgrid[iw] / eV * 1000);
@@ -305,10 +337,17 @@ void electron::compute_b2(double de, double degauss, double degthr){
 	}
 	dealloc_real_array(b2kn);
 
+	if (rotate_spin_axes) dealloc_array(s_rot);
 
-	// sin^2(theta^{sf}/2) whether theta^{sf} is the spin-flip angle, i.e., the angle between -S^exp at k1 and S^exp at k2
+
+
+	/////////////////////////////////////////////////////////////////////////
+	// averaged spin axis; angle between spins and spin axis; spin-flip angle
 	// currently degeneracy is not considered
-	// spin expectation value magnitude is assumed close to 0.5
+	/////////////////////////////////////////////////////////////////////////
+	if (rotate_spin_axes) return; // the following analysis are unrelated to whether spin axes are rotated, so do not need to repeat
+	
+	// spin expectation values
 	std::vector<std::vector<vector3<>>> Sexp_dir(nk, std::vector<vector3<>>(nb_dm));
 	for (int ik = 0; ik < nk; ik++)
 	for (int b = 0; b < nb_dm; b++){
@@ -320,7 +359,46 @@ void electron::compute_b2(double de, double degauss, double degthr){
 			error_message("fabs(sqrt(Sexp_dir.length_squared()) - 1) > 1e-10", "compute_b2");
 		}
 	}
+	if (ionode){
+		string sdir[3]; sdir[0] = "x"; sdir[1] = "y"; sdir[2] = "z";
+		for (int id = 2; id >= 0; id--){
+			string fname = "electron_analysis/Sexp_dir_" + sdir[id] + "_kn.out";
+			FILE *fp = fopen(fname.c_str(), "w");
+			fprintf(fp, "# energy (eV) Sexp_dir\n");
+			for (int ik = 0; ik < nk; ik++)
+			for (int b = 0; b < nb_dm; b++){
+				fprintf(fp, "%14.7le %14.7le\n", e_dm[ik][b] / eV, Sexp_dir[ik][b][id]);
+			}
+			fclose(fp);
+		}
+	}
 
+	//average spin axis
+	vector3<double> Saxis_avg(vector3<double>(0,0,0));
+	for (int ik = 0; ik < nk; ik++)
+	for (int b = 0; b < nb_dm; b++){
+		double cos_theta_from_sdir_z = dot(Sexp_dir[ik][b], sdir_z);
+		vector3<double> Saxis = cos_theta_from_sdir_z > 0 ? Sexp_dir[ik][b] : -Sexp_dir[ik][b];
+		double dfde = f_dm[ik][b] * (1 - f_dm[ik][b]);
+		Saxis_avg = Saxis_avg + Saxis * dfde;
+	}
+	Saxis_avg = Saxis_avg / sum_dfde;
+	if (ionode) printf("Saxis_avg: %lg %lg %lg\n", Saxis_avg[0], Saxis_avg[1], Saxis_avg[2]);
+
+	//angle between k-dependent spins and the averaged spin axis
+	double sin2_half_theta_avg = 0;
+	for (int ik = 0; ik < nk; ik++)
+	for (int b = 0; b < nb_dm; b++){
+		double cos_theta = fabs(dot(Sexp_dir[ik][b], Saxis_avg));
+		double sin2_half_theta = 1 - cos_theta < 0 ? 0 : 0.5 * (1 - cos_theta);
+		double dfde = f_dm[ik][b] * (1 - f_dm[ik][b]);
+		sin2_half_theta_avg += sin2_half_theta * dfde;
+	}
+	sin2_half_theta_avg /= sum_dfde;
+	if (ionode) printf("sin2_half_theta_avg = %lg\n", sin2_half_theta_avg);
+
+	//spin-flip angle
+	// sin^2(theta^{sf}/2) whether theta^{sf} is the spin-flip angle, i.e., the angle between -S^exp at k1 and S^exp at k2
 	double **sin2_half_theta_sf_ew = alloc_real_array(ne, nw), **New = alloc_real_array(ne, nw);;
 	std::vector<double> sin2_half_theta_sf_w_avg(nw), Nw(nw);
 	std::vector<double> nstates_e(ne,0);
@@ -401,7 +479,7 @@ void electron::compute_b2(double de, double degauss, double degthr){
 		Nw[iw] *= prefac_Nw;
 	}
 
-	// output frequency-dependent spin mixing
+	// output frequency-dependent spin-flip angle
 	if (ionode){
 		string fname = "electron_analysis/sin2_half_theta_sf_w.out";
 		FILE *fp = fopen(fname.c_str(), "w");
@@ -445,13 +523,22 @@ void electron::compute_b2(double de, double degauss, double degthr){
 }
 
 void electron::compute_Bin2(){
+	compute_Bin2(false);
+	if (this->rotate_spin_axes) compute_Bin2(true);
+}
+
+void electron::compute_Bin2(bool rotate_spin_axes){
 	//analyse internal magnetic field
 	if (ionode && !is_dir("electron_analysis")) system("mkdir electron_analysis");
-	if (ionode){ printf("\nAnalyse internal magnetic fields\n"); }
+	if (ionode) printf("\n");
+	if (ionode) printf("\n**************************************************\n");
+	if (ionode){ printf("electron: Analyse internal magnetic fields\n"); }
+	if (ionode && rotate_spin_axes){ printf("with rotated spin axes:\n"); sdir_rot.print(stdout, " %lg", true); }
+	if (ionode) printf("**************************************************\n");
 
 	// Bin_i = DeltaE * S^exp_i / 2 / |S^exp|^2
 	// Bin_SHalf_i = DeltaE * S^exp_i / |S^exp|, which is Bin_i with |S^exp| normalized to 0.5
-	std::vector<vector3<>> Binkn(nk*nb_dm), Binkn_SHalf(nk*nb_dm);
+	std::vector<vector3<>> Binkn(nk*nb_dm), Binkn_SHalf(nk*nb_dm), Binabskn_SHalf(nk*nb_dm);
 	std::vector<double> dfde(nk*nb_dm), dekn(nk*nb_dm);
 	for (int ik = 0; ik < nk; ik++)
 	for (int b = 0; b < nb_dm; b++){
@@ -459,6 +546,7 @@ void electron::compute_Bin2(){
 		dekn[ik*nb_dm + b] = (b_dft % 2 == 0) ? e_dm[ik][b + 1] - e_dm[ik][b] : e_dm[ik][b] - e_dm[ik][b - 1];
 		double de_sign = (b_dft % 2 == 0) ? -dekn[ik*nb_dm + b] : dekn[ik*nb_dm + b]; // include sign for Bin
 		vector3<> Sexp(s[ik][0][b*nb_dm + b].real(), s[ik][1][b*nb_dm + b].real(), s[ik][2][b*nb_dm + b].real());
+		if (rotate_spin_axes) Sexp = sdir_rot * Sexp;
 		double Sexp2 = Sexp.length_squared();
 		double Sexp_abs = sqrt(Sexp2);
 		double two_Sexp2 = 2 * Sexp2;
@@ -466,6 +554,7 @@ void electron::compute_Bin2(){
 		for (int id = 0; id < 3; id++){
 			Binkn[ik*nb_dm + b][id] = de_sign * Sexp[id] / two_Sexp2;
 			Binkn_SHalf[ik*nb_dm + b][id] = de_sign * Sexp[id] / Sexp_abs;
+			Binabskn_SHalf[ik*nb_dm + b][id] = fabs(de_sign * Sexp[id] / Sexp_abs);
 		}
 	}
 	double de_mean = mean_of_array(dekn.data(), nk*nb_dm, dfde.data());
@@ -477,22 +566,28 @@ void electron::compute_Bin2(){
 	vector3<> Bin_SHalf_mean = mean_of_(Binkn_SHalf, dfde.data()); // actually external magnetic field
 	vector3<> Bin_SHalf_sigma = sigma_of_(Binkn_SHalf, false, Bin_SHalf_mean, dfde.data());
 	vector3<> Bin2_SHalf_avg(Bin_SHalf_sigma[0] * Bin_SHalf_sigma[0], Bin_SHalf_sigma[1] * Bin_SHalf_sigma[1], Bin_SHalf_sigma[2] * Bin_SHalf_sigma[2]);
+	vector3<> Binabs_SHalf_mean = mean_of_(Binabskn_SHalf, dfde.data()); // actually external magnetic field
+	vector3<> Binabs_SHalf_sigma = sigma_of_(Binabskn_SHalf, false, Binabs_SHalf_mean, dfde.data());
+	vector3<> Binabs2_SHalf_avg(Binabs_SHalf_sigma[0] * Binabs_SHalf_sigma[0], Binabs_SHalf_sigma[1] * Binabs_SHalf_sigma[1], Binabs_SHalf_sigma[2] * Binabs_SHalf_sigma[2]);
 
 	// output internal magnetic field related information
 	if (ionode){
 		printf("\nDefine B from DeltaE = 2 B S^exp\n");
 		printf("Bext: %lg %lg %lg (a.u.)\n", Bin_mean[0], Bin_mean[1], Bin_mean[2]);
 		printf("Bext: %lg %lg %lg (Tesla)\n", Bin_mean[0] / Tesla2au, Bin_mean[1] / Tesla2au, Bin_mean[2] / Tesla2au);
-		printf("|Bin| sigma: %lg %lg %lg (Tesla)\n", Bin_sigma[0] / Tesla2au, Bin_sigma[1] / Tesla2au, Bin_sigma[2] / Tesla2au);
-		printf("|Bin|^2 avg.: %lg %lg %lg (a.u.)\n", Bin2_avg[0], Bin2_avg[1], Bin2_avg[2]);
-		printf("|Bin|^2 avg.: %lg %lg %lg (ps^-2)\n", Bin2_avg[0] * ps*ps, Bin2_avg[1] * ps*ps, Bin2_avg[2] * ps*ps);
+		printf("Bin sigma: %lg %lg %lg (Tesla)\n", Bin_sigma[0] / Tesla2au, Bin_sigma[1] / Tesla2au, Bin_sigma[2] / Tesla2au);
+		printf("Bin sigma^2: %lg %lg %lg (a.u.)\n", Bin2_avg[0], Bin2_avg[1], Bin2_avg[2]);
+		printf("Bin sigma^2: %lg %lg %lg (ps^-2)\n", Bin2_avg[0] * ps*ps, Bin2_avg[1] * ps*ps, Bin2_avg[2] * ps*ps);
 
 		printf("\nDefine B from DeltaE = 2 B S^exp assuming |S^exp| = 0.5\n");
 		printf("Bext_SHalf: %lg %lg %lg (a.u.)\n", Bin_SHalf_mean[0], Bin_SHalf_mean[1], Bin_SHalf_mean[2]);
 		printf("Bext_SHalf: %lg %lg %lg (Tesla)\n", Bin_SHalf_mean[0] / Tesla2au, Bin_SHalf_mean[1] / Tesla2au, Bin_SHalf_mean[2] / Tesla2au);
-		printf("|Bin_SHalf| sigma: %lg %lg %lg (Tesla)\n", Bin_SHalf_sigma[0] / Tesla2au, Bin_SHalf_sigma[1] / Tesla2au, Bin_SHalf_sigma[2] / Tesla2au);
-		printf("|Bin_SHalf|^2 avg.: %lg %lg %lg (a.u.)\n", Bin2_SHalf_avg[0], Bin2_SHalf_avg[1], Bin2_SHalf_avg[2]);
-		printf("|Bin_SHalf|^2 avg.: %lg %lg %lg (ps^-2)\n", Bin2_SHalf_avg[0] * ps*ps, Bin2_SHalf_avg[1] * ps*ps, Bin2_SHalf_avg[2] * ps*ps);
+		printf("Bin_SHalf sigma: %lg %lg %lg (Tesla)\n", Bin_SHalf_sigma[0] / Tesla2au, Bin_SHalf_sigma[1] / Tesla2au, Bin_SHalf_sigma[2] / Tesla2au);
+		printf("Bin_SHalf sigma^2: %lg %lg %lg (a.u.)\n", Bin2_SHalf_avg[0], Bin2_SHalf_avg[1], Bin2_SHalf_avg[2]);
+		printf("Bin_SHalf sigma^2: %lg %lg %lg (ps^-2)\n", Bin2_SHalf_avg[0] * ps*ps, Bin2_SHalf_avg[1] * ps*ps, Bin2_SHalf_avg[2] * ps*ps);
+		printf("|Bin_SHalf| sigma: %lg %lg %lg (Tesla)\n", Binabs_SHalf_sigma[0] / Tesla2au, Binabs_SHalf_sigma[1] / Tesla2au, Binabs_SHalf_sigma[2] / Tesla2au);
+		printf("|Bin_SHalf| sigma^2: %lg %lg %lg (a.u.)\n", Binabs2_SHalf_avg[0], Binabs2_SHalf_avg[1], Binabs2_SHalf_avg[2]);
+		printf("|Bin_SHalf| sigma^2: %lg %lg %lg (ps^-2)\n", Binabs2_SHalf_avg[0] * ps*ps, Binabs2_SHalf_avg[1] * ps*ps, Binabs2_SHalf_avg[2] * ps*ps);
 
 		printf("\nAnalyse energy splitting\n");
 		printf("DE mean: %lg (a.u.)\n", de_mean);
@@ -501,9 +596,11 @@ void electron::compute_Bin2(){
 		printf("DE sigma^2: %lg (a.u.)\n", de2_avg);
 		printf("DE sigma^2: %lg (ps^-2)\n", de2_avg * ps*ps);
 
+		string rotated = rotate_spin_axes ? "rotated_" : "";
 		string sdir[3]; sdir[0] = "x"; sdir[1] = "y"; sdir[2] = "z";
 		for (int id = 2; id >= 0; id--){
-			string fname = "electron_analysis/Bin_" + sdir[id] + "_kn.out", fname_SHalf = "electron_analysis/Bin_SHalf_" + sdir[id] + "_kn.out";
+			string fname = "electron_analysis/Bin_" + rotated + sdir[id] + "_kn.out", 
+				fname_SHalf = "electron_analysis/Bin_SHalf_" + rotated + sdir[id] + "_kn.out";
 			FILE *fp = fopen(fname.c_str(), "w"), *fp_SHalf = fopen(fname_SHalf.c_str(), "w");
 			fprintf(fp, "# energy (eV) Bin\n"); fprintf(fp_SHalf, "# energy (eV) Bin\n");
 			for (int ik = 0; ik < nk; ik++)
@@ -515,7 +612,8 @@ void electron::compute_Bin2(){
 		}
 
 		for (int id = 2; id >= 0; id--){
-			string fname = "electron_analysis/Bin2_" + sdir[id] + "_kn.out", fname_SHalf = "electron_analysis/Bin2_SHalf_" + sdir[id] + "_kn.out";
+			string fname = "electron_analysis/Bin2_" + rotated + sdir[id] + "_kn.out", 
+				fname_SHalf = "electron_analysis/Bin2_SHalf_" + rotated + sdir[id] + "_kn.out";
 			FILE *fp = fopen(fname.c_str(), "w"), *fp_SHalf = fopen(fname_SHalf.c_str(), "w");
 			fprintf(fp, "# energy (eV) Bin2\n"); fprintf(fp_SHalf, "# energy (eV) Bin2\n");
 			for (int ik = 0; ik < nk; ik++)

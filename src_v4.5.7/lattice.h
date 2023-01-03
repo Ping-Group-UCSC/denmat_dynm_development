@@ -5,7 +5,7 @@
 class lattice{
 public:
 	int dim;
-	double a, volume, area, thickness, length, density, cell_size, cell_size_cmd;
+	double a, volume, area, thickness, length, density, cell_size, cell_size_cmd, cmd;
 	matrix3<> R, Gvec, GGT;
 	vector3<> K, Kp;
 	std::vector<vector3<>> vpos;
@@ -15,6 +15,13 @@ public:
 	lattice(parameters *param)
 		: R(param->R), vpos(param->vpos), vtrans(param->vtrans), type_q_ana(param->type_q_ana)
 	{
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("lattice\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+
 		if (code == "jdftx") read_ldbd_R();
 
 		volume = fabs(det(R));
@@ -26,7 +33,8 @@ public:
 		if (dim == 2) cell_size = area;
 		if (dim == 1) cell_size = length;
 		if (dim == 0) cell_size = 1;
-		cell_size_cmd = cell_size * std::pow(bohr2cm, dim);
+		double cmd = std::pow(bohr2cm, dim);
+		cell_size_cmd = cell_size * cmd;
 		if (ionode) printf("cell_size = %lg a.u.\n", cell_size);
 		if (cell_size == 0) error_message("cell_size is zero", "lattice");
 

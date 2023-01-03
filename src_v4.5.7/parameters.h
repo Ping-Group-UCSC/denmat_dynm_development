@@ -7,7 +7,7 @@ public:
 	std::vector<vector3<double>> kpath_start, kpath_end;
 	int freq_measure, freq_measure_ene, freq_compute_tau, freq_update_eimp_model, freq_update_ee_model;
 	double de_measure, degauss_measure;
-	double t0, tend, tstep, tstep_pump;
+	double t0, tend, tstep, tstep_laser;
 	int nk1, nk2, nk3;
 	double ewind;
 	double temperature;
@@ -18,15 +18,14 @@ public:
 	int band_skipped; // dft bands skipped in wannierization
 	                  // relevant when computing internal magnetic fields
 	double degthr;
-	vector3<double> sdir1_t2, sdir2_t2; // spin directions for spin dephasing
-	                                    // which is decay of sum_k |s1_k + i*s2_k|
-	                                    // s? is spin observable along direction ?
+	bool rotate_spin_axes;
+	vector3<double> sdir_z, sdir_y, sdir_x; // redefined spin directions
+	matrix3<double> sdir_rot;
 	bool need_imsig;
+	double scissor;
 
 	double tau_phenom;
 	int bStart_tau, bEnd_tau; // if phenom_tau true
-
-	string pumpMode;
 
 	double Bx, By, Bz, scale_Ez; vector3<> B;
 	double Bxpert, Bypert, Bzpert; vector3<> Bpert; // to generate an initial spin inbalance

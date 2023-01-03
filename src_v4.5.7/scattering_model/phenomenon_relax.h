@@ -17,7 +17,12 @@ public:
 	{
 		if (bEnd > nb_dm)
 			error_message("bEnd_tau > nb_dm", "phenom_relax");
-		if (ionode) { printf("\ninitialize phenom_relax for bStart = %d and bEnd = %d\n", bStart, bEnd); fflush(stdout); }
+		if (ionode) printf("\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
+		if (ionode) { printf("initialize phenom_relax for bStart = %d and bEnd = %d\n", bStart, bEnd); fflush(stdout); }
+		if (ionode) printf("==================================================\n");
+		if (ionode) printf("==================================================\n");
 		dm_eq = alloc_array(nk_glob, nb*nb);
 		dm = alloc_array(nk_glob, nb*nb);
 		ddmdt_phenom = alloc_array(nk_glob, nb*nb);

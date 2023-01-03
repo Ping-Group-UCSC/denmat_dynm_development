@@ -75,5 +75,8 @@ const double Tesla2au = 1. / 2.3505175675871e5;
 const double cm2byVs2au = 1e-4*meter*meter / (Volt*sec);
 const double cm2bys2au = 1e-4*meter*meter / sec;
 
+//Current density:
+const double cmbys = 0.01*meter / sec;
+
 //! @}
 #endif //JDFTX_CORE_UNITS_H
