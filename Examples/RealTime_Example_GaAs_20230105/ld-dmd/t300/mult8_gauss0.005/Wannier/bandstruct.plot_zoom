@@ -1,0 +1,16 @@
+#!/usr/bin/gnuplot -persist
+set xtics ( "G" 0,  "X" 142,  "W" 213,  "L" 284,  "G" 458,  "K" 642 )
+unset key
+nRows = real(system("awk '$1==\"kpoint\" {nRows++} END {print nRows}' bandstruct.kpoints"))
+nCols = real(system("wc -c < bandstruct.eigenvals")) / (8*nRows)
+formatString = system(sprintf("echo '' | awk 'END { str=\"\"; for(i=0; i<%d; i++) str = str \"%%\" \"lf\"; print str}'", nCols))
+set term png
+set output "bandstruct_zoom.png"
+VBM=0. #0.229499
+ha2ev=1. #27.2114
+set xzeroaxis               #Add dotted line at zero energy
+set xrange [181.9995:182.0005]
+set ylabel "E - VBM [Ha]"   #Add y-axis label
+set yrange [0.312390:0.312415]
+plot for [i=1:nCols] "bandstruct.eigenvals" binary format=formatString u 0:((column(i)-VBM)*ha2ev) w lp lc rgb "black", \
+     for [i=1:14] "wannier.eigenvals" u (1*column(0)):((column(i)-VBM)*ha2ev) w lp lc rgb "red"

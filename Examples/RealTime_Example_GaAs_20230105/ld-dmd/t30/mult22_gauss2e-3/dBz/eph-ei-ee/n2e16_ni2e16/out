@@ -1,0 +1,1559 @@
+
+reading parameters
+
+**************************************************
+Code control parameters:
+
+**************************************************
+DEBUG = 0
+restart = 0
+code = jdftx
+material_model = none
+compute_tau_only = 0
+
+**************************************************
+Master equation control parameters:
+
+**************************************************
+alg_scatt_enable = 1
+alg_eph_enable = 1
+scale_eph = 1
+alg_only_eimp = 0
+alg_only_ee = 0
+alg_only_intravalley = 0
+alg_only_intervalley = 0
+alg_eph_sepr_eh = 1
+alg_eph_need_elec = 1
+alg_eph_need_hole = 0
+alg_summode = 1
+alg_ddmdteq = 0
+alg_expt = 1
+alg_expt_elight = 1
+alg_scatt = lindblad
+alg_picture = interaction
+alg_linearize = 1
+alg_linearize_dPee = 0
+
+model intermal magnetic field parameters:
+alg_modelH0hasBS = 1
+alg_read_Bso = 0
+
+sparse parameters:
+alg_Pin_is_sparse = 0
+alg_sparseP = 0
+alg_thr_sparseP = 1e-40
+
+phenomenological relaxation parameters:
+alg_phenom_relax = 0
+
+Smearing parameters:
+temperature =  9.5004341e-05
+mu = 0.0525515
+degauss = 7.34986e-05 ndegauss = 1000
+degauss = 7.34986e-05
+ndegauss = 1000
+
+**************************************************
+System and external condition parameters:
+
+**************************************************
+dim = 3
+mu = 0.0514491
+carrier_density = 2.96369e-09
+
+magnetic field parameters:
+Bx = 0
+By = 0
+Bz = 0
+scale_Ez = 0
+
+**************************************************
+Screening and model e-i and e-e parameters:
+
+**************************************************
+
+screening parameters:
+scrMode = medium
+scrFormula = RPA
+update_screening = 1
+dynamic_screening = static
+eppa_screening = 0
+meff_screening = 1
+omegamax_screening = 0
+nomega_screening = 1
+fderavitive_technique_static_screening = 1
+smearing_screening = 0
+epsilon_background = 12.9
+
+electron-impurity parameters:
+impurity_density = 2.96369e-09
+impMode = model_ionized
+partial_ionized = 0
+Z_impurity = 1
+g_impurity = 2
+E_impurity = 0.0525515
+degauss_eimp = 7.34986e-05
+impurity_density2 = 0
+freq_update_eimp_model = 10
+
+electron-electron parameters:
+eeMode = Pee_update
+ee_antisymmetry = 0
+degauss_ee = 7.34986e-05
+freq_update_ee_model = 10
+
+**************************************************
+Spin generation and measurement parameters:
+
+**************************************************
+
+pump and probe parameters:
+pumpMode = perturb
+pumpA0 = 0
+pumpE = 0.052919
+pumpTau = 4134.14
+pump_tcenter = 20670.7
+
+magnetic field perturbation parameters:
+Bxpert = 0
+Bypert = 0
+Bzpert = 4.25438e-07
+
+Time control parameters:
+t0 = 0
+tend = 4.13414e+06
+tstep = 4134.14
+
+Other measurement parameters:
+print_tot_band = 0
+alg_set_scv_zero = 1
+freq_measure = 1
+freq_measure_ene = 10
+freq_compute_tau = 10
+de_measure = 1.83747e-05
+degauss_measure = 7.34986e-05
+valley1 = 1 1 1
+invalid valley position. all values must be within (-1,1)
+number of valleys: 0
+
+ODE parameters:
+alg_ode_method = rkf45
+ode_hstart = 0.0413414
+ode_hmin = 0
+ode_hmax = 4134.14
+ode_hmax_pump = 4134.14
+ode_epsabs = 1e-08
+
+kpath realted parameters:
+print_along_kpath = 0
+
+DP mechanism analysis parameters:
+alg_use_dmDP_taufm_as_init = 0
+alg_DP_beyond_carrierlifetime = 0
+alg_mix_tauneq = 0.2
+alg_positive_tauneq = 0
+alg_use_dmDP_in_evolution = 0
+
+read ldbd_R.dat:
+dim = 3
+volume = 304.795
+R
+0 5.34145 5.34145
+5.34145 0 5.34145
+5.34145 5.34145 0
+Gvec
+-0.588154 0.588154 0.588154
+0.588154 -0.588154 0.588154
+0.588154 0.588154 -0.588154
+
+read ldbd_size.dat:
+nb= 10 nv= 6 bStart_dm= 6 bEnd_dm= 8 bStart_eph = 6 bEnd_eph = 8 nb_wannier = 16 bskipped_wannier = 0
+nk_full =  1.47197952000000e+08 nk = 531 kmesh=(528,528,528)
+
+read ldbd_kvec.bin:
+
+read ldbd_ek.bin:
+ek:ik= 0: -0.0124073 -0.0124073 -7.73548e-14 -6.86118e-14 -5.38181e-14 -3.81084e-14 0.0525515 0.0525515 0.169971 0.169971
+ik= 1: -0.0124196 -0.0124193 -3.0224e-05 -2.99235e-05 -2.54807e-06 -1.82035e-06 0.0525856 0.0525856 0.169972 0.169972
+ik= 2: -0.0124564 -0.012456 -0.000119972 -0.000119388 -9.4637e-06 -8.00739e-06 0.0526874 0.0526874 0.169976 0.169976
+ik= 3: -0.0125184 -0.0125177 -0.000267416 -0.00026658 -2.0743e-05 -1.85565e-05 0.0528556 0.0528556 0.169983 0.169983
+ik= 4: -0.0126063 -0.0126054 -0.000469584 -0.000468543 -3.63792e-05 -3.34602e-05 0.0530881 0.0530882 0.169993 0.169993
+ik= 5: -0.0126063 -0.0126054 -0.000469584 -0.000468543 -3.63792e-05 -3.34602e-05 0.0530881 0.0530882 0.169993 0.169993
+ik= 6: -0.0125184 -0.0125177 -0.000267416 -0.00026658 -2.0743e-05 -1.85565e-05 0.0528556 0.0528556 0.169983 0.169983
+ik= 7: -0.0124564 -0.012456 -0.000119972 -0.000119388 -9.4637e-06 -8.00739e-06 0.0526874 0.0526874 0.169976 0.169976
+ik= 8: -0.0124196 -0.0124193 -3.0224e-05 -2.99235e-05 -2.54807e-06 -1.82035e-06 0.0525856 0.0525856 0.169972 0.169972
+ik= 9: -0.0124196 -0.0124193 -3.02192e-05 -2.99283e-05 -2.54803e-06 -1.82038e-06 0.0525856 0.0525856 0.169972 0.169972
+ik= 10: -0.0124236 -0.0124234 -3.58632e-05 -3.58161e-05 -7.22996e-06 -7.12529e-06 0.052597 0.052597 0.169973 0.169973
+ik= 11: -0.0124523 -0.0124518 -0.000104548 -0.000103549 -1.43953e-05 -1.32797e-05 0.0526761 0.0526763 0.169976 0.169976
+ik= 12: -0.0125061 -0.0125049 -0.000233156 -0.000231151 -2.42401e-05 -2.23347e-05 0.052822 0.0528225 0.169982 0.169982
+ik= 13: -0.0125856 -0.0125836 -0.000417747 -0.000414466 -3.8305e-05 -3.56653e-05 0.0530329 0.0530337 0.16999 0.169991
+ik= 14: -0.0126533 -0.0126511 -0.000571307 -0.000567263 -4.84849e-05 -4.55177e-05 0.053208 0.0532095 0.169997 0.169998
+ik= 15: -0.012556 -0.0125547 -0.00035187 -0.000349333 -3.11327e-05 -2.88501e-05 0.0529553 0.0529562 0.169987 0.169987
+ik= 16: -0.0124852 -0.0124845 -0.000186298 -0.000184909 -1.78686e-05 -1.62469e-05 0.0527659 0.0527664 0.169979 0.16998
+ik= 17: -0.01244 -0.0124396 -7.83308e-05 -7.77749e-05 -8.28107e-06 -7.23919e-06 0.0526422 0.0526423 0.169975 0.169975
+ik= 18: -0.0124564 -0.012456 -0.000119963 -0.000119398 -9.46361e-06 -8.00747e-06 0.0526874 0.0526874 0.169976 0.169976
+ik= 19: -0.0124523 -0.0124518 -0.000104544 -0.000103553 -1.43945e-05 -1.32805e-05 0.0526761 0.0526763 0.169976 0.169976
+fk:ik= 0: 1 1 1 1 1 1 9.12546e-06 9.12546e-06 0 0
+ik= 1: 1 1 1 1 1 1 6.37496e-06 6.37489e-06 0 0
+ik= 2: 1 1 1 1 1 1 2.1835e-06 2.18346e-06 0 0
+ik= 3: 1 1 1 1 1 1 3.71728e-07 3.717e-07 0 0
+ik= 4: 1 1 1 1 1 1 3.21541e-08 3.21478e-08 0 0
+ik= 5: 1 1 1 1 1 1 3.21541e-08 3.21478e-08 0 0
+ik= 6: 1 1 1 1 1 1 3.71728e-07 3.717e-07 0 0
+ik= 7: 1 1 1 1 1 1 2.1835e-06 2.18346e-06 0 0
+ik= 8: 1 1 1 1 1 1 6.37496e-06 6.37489e-06 0 0
+ik= 9: 1 1 1 1 1 1 6.37498e-06 6.37487e-06 0 0
+ik= 10: 1 1 1 1 1 1 5.65615e-06 5.65608e-06 0 0
+ik= 11: 1 1 1 1 1 1 2.45875e-06 2.45498e-06 0 0
+ik= 12: 1 1 1 1 1 1 5.2928e-07 5.26871e-07 0 0
+ik= 13: 1 1 1 1 1 1 5.75122e-08 5.6998e-08 0 0
+ik= 14: 1 1 1 1 1 1 9.10115e-09 8.96506e-09 0 0
+ik= 15: 1 1 1 1 1 1 1.3013e-07 1.28941e-07 0 0
+ik= 16: 1 1 1 1 1 1 9.55379e-07 9.50957e-07 0 0
+ik= 17: 1 1 1 1 1 1 3.51495e-06 3.5095e-06 0 0
+ik= 18: 1 1 1 1 1 1 2.18349e-06 2.18347e-06 0 0
+ik= 19: 1 1 1 1 1 1 2.45878e-06 2.45495e-06 0 0
+
+read ldbd_imsig.bin:
+imsig_eph_kn in Ha:
+ik= 0: 2.95626e-06 2.95626e-06
+ik= 1: 3.69674e-06 3.69679e-06
+ik= 2: 4.39899e-06 4.39898e-06
+ik= 3: 3.90868e-06 3.90846e-06
+ik= 4: 3.48254e-06 3.48217e-06
+ik= 5: 3.48254e-06 3.48217e-06
+ik= 6: 3.90868e-06 3.90846e-06
+ik= 7: 4.39899e-06 4.39898e-06
+ik= 8: 3.69674e-06 3.69679e-06
+ik= 9: 3.69673e-06 3.69678e-06
+ik= 10: 3.88119e-06 3.88124e-06
+ik= 11: 4.48213e-06 4.48337e-06
+ik= 12: 4.13506e-06 4.13393e-06
+ik= 13: 3.61273e-06 3.60992e-06
+ik= 14: 2.72158e-06 2.7017e-06
+ik= 15: 3.97047e-06 3.97068e-06
+ik= 16: 4.40619e-06 4.40739e-06
+ik= 17: 4.37249e-06 4.37521e-06
+ik= 18: 4.39887e-06 4.39898e-06
+ik= 19: 4.48213e-06 4.48331e-06
+imsig_eph_k in Ha:
+ik= 0: 2.95626e-06
+ik= 1: 3.69676e-06
+ik= 2: 4.39898e-06
+ik= 3: 3.90857e-06
+ik= 4: 3.48235e-06
+ik= 5: 3.48235e-06
+ik= 6: 3.90857e-06
+ik= 7: 4.39898e-06
+ik= 8: 3.69676e-06
+ik= 9: 3.69676e-06
+ik= 10: 3.88122e-06
+ik= 11: 4.48275e-06
+ik= 12: 4.1345e-06
+ik= 13: 3.61133e-06
+ik= 14: 2.71171e-06
+ik= 15: 3.97057e-06
+ik= 16: 4.40679e-06
+ik= 17: 4.37385e-06
+ik= 18: 4.39892e-06
+ik= 19: 4.48272e-06
+imsig_eph_avg = 4.13569e-06 Ha tau_m_avg = 2924.4 fs
+
+read ldbd_smat.bin:
+ik= 0: (0.499966,-4.89525e-15) (-0.00162133,-0.00562253) (-0.00162133,0.00562253) (-0.499966,4.94602e-15)
+ik= 1: (0.0524124,-5.05354e-16) (-0.497163,-0.00843183) (-0.497163,0.00843183) (-0.0524124,5.79764e-16)
+ik= 2: (0.476539,-5.44069e-15) (0.150013,0.0190904) (0.150013,-0.0190904) (-0.476539,5.52959e-15)
+ik= 3: (0.454287,-5.44016e-15) (0.208568,-0.00554009) (0.208568,0.00554009) (-0.454287,5.53898e-15)
+ik= 4: (0.409331,-5.1255e-15) (0.286796,-0.00614138) (0.286796,0.00614138) (-0.409331,5.22714e-15)
+ik= 5: (-0.409331,2.26131e-15) (-0.286796,-0.0061426) (-0.286796,0.0061426) (0.409331,-2.22196e-15)
+ik= 6: (-0.454287,2.89975e-15) (-0.208568,-0.0055449) (-0.208568,0.0055449) (0.454287,-2.86724e-15)
+ik= 7: (-0.476538,3.52055e-15) (0.150044,-0.0188805) (0.150044,0.0188805) (0.476538,-3.47354e-15)
+ik= 8: (-0.0523809,5.16326e-16) (-0.497167,0.00840783) (-0.497167,-0.00840783) (0.0523809,-4.62626e-16)
+ik= 9: (-0.0498081,6.08058e-16) (0.346968,-0.356542) (0.346968,0.356542) (0.0498081,-5.42885e-16)
+ik= 10: (-0.0692799,7.32169e-16) (-0.495047,-0.0108651) (-0.495047,0.0108651) (0.0692799,-6.59537e-16)
+ik= 11: (-0.353925,4.45528e-15) (-0.350689,-0.0415094) (-0.350689,0.0415094) (0.353925,-4.37345e-15)
+ik= 12: (-0.351264,4.629e-15) (-0.351224,-0.0564172) (-0.351224,0.0564172) (0.351265,-4.54492e-15)
+ik= 13: (-0.349962,4.88688e-15) (-0.35124,-0.0634562) (-0.35124,0.0634562) (0.349964,-4.77336e-15)
+ik= 14: (-0.35652,2.18521e-15) (-0.335494,-0.100655) (-0.335494,0.100655) (0.356522,-2.1619e-15)
+ik= 15: (-0.355932,2.59328e-15) (-0.334531,-0.106156) (-0.334531,0.106156) (0.355934,-2.58439e-15)
+ik= 16: (-0.355453,2.76496e-15) (-0.331656,-0.116554) (-0.331656,0.116554) (0.355453,-2.72203e-15)
+ik= 17: (-0.355952,2.93207e-15) (0.320346,0.143685) (0.320346,-0.143685) (0.355952,-2.88589e-15)
+ik= 18: (-0.149311,1.51808e-15) (-0.30376,0.367959) (-0.30376,-0.367959) (0.149311,-1.44864e-15)
+ik= 19: (0.350713,-4.10406e-15) (0.323545,0.14929) (0.323545,-0.14929) (-0.350713,4.15835e-15)
+
+
+read ldbd_Umat.bin:
+get Ufull[:,6:8]
+
+Electronic states energy range:
+
+emax = 0.0532115 ecmin = 0.0525515
+isHole = 0 mu0 =  5.1449053e-02 mu =  5.2679434e-02:
+Carriers per bvk * nk = 132.967 excess = 2.55795e-11
+f:ik= 0: 1 1 1 1 1 1 0.793532 0.793532 0 0
+ik= 1: 1 1 1 1 1 1 0.728625 0.728622 0 0
+ik= 2: 1 1 1 1 1 1 0.479063 0.479058 0 0
+ik= 3: 1 1 1 1 1 1 0.135366 0.135358 0 0
+ik= 4: 1 1 1 1 1 1 0.0133613 0.0133587 0 0
+ik= 5: 1 1 1 1 1 1 0.0133613 0.0133587 0 0
+ik= 6: 1 1 1 1 1 1 0.135366 0.135358 0 0
+ik= 7: 1 1 1 1 1 1 0.479063 0.479058 0 0
+ik= 8: 1 1 1 1 1 1 0.728625 0.728622 0 0
+ik= 9: 1 1 1 1 1 1 0.728625 0.728622 0 0
+ik= 10: 1 1 1 1 1 1 0.704334 0.704331 0 0
+ik= 11: 1 1 1 1 1 1 0.508731 0.508347 0 0
+ik= 12: 1 1 1 1 1 1 0.182282 0.181603 0 0
+ik= 13: 1 1 1 1 1 1 0.0236494 0.0234428 0 0
+ik= 14: 1 1 1 1 1 1 0.00381846 0.00376158 0 0
+ik= 15: 1 1 1 1 1 1 0.0519586 0.0515082 0 0
+ik= 16: 1 1 1 1 1 1 0.286923 0.285975 0 0
+ik= 17: 1 1 1 1 1 1 0.596836 0.596463 0 0
+ik= 18: 1 1 1 1 1 1 0.479062 0.479059 0 0
+ik= 19: 1 1 1 1 1 1 0.508734 0.508344 0 0
+f_dm:ik= 0: 0.793532 0.793532
+ik= 1: 0.728625 0.728622
+ik= 2: 0.479063 0.479058
+ik= 3: 0.135366 0.135358
+ik= 4: 0.0133613 0.0133587
+ik= 5: 0.0133613 0.0133587
+ik= 6: 0.135366 0.135358
+ik= 7: 0.479063 0.479058
+ik= 8: 0.728625 0.728622
+ik= 9: 0.728625 0.728622
+ik= 10: 0.704334 0.704331
+ik= 11: 0.508731 0.508347
+ik= 12: 0.182282 0.181603
+ik= 13: 0.0236494 0.0234428
+ik= 14: 0.00381846 0.00376158
+ik= 15: 0.0519586 0.0515082
+ik= 16: 0.286923 0.285975
+ik= 17: 0.596836 0.596463
+ik= 18: 0.479062 0.479059
+ik= 19: 0.508734 0.508344
+ne = 2.96369e-09 nei = 0 ne+nei = 2.96369e-09
+nh = 0 nhi = 0 nh+nhi = 0
+
+enter compute_dm_Bpert_1st
+Tr[ddm_Bpert ddm_Bpert] = 1.28689e-07
+
+**************************************************
+Compute DP-related quatities:
+Tr[ddm_eq ddm_eq] = 1.28689e-07
+has_precess:
+ik= 0: 0
+ik= 1: 0
+ik= 2: 0
+ik= 3: 0
+ik= 4: 1
+ik= 5: 1
+ik= 6: 0
+ik= 7: 0
+ik= 8: 0
+ik= 9: 0
+ik= 10: 0
+ik= 11: 1
+ik= 12: 1
+ik= 13: 1
+ik= 14: 1
+ik= 15: 1
+ik= 16: 1
+ik= 17: 1
+ik= 18: 0
+ik= 19: 1
+ddm_Bpert:
+ik= 0: (-0.000366818,3.59157e-18) (1.18954e-06,4.12517e-06) (1.18954e-06,-4.12517e-06) (0.000366818,-3.62882e-18)
+ik= 1: (-4.64089e-05,4.47469e-19) (0.000440217,7.46604e-06) (0.000440217,-7.46604e-06) (4.64091e-05,-5.13358e-19)
+ik= 2: (-0.000532562,6.0803e-18) (-0.000167648,-2.13347e-05) (-0.000167648,2.13347e-05) (0.000532561,-6.17964e-18)
+ik= 3: (-0.000238104,2.85134e-18) (-0.000109313,2.90363e-06) (-0.000109313,-2.90363e-06) (0.000238091,-2.90297e-18)
+ik= 4: (-2.41642e-05,3.02576e-19) (-1.6929e-05,3.62513e-07) (-1.6929e-05,-3.62513e-07) (2.41596e-05,-3.08518e-19)
+ik= 5: (2.41642e-05,-1.33493e-19) (1.6929e-05,3.62585e-07) (1.6929e-05,-3.62585e-07) (-2.41596e-05,1.31145e-19)
+ik= 6: (0.000238104,-1.51984e-18) (0.000109313,2.90615e-06) (0.000109313,-2.90615e-06) (-0.000238091,1.50271e-18)
+ik= 7: (0.00053256,-3.93442e-18) (-0.000167684,2.11001e-05) (-0.000167684,-2.11001e-05) (-0.000532559,3.88188e-18)
+ik= 8: (4.6381e-05,-4.57184e-19) (0.000440221,-7.44479e-06) (0.000440221,7.44479e-06) (-4.63813e-05,4.09637e-19)
+ik= 9: (4.41029e-05,-5.38408e-19) (-0.000307225,0.000315703) (-0.000307225,-0.000315703) (-4.41032e-05,4.80705e-19)
+ik= 10: (6.46071e-05,-6.82785e-19) (0.000461659,1.01323e-05) (0.000461659,-1.01323e-05) (-6.46075e-05,6.15056e-19)
+ik= 11: (0.000396107,-4.98627e-18) (0.00039249,4.64571e-05) (0.00039249,-4.64571e-05) (-0.000396117,4.89482e-18)
+ik= 12: (0.000234463,-3.08978e-18) (0.000234096,3.76029e-05) (0.000234096,-3.76029e-05) (-0.000233784,3.02486e-18)
+ik= 13: (3.61859e-05,-5.053e-19) (3.61631e-05,6.53333e-06) (3.61631e-05,-6.53333e-06) (-3.58776e-05,4.89357e-19)
+ik= 14: (6.073e-06,-3.72231e-20) (5.67233e-06,1.70182e-06) (5.67233e-06,-1.70182e-06) (-5.98291e-06,3.62795e-20)
+ik= 15: (7.85136e-05,-5.7204e-19) (7.34901e-05,2.33205e-05) (7.34901e-05,-2.33205e-05) (-7.78703e-05,5.65406e-19)
+ik= 16: (0.000325669,-2.53328e-18) (0.000303566,0.000106682) (0.000303566,-0.000106682) (-0.000325025,2.48901e-18)
+ik= 17: (0.000383549,-3.15939e-18) (-0.000345234,-0.000154848) (-0.000345234,0.000154848) (-0.000383664,3.11057e-18)
+ik= 18: (0.000166864,-1.69654e-18) (0.00033947,-0.000411217) (0.00033947,0.000411217) (-0.000166864,1.61894e-18)
+ik= 19: (-0.000392512,4.59319e-18) (-0.000362111,-0.000167085) (-0.000362111,0.000167085) (0.000392522,-4.65408e-18)
+
+ddm_Bpert_neq:
+ik= 0: (0,0) (-1.48522e-19,4.28281e-20) (-1.48522e-19,-4.28281e-20) (0,0)
+ik= 1: (0,0) (-8.42658e-15,4.96854e-13) (-8.42658e-15,-4.96854e-13) (0,0)
+ik= 2: (0,0) (4.14508e-14,-3.25721e-13) (4.14508e-14,3.25721e-13) (0,0)
+ik= 3: (0,0) (-2.10188e-14,-7.91295e-13) (-2.10188e-14,7.91295e-13) (0,0)
+ik= 4: (0,0) (-6.74554e-15,-3.1501e-13) (-6.74554e-15,3.1501e-13) (0,0)
+ik= 5: (0,0) (-6.74687e-15,3.1501e-13) (-6.74687e-15,-3.1501e-13) (0,0)
+ik= 6: (0,0) (-2.10369e-14,7.91292e-13) (-2.10369e-14,-7.91292e-13) (0,0)
+ik= 7: (0,0) (-4.09938e-14,-3.2578e-13) (-4.09938e-14,3.2578e-13) (0,0)
+ik= 8: (0,0) (8.40254e-15,4.96854e-13) (8.40254e-15,-4.96854e-13) (0,0)
+ik= 9: (0,0) (-5.25247e-13,-5.11142e-13) (-5.25247e-13,5.11142e-13) (0,0)
+ik= 10: (0,0) (-1.32528e-14,6.0384e-13) (-1.32528e-14,-6.0384e-13) (0,0)
+ik= 11: (0,0) (-6.77192e-12,5.72121e-11) (-6.77192e-12,-5.72121e-11) (0,0)
+ik= 12: (0,0) (-1.62995e-11,1.01472e-10) (-1.62995e-11,-1.01472e-10) (0,0)
+ik= 13: (0,0) (-5.57488e-12,3.08578e-11) (-5.57488e-12,-3.08578e-11) (0,0)
+ik= 14: (0,0) (-2.43594e-12,8.1192e-12) (-2.43594e-12,-8.1192e-12) (0,0)
+ik= 15: (0,0) (-2.03407e-11,6.40999e-11) (-2.03407e-11,-6.40999e-11) (0,0)
+ik= 16: (0,0) (-4.70183e-11,1.33791e-10) (-4.70183e-11,-1.33791e-10) (0,0)
+ik= 17: (0,0) (2.28309e-11,-5.09017e-11) (2.28309e-11,5.09017e-11) (0,0)
+ik= 18: (0,0) (4.31481e-13,3.56199e-13) (4.31481e-13,-3.56199e-13) (0,0)
+ik= 19: (0,0) (2.47473e-11,-5.36329e-11) (2.47473e-11,5.36329e-11) (0,0)
+
+[ek,[ek,ddm_eq_k]]:
+ik= 0: (0,0) (1.54187e-33,5.34746e-33) (1.54187e-33,-5.34746e-33) (0,0)
+ik= 1: (0,0) (5.60776e-22,9.5107e-24) (5.60776e-22,-9.5107e-24) (0,0)
+ik= 2: (0,0) (-6.32837e-22,-8.0534e-23) (-6.32837e-22,8.0534e-23) (0,0)
+ik= 3: (0,0) (-5.72803e-21,1.52151e-22) (-5.72803e-21,-1.52151e-22) (0,0)
+ik= 4: (0,0) (-5.86162e-21,1.25519e-22) (-5.86162e-21,-1.25519e-22) (0,0)
+ik= 5: (0,0) (5.86161e-21,1.25544e-22) (5.86161e-21,-1.25544e-22) (0,0)
+ik= 6: (0,0) (5.72798e-21,1.52282e-22) (5.72798e-21,-1.52282e-22) (0,0)
+ik= 7: (0,0) (-6.32935e-22,7.96439e-23) (-6.32935e-22,-7.96439e-23) (0,0)
+ik= 8: (0,0) (5.60774e-22,-9.48351e-24) (5.60774e-22,9.48351e-24) (0,0)
+ik= 9: (0,0) (-8.50405e-22,8.73871e-22) (-8.50405e-22,-8.73871e-22) (0,0)
+ik= 10: (0,0) (7.89811e-22,1.73344e-23) (7.89811e-22,-1.73344e-23) (0,0)
+ik= 11: (0,0) (8.33963e-18,9.87123e-19) (8.33963e-18,-9.87123e-19) (0,0)
+ik= 12: (0,0) (4.39845e-17,7.06523e-18) (4.39845e-17,-7.06523e-18) (0,0)
+ik= 13: (0,0) (2.63309e-17,4.75703e-18) (2.63309e-17,-4.75703e-18) (0,0)
+ik= 14: (0,0) (1.16216e-17,3.48673e-18) (1.16216e-17,-3.48673e-18) (0,0)
+ik= 15: (0,0) (5.59095e-17,1.77417e-17) (5.59095e-17,-1.77417e-17) (0,0)
+ik= 16: (0,0) (5.89663e-17,2.07225e-17) (5.89663e-17,-2.07225e-17) (0,0)
+ik= 17: (0,0) (-7.50499e-18,-3.36621e-18) (-7.50499e-18,3.36621e-18) (0,0)
+ik= 18: (0,0) (3.73752e-22,-4.52744e-22) (3.73752e-22,4.52744e-22) (0,0)
+ik= 19: (0,0) (-7.94368e-18,-3.66537e-18) (-7.94368e-18,3.66537e-18) (0,0)
+
+Tr{sk [ek,[ek,ddm_eq_k]]}:
+ik= 0: -6.51323e-35
+ik= 1: -5.57755e-22
+ik= 2: -1.92942e-22
+ik= 3: -2.39105e-21
+ik= 4: -3.36373e-21
+ik= 5: -3.36372e-21
+ik= 6: -2.39104e-21
+ik= 7: -1.92944e-22
+ik= 8: -5.57756e-22
+ik= 9: -1.21327e-21
+ik= 10: -7.82364e-22
+ik= 11: -5.93118e-18
+ik= 12: -3.16941e-17
+ik= 13: -1.91007e-17
+ik= 14: -8.49985e-18
+ik= 15: -4.11737e-17
+ik= 16: -4.39436e-17
+ik= 17: -5.77573e-18
+ik= 18: -5.60244e-22
+ik= 19: -6.23469e-18
+dstot = -0.000169261
+tau_DP with imsig_eph_avg: 861.203 ps
+tau_DP with imsig_eph_k: 793.222 ps
+Tr[ddm_neq ddm_neq] = 1.72861e-10
+**************************************************
+
+read ldbd_size.dat to get band range:
+bStart = 0 bEnd = 2
+estart_eph = 0.0525515 eend_eph = 0.0532166
+
+read ldbd_size.dat to get nkpair_glob:
+nkpair_glob = 141246
+
+Initialize screening formula RPA
+bStart = 0 bEnd = 2 nv = 0
+prefac_vq =  3.196e-03
+init ab initio elec-imp
+fraction = 9.03318e-07
+
+Initialize electron-impurity scattering: model_ionized
+bStart = 0 bEnd = 2 bStart_wannier = 6
+ionized impurity denstiy =  2.964e-09
+
+Initialize electron-electron scattering: Pee_update
+bStart = 0 bEnd = 2 bStart_wannier = 6
+
+read ldbd_kpair_k1st(2nd)(_hole).bin:
+no initial density matrix inbalance or that induced by Bpert (1st order)
+isHole = 0 mu0 =  5.2679434e-02 mu =  5.2679434e-02:
+Carriers per cell * nk = 132.967 excess = 1.16813e-11
+
+e: ik= 0: 0.0525515 0.0525515
+ik= 1: 0.0525856 0.0525856
+ik= 2: 0.0526874 0.0526874
+ik= 3: 0.0528556 0.0528556
+ik= 4: 0.0530881 0.0530882
+ik= 5: 0.0530881 0.0530882
+ik= 6: 0.0528556 0.0528556
+ik= 7: 0.0526874 0.0526874
+ik= 8: 0.0525856 0.0525856
+ik= 9: 0.0525856 0.0525856
+ik= 10: 0.052597 0.052597
+ik= 11: 0.0526761 0.0526763
+ik= 12: 0.052822 0.0528225
+ik= 13: 0.0530329 0.0530337
+ik= 14: 0.053208 0.0532095
+ik= 15: 0.0529553 0.0529562
+ik= 16: 0.0527659 0.0527664
+ik= 17: 0.0526422 0.0526423
+ik= 18: 0.0526874 0.0526874
+ik= 19: 0.0526761 0.0526763
+f: ik= 0: 0.793532 0.793532
+ik= 1: 0.728625 0.728622
+ik= 2: 0.479063 0.479058
+ik= 3: 0.135366 0.135358
+ik= 4: 0.0133613 0.0133587
+ik= 5: 0.0133613 0.0133587
+ik= 6: 0.135366 0.135358
+ik= 7: 0.479063 0.479058
+ik= 8: 0.728625 0.728622
+ik= 9: 0.728625 0.728622
+ik= 10: 0.704334 0.704331
+ik= 11: 0.508731 0.508347
+ik= 12: 0.182282 0.181603
+ik= 13: 0.0236494 0.0234428
+ik= 14: 0.00381846 0.00376158
+ik= 15: 0.0519586 0.0515082
+ik= 16: 0.286923 0.285975
+ik= 17: 0.596836 0.596463
+ik= 18: 0.479062 0.479059
+ik= 19: 0.508734 0.508344
+
+read P? matrices and linearize them
+
+Add electron-impurity (0) scattering contribution to Lsc
+kpair 0 done
+kpair 1000 done
+kpair 2000 done
+kpair 3000 done
+kpair 4000 done
+
+Add electron-electron scattering contribution to Lsc
+kpair 0 done
+kpair 1000 done
+kpair 2000 done
+kpair 3000 done
+kpair 4000 done
+nk3_accum: max= 744878 min= 720668 avg = 729049
+
+it_start_ddm = 0
+
+initial fn  9.03318474611824e-07
+
+initial sx  2.99043024544583e-18
+
+initial sy  4.62042861086654e-18
+
+initial sz  4.93934636884770e-17
+
+==================================================
+start density matrix evolution (rkf45 method from GSL)
+==================================================
+t= 0.0185 fs
+t= 0.0935 fs
+t= 0.4685 fs
+t= 2.3435 fs
+t= 11.7185 fs
+t= 56.7885 fs
+t= 97.023 fs
+ncalls= 55 at ti= 100 fs
+ncalls= 12 at ti= 200 fs
+ncalls= 6 at ti= 300 fs
+ncalls= 6 at ti= 400 fs
+ncalls= 6 at ti= 500 fs
+ncalls= 6 at ti= 600 fs
+ncalls= 6 at ti= 700 fs
+ncalls= 6 at ti= 800 fs
+ncalls= 6 at ti= 900 fs
+ncalls= 6 at ti= 1000 fs
+ncalls= 6 at ti= 1100 fs
+ncalls= 6 at ti= 1200 fs
+ncalls= 6 at ti= 1300 fs
+ncalls= 6 at ti= 1400 fs
+ncalls= 6 at ti= 1500 fs
+ncalls= 6 at ti= 1600 fs
+ncalls= 6 at ti= 1700 fs
+ncalls= 6 at ti= 1800 fs
+ncalls= 6 at ti= 1900 fs
+ncalls= 6 at ti= 2000 fs
+ncalls= 6 at ti= 2100 fs
+ncalls= 6 at ti= 2200 fs
+ncalls= 6 at ti= 2300 fs
+ncalls= 6 at ti= 2400 fs
+ncalls= 6 at ti= 2500 fs
+ncalls= 6 at ti= 2600 fs
+ncalls= 6 at ti= 2700 fs
+ncalls= 6 at ti= 2800 fs
+ncalls= 6 at ti= 2900 fs
+ncalls= 6 at ti= 3000 fs
+ncalls= 6 at ti= 3100 fs
+ncalls= 6 at ti= 3200 fs
+ncalls= 6 at ti= 3300 fs
+ncalls= 6 at ti= 3400 fs
+ncalls= 6 at ti= 3500 fs
+ncalls= 6 at ti= 3600 fs
+ncalls= 6 at ti= 3700 fs
+ncalls= 6 at ti= 3800 fs
+ncalls= 6 at ti= 3900 fs
+ncalls= 6 at ti= 4000 fs
+ncalls= 6 at ti= 4100 fs
+ncalls= 6 at ti= 4200 fs
+ncalls= 6 at ti= 4300 fs
+ncalls= 6 at ti= 4400 fs
+ncalls= 6 at ti= 4500 fs
+ncalls= 6 at ti= 4600 fs
+ncalls= 6 at ti= 4700 fs
+ncalls= 6 at ti= 4800 fs
+ncalls= 6 at ti= 4900 fs
+ncalls= 6 at ti= 5000 fs
+ncalls= 6 at ti= 5100 fs
+ncalls= 6 at ti= 5200 fs
+ncalls= 6 at ti= 5300 fs
+ncalls= 6 at ti= 5400 fs
+ncalls= 6 at ti= 5500 fs
+ncalls= 6 at ti= 5600 fs
+ncalls= 6 at ti= 5700 fs
+ncalls= 6 at ti= 5800 fs
+ncalls= 6 at ti= 5900 fs
+ncalls= 6 at ti= 6000 fs
+ncalls= 6 at ti= 6100 fs
+ncalls= 6 at ti= 6200 fs
+ncalls= 6 at ti= 6300 fs
+ncalls= 6 at ti= 6400 fs
+ncalls= 6 at ti= 6500 fs
+ncalls= 6 at ti= 6600 fs
+ncalls= 6 at ti= 6700 fs
+ncalls= 6 at ti= 6800 fs
+ncalls= 6 at ti= 6900 fs
+ncalls= 6 at ti= 7000 fs
+ncalls= 6 at ti= 7100 fs
+ncalls= 6 at ti= 7200 fs
+ncalls= 6 at ti= 7300 fs
+ncalls= 6 at ti= 7400 fs
+ncalls= 6 at ti= 7500 fs
+ncalls= 6 at ti= 7600 fs
+ncalls= 6 at ti= 7700 fs
+ncalls= 6 at ti= 7800 fs
+ncalls= 6 at ti= 7900 fs
+ncalls= 6 at ti= 8000 fs
+ncalls= 6 at ti= 8100 fs
+ncalls= 6 at ti= 8200 fs
+ncalls= 6 at ti= 8300 fs
+ncalls= 6 at ti= 8400 fs
+ncalls= 6 at ti= 8500 fs
+ncalls= 6 at ti= 8600 fs
+ncalls= 6 at ti= 8700 fs
+ncalls= 6 at ti= 8800 fs
+ncalls= 6 at ti= 8900 fs
+ncalls= 6 at ti= 9000 fs
+ncalls= 6 at ti= 9100 fs
+ncalls= 6 at ti= 9200 fs
+ncalls= 6 at ti= 9300 fs
+ncalls= 6 at ti= 9400 fs
+ncalls= 6 at ti= 9500 fs
+ncalls= 6 at ti= 9600 fs
+ncalls= 6 at ti= 9700 fs
+ncalls= 6 at ti= 9800 fs
+ncalls= 6 at ti= 9900 fs
+ncalls= 6 at ti= 10000 fs
+ncalls= 6 at ti= 10100 fs
+ncalls= 6 at ti= 10200 fs
+ncalls= 6 at ti= 10300 fs
+ncalls= 6 at ti= 10400 fs
+ncalls= 6 at ti= 10500 fs
+ncalls= 6 at ti= 10600 fs
+ncalls= 6 at ti= 10700 fs
+ncalls= 6 at ti= 10800 fs
+ncalls= 6 at ti= 10900 fs
+ncalls= 6 at ti= 11000 fs
+ncalls= 6 at ti= 11100 fs
+ncalls= 6 at ti= 11200 fs
+ncalls= 6 at ti= 11300 fs
+ncalls= 6 at ti= 11400 fs
+ncalls= 6 at ti= 11500 fs
+ncalls= 6 at ti= 11600 fs
+ncalls= 6 at ti= 11700 fs
+ncalls= 6 at ti= 11800 fs
+ncalls= 6 at ti= 11900 fs
+ncalls= 6 at ti= 12000 fs
+ncalls= 6 at ti= 12100 fs
+ncalls= 6 at ti= 12200 fs
+ncalls= 6 at ti= 12300 fs
+ncalls= 6 at ti= 12400 fs
+ncalls= 6 at ti= 12500 fs
+ncalls= 6 at ti= 12600 fs
+ncalls= 6 at ti= 12700 fs
+ncalls= 6 at ti= 12800 fs
+ncalls= 6 at ti= 12900 fs
+ncalls= 6 at ti= 13000 fs
+ncalls= 6 at ti= 13100 fs
+ncalls= 6 at ti= 13200 fs
+ncalls= 6 at ti= 13300 fs
+ncalls= 6 at ti= 13400 fs
+ncalls= 6 at ti= 13500 fs
+ncalls= 6 at ti= 13600 fs
+ncalls= 6 at ti= 13700 fs
+ncalls= 6 at ti= 13800 fs
+ncalls= 6 at ti= 13900 fs
+ncalls= 6 at ti= 14000 fs
+ncalls= 6 at ti= 14100 fs
+ncalls= 6 at ti= 14200 fs
+ncalls= 6 at ti= 14300 fs
+ncalls= 6 at ti= 14400 fs
+ncalls= 6 at ti= 14500 fs
+ncalls= 6 at ti= 14600 fs
+ncalls= 6 at ti= 14700 fs
+ncalls= 6 at ti= 14800 fs
+ncalls= 6 at ti= 14900 fs
+ncalls= 6 at ti= 15000 fs
+ncalls= 6 at ti= 15100 fs
+ncalls= 6 at ti= 15200 fs
+ncalls= 6 at ti= 15300 fs
+ncalls= 6 at ti= 15400 fs
+ncalls= 6 at ti= 15500 fs
+ncalls= 6 at ti= 15600 fs
+ncalls= 6 at ti= 15700 fs
+ncalls= 6 at ti= 15800 fs
+ncalls= 6 at ti= 15900 fs
+ncalls= 6 at ti= 16000 fs
+ncalls= 6 at ti= 16100 fs
+ncalls= 6 at ti= 16200 fs
+ncalls= 6 at ti= 16300 fs
+ncalls= 6 at ti= 16400 fs
+ncalls= 6 at ti= 16500 fs
+ncalls= 6 at ti= 16600 fs
+ncalls= 6 at ti= 16700 fs
+ncalls= 6 at ti= 16800 fs
+ncalls= 6 at ti= 16900 fs
+ncalls= 6 at ti= 17000 fs
+ncalls= 6 at ti= 17100 fs
+ncalls= 6 at ti= 17200 fs
+ncalls= 6 at ti= 17300 fs
+ncalls= 6 at ti= 17400 fs
+ncalls= 6 at ti= 17500 fs
+ncalls= 6 at ti= 17600 fs
+ncalls= 6 at ti= 17700 fs
+ncalls= 6 at ti= 17800 fs
+ncalls= 6 at ti= 17900 fs
+ncalls= 6 at ti= 18000 fs
+ncalls= 6 at ti= 18100 fs
+ncalls= 6 at ti= 18200 fs
+ncalls= 6 at ti= 18300 fs
+ncalls= 6 at ti= 18400 fs
+ncalls= 6 at ti= 18500 fs
+ncalls= 6 at ti= 18600 fs
+ncalls= 6 at ti= 18700 fs
+ncalls= 6 at ti= 18800 fs
+ncalls= 6 at ti= 18900 fs
+ncalls= 6 at ti= 19000 fs
+ncalls= 6 at ti= 19100 fs
+ncalls= 6 at ti= 19200 fs
+ncalls= 6 at ti= 19300 fs
+ncalls= 6 at ti= 19400 fs
+ncalls= 6 at ti= 19500 fs
+ncalls= 6 at ti= 19600 fs
+ncalls= 6 at ti= 19700 fs
+ncalls= 6 at ti= 19800 fs
+ncalls= 6 at ti= 19900 fs
+ncalls= 6 at ti= 20000 fs
+ncalls= 6 at ti= 20100 fs
+ncalls= 6 at ti= 20200 fs
+ncalls= 6 at ti= 20300 fs
+ncalls= 6 at ti= 20400 fs
+ncalls= 6 at ti= 20500 fs
+ncalls= 6 at ti= 20600 fs
+ncalls= 6 at ti= 20700 fs
+ncalls= 6 at ti= 20800 fs
+ncalls= 6 at ti= 20900 fs
+ncalls= 6 at ti= 21000 fs
+ncalls= 6 at ti= 21100 fs
+ncalls= 6 at ti= 21200 fs
+ncalls= 6 at ti= 21300 fs
+ncalls= 6 at ti= 21400 fs
+ncalls= 6 at ti= 21500 fs
+ncalls= 6 at ti= 21600 fs
+ncalls= 6 at ti= 21700 fs
+ncalls= 6 at ti= 21800 fs
+ncalls= 6 at ti= 21900 fs
+ncalls= 6 at ti= 22000 fs
+ncalls= 6 at ti= 22100 fs
+ncalls= 6 at ti= 22200 fs
+ncalls= 6 at ti= 22300 fs
+ncalls= 6 at ti= 22400 fs
+ncalls= 6 at ti= 22500 fs
+ncalls= 6 at ti= 22600 fs
+ncalls= 6 at ti= 22700 fs
+ncalls= 6 at ti= 22800 fs
+ncalls= 6 at ti= 22900 fs
+ncalls= 6 at ti= 23000 fs
+ncalls= 6 at ti= 23100 fs
+ncalls= 6 at ti= 23200 fs
+ncalls= 6 at ti= 23300 fs
+ncalls= 6 at ti= 23400 fs
+ncalls= 6 at ti= 23500 fs
+ncalls= 6 at ti= 23600 fs
+ncalls= 6 at ti= 23700 fs
+ncalls= 6 at ti= 23800 fs
+ncalls= 6 at ti= 23900 fs
+ncalls= 6 at ti= 24000 fs
+ncalls= 6 at ti= 24100 fs
+ncalls= 6 at ti= 24200 fs
+ncalls= 6 at ti= 24300 fs
+ncalls= 6 at ti= 24400 fs
+ncalls= 6 at ti= 24500 fs
+ncalls= 6 at ti= 24600 fs
+ncalls= 6 at ti= 24700 fs
+ncalls= 6 at ti= 24800 fs
+ncalls= 6 at ti= 24900 fs
+ncalls= 6 at ti= 25000 fs
+ncalls= 6 at ti= 25100 fs
+ncalls= 6 at ti= 25200 fs
+ncalls= 6 at ti= 25300 fs
+ncalls= 6 at ti= 25400 fs
+ncalls= 6 at ti= 25500 fs
+ncalls= 6 at ti= 25600 fs
+ncalls= 6 at ti= 25700 fs
+ncalls= 6 at ti= 25800 fs
+ncalls= 6 at ti= 25900 fs
+ncalls= 6 at ti= 26000 fs
+ncalls= 6 at ti= 26100 fs
+ncalls= 6 at ti= 26200 fs
+ncalls= 6 at ti= 26300 fs
+ncalls= 6 at ti= 26400 fs
+ncalls= 6 at ti= 26500 fs
+ncalls= 6 at ti= 26600 fs
+ncalls= 6 at ti= 26700 fs
+ncalls= 6 at ti= 26800 fs
+ncalls= 6 at ti= 26900 fs
+ncalls= 6 at ti= 27000 fs
+ncalls= 6 at ti= 27100 fs
+ncalls= 6 at ti= 27200 fs
+ncalls= 6 at ti= 27300 fs
+ncalls= 6 at ti= 27400 fs
+ncalls= 6 at ti= 27500 fs
+ncalls= 6 at ti= 27600 fs
+ncalls= 6 at ti= 27700 fs
+ncalls= 6 at ti= 27800 fs
+ncalls= 6 at ti= 27900 fs
+ncalls= 6 at ti= 28000 fs
+ncalls= 6 at ti= 28100 fs
+ncalls= 6 at ti= 28200 fs
+ncalls= 6 at ti= 28300 fs
+ncalls= 6 at ti= 28400 fs
+ncalls= 6 at ti= 28500 fs
+ncalls= 6 at ti= 28600 fs
+ncalls= 6 at ti= 28700 fs
+ncalls= 6 at ti= 28800 fs
+ncalls= 6 at ti= 28900 fs
+ncalls= 6 at ti= 29000 fs
+ncalls= 6 at ti= 29100 fs
+ncalls= 6 at ti= 29200 fs
+ncalls= 6 at ti= 29300 fs
+ncalls= 6 at ti= 29400 fs
+ncalls= 6 at ti= 29500 fs
+ncalls= 6 at ti= 29600 fs
+ncalls= 6 at ti= 29700 fs
+ncalls= 6 at ti= 29800 fs
+ncalls= 6 at ti= 29900 fs
+ncalls= 6 at ti= 30000 fs
+ncalls= 6 at ti= 30100 fs
+ncalls= 6 at ti= 30200 fs
+ncalls= 6 at ti= 30300 fs
+ncalls= 6 at ti= 30400 fs
+ncalls= 6 at ti= 30500 fs
+ncalls= 6 at ti= 30600 fs
+ncalls= 6 at ti= 30700 fs
+ncalls= 6 at ti= 30800 fs
+ncalls= 6 at ti= 30900 fs
+ncalls= 6 at ti= 31000 fs
+ncalls= 6 at ti= 31100 fs
+ncalls= 6 at ti= 31200 fs
+ncalls= 6 at ti= 31300 fs
+ncalls= 6 at ti= 31400 fs
+ncalls= 6 at ti= 31500 fs
+ncalls= 6 at ti= 31600 fs
+ncalls= 6 at ti= 31700 fs
+ncalls= 6 at ti= 31800 fs
+ncalls= 6 at ti= 31900 fs
+ncalls= 6 at ti= 32000 fs
+ncalls= 6 at ti= 32100 fs
+ncalls= 6 at ti= 32200 fs
+ncalls= 6 at ti= 32300 fs
+ncalls= 6 at ti= 32400 fs
+ncalls= 6 at ti= 32500 fs
+ncalls= 6 at ti= 32600 fs
+ncalls= 6 at ti= 32700 fs
+ncalls= 6 at ti= 32800 fs
+ncalls= 6 at ti= 32900 fs
+ncalls= 6 at ti= 33000 fs
+ncalls= 6 at ti= 33100 fs
+ncalls= 6 at ti= 33200 fs
+ncalls= 6 at ti= 33300 fs
+ncalls= 6 at ti= 33400 fs
+ncalls= 6 at ti= 33500 fs
+ncalls= 6 at ti= 33600 fs
+ncalls= 6 at ti= 33700 fs
+ncalls= 6 at ti= 33800 fs
+ncalls= 6 at ti= 33900 fs
+ncalls= 6 at ti= 34000 fs
+ncalls= 6 at ti= 34100 fs
+ncalls= 6 at ti= 34200 fs
+ncalls= 6 at ti= 34300 fs
+ncalls= 6 at ti= 34400 fs
+ncalls= 6 at ti= 34500 fs
+ncalls= 6 at ti= 34600 fs
+ncalls= 6 at ti= 34700 fs
+ncalls= 6 at ti= 34800 fs
+ncalls= 6 at ti= 34900 fs
+ncalls= 6 at ti= 35000 fs
+ncalls= 6 at ti= 35100 fs
+ncalls= 6 at ti= 35200 fs
+ncalls= 6 at ti= 35300 fs
+ncalls= 6 at ti= 35400 fs
+ncalls= 6 at ti= 35500 fs
+ncalls= 6 at ti= 35600 fs
+ncalls= 6 at ti= 35700 fs
+ncalls= 6 at ti= 35800 fs
+ncalls= 6 at ti= 35900 fs
+ncalls= 6 at ti= 36000 fs
+ncalls= 6 at ti= 36100 fs
+ncalls= 6 at ti= 36200 fs
+ncalls= 6 at ti= 36300 fs
+ncalls= 6 at ti= 36400 fs
+ncalls= 6 at ti= 36500 fs
+ncalls= 6 at ti= 36600 fs
+ncalls= 6 at ti= 36700 fs
+ncalls= 6 at ti= 36800 fs
+ncalls= 6 at ti= 36900 fs
+ncalls= 6 at ti= 37000 fs
+ncalls= 6 at ti= 37100 fs
+ncalls= 6 at ti= 37200 fs
+ncalls= 6 at ti= 37300 fs
+ncalls= 6 at ti= 37400 fs
+ncalls= 6 at ti= 37500 fs
+ncalls= 6 at ti= 37600 fs
+ncalls= 6 at ti= 37700 fs
+ncalls= 6 at ti= 37800 fs
+ncalls= 6 at ti= 37900 fs
+ncalls= 6 at ti= 38000 fs
+ncalls= 6 at ti= 38100 fs
+ncalls= 6 at ti= 38200 fs
+ncalls= 6 at ti= 38300 fs
+ncalls= 6 at ti= 38400 fs
+ncalls= 6 at ti= 38500 fs
+ncalls= 6 at ti= 38600 fs
+ncalls= 6 at ti= 38700 fs
+ncalls= 6 at ti= 38800 fs
+ncalls= 6 at ti= 38900 fs
+ncalls= 6 at ti= 39000 fs
+ncalls= 6 at ti= 39100 fs
+ncalls= 6 at ti= 39200 fs
+ncalls= 6 at ti= 39300 fs
+ncalls= 6 at ti= 39400 fs
+ncalls= 6 at ti= 39500 fs
+ncalls= 6 at ti= 39600 fs
+ncalls= 6 at ti= 39700 fs
+ncalls= 6 at ti= 39800 fs
+ncalls= 6 at ti= 39900 fs
+ncalls= 6 at ti= 40000 fs
+ncalls= 6 at ti= 40100 fs
+ncalls= 6 at ti= 40200 fs
+ncalls= 6 at ti= 40300 fs
+ncalls= 6 at ti= 40400 fs
+ncalls= 6 at ti= 40500 fs
+ncalls= 6 at ti= 40600 fs
+ncalls= 6 at ti= 40700 fs
+ncalls= 6 at ti= 40800 fs
+ncalls= 6 at ti= 40900 fs
+ncalls= 6 at ti= 41000 fs
+ncalls= 6 at ti= 41100 fs
+ncalls= 6 at ti= 41200 fs
+ncalls= 6 at ti= 41300 fs
+ncalls= 6 at ti= 41400 fs
+ncalls= 6 at ti= 41500 fs
+ncalls= 6 at ti= 41600 fs
+ncalls= 6 at ti= 41700 fs
+ncalls= 6 at ti= 41800 fs
+ncalls= 6 at ti= 41900 fs
+ncalls= 6 at ti= 42000 fs
+ncalls= 6 at ti= 42100 fs
+ncalls= 6 at ti= 42200 fs
+ncalls= 6 at ti= 42300 fs
+ncalls= 6 at ti= 42400 fs
+ncalls= 6 at ti= 42500 fs
+ncalls= 6 at ti= 42600 fs
+ncalls= 6 at ti= 42700 fs
+ncalls= 6 at ti= 42800 fs
+ncalls= 6 at ti= 42900 fs
+ncalls= 6 at ti= 43000 fs
+ncalls= 6 at ti= 43100 fs
+ncalls= 6 at ti= 43200 fs
+ncalls= 6 at ti= 43300 fs
+ncalls= 6 at ti= 43400 fs
+ncalls= 6 at ti= 43500 fs
+ncalls= 6 at ti= 43600 fs
+ncalls= 6 at ti= 43700 fs
+ncalls= 6 at ti= 43800 fs
+ncalls= 6 at ti= 43900 fs
+ncalls= 6 at ti= 44000 fs
+ncalls= 6 at ti= 44100 fs
+ncalls= 6 at ti= 44200 fs
+ncalls= 6 at ti= 44300 fs
+ncalls= 6 at ti= 44400 fs
+ncalls= 6 at ti= 44500 fs
+ncalls= 6 at ti= 44600 fs
+ncalls= 6 at ti= 44700 fs
+ncalls= 6 at ti= 44800 fs
+ncalls= 6 at ti= 44900 fs
+ncalls= 6 at ti= 45000 fs
+ncalls= 6 at ti= 45100 fs
+ncalls= 6 at ti= 45200 fs
+ncalls= 6 at ti= 45300 fs
+ncalls= 6 at ti= 45400 fs
+ncalls= 6 at ti= 45500 fs
+ncalls= 6 at ti= 45600 fs
+ncalls= 6 at ti= 45700 fs
+ncalls= 6 at ti= 45800 fs
+ncalls= 6 at ti= 45900 fs
+ncalls= 6 at ti= 46000 fs
+ncalls= 6 at ti= 46100 fs
+ncalls= 6 at ti= 46200 fs
+ncalls= 6 at ti= 46300 fs
+ncalls= 6 at ti= 46400 fs
+ncalls= 6 at ti= 46500 fs
+ncalls= 6 at ti= 46600 fs
+ncalls= 6 at ti= 46700 fs
+ncalls= 6 at ti= 46800 fs
+ncalls= 6 at ti= 46900 fs
+ncalls= 6 at ti= 47000 fs
+ncalls= 6 at ti= 47100 fs
+ncalls= 6 at ti= 47200 fs
+ncalls= 6 at ti= 47300 fs
+ncalls= 6 at ti= 47400 fs
+ncalls= 6 at ti= 47500 fs
+ncalls= 6 at ti= 47600 fs
+ncalls= 6 at ti= 47700 fs
+ncalls= 6 at ti= 47800 fs
+ncalls= 6 at ti= 47900 fs
+ncalls= 6 at ti= 48000 fs
+ncalls= 6 at ti= 48100 fs
+ncalls= 6 at ti= 48200 fs
+ncalls= 6 at ti= 48300 fs
+ncalls= 6 at ti= 48400 fs
+ncalls= 6 at ti= 48500 fs
+ncalls= 6 at ti= 48600 fs
+ncalls= 6 at ti= 48700 fs
+ncalls= 6 at ti= 48800 fs
+ncalls= 6 at ti= 48900 fs
+ncalls= 6 at ti= 49000 fs
+ncalls= 6 at ti= 49100 fs
+ncalls= 6 at ti= 49200 fs
+ncalls= 6 at ti= 49300 fs
+ncalls= 6 at ti= 49400 fs
+ncalls= 6 at ti= 49500 fs
+ncalls= 6 at ti= 49600 fs
+ncalls= 6 at ti= 49700 fs
+ncalls= 6 at ti= 49800 fs
+ncalls= 6 at ti= 49900 fs
+ncalls= 6 at ti= 50000 fs
+ncalls= 6 at ti= 50100 fs
+ncalls= 6 at ti= 50200 fs
+ncalls= 6 at ti= 50300 fs
+ncalls= 6 at ti= 50400 fs
+ncalls= 6 at ti= 50500 fs
+ncalls= 6 at ti= 50600 fs
+ncalls= 6 at ti= 50700 fs
+ncalls= 6 at ti= 50800 fs
+ncalls= 6 at ti= 50900 fs
+ncalls= 6 at ti= 51000 fs
+ncalls= 6 at ti= 51100 fs
+ncalls= 6 at ti= 51200 fs
+ncalls= 6 at ti= 51300 fs
+ncalls= 6 at ti= 51400 fs
+ncalls= 6 at ti= 51500 fs
+ncalls= 6 at ti= 51600 fs
+ncalls= 6 at ti= 51700 fs
+ncalls= 6 at ti= 51800 fs
+ncalls= 6 at ti= 51900 fs
+ncalls= 6 at ti= 52000 fs
+ncalls= 6 at ti= 52100 fs
+ncalls= 6 at ti= 52200 fs
+ncalls= 6 at ti= 52300 fs
+ncalls= 6 at ti= 52400 fs
+ncalls= 6 at ti= 52500 fs
+ncalls= 6 at ti= 52600 fs
+ncalls= 6 at ti= 52700 fs
+ncalls= 6 at ti= 52800 fs
+ncalls= 6 at ti= 52900 fs
+ncalls= 6 at ti= 53000 fs
+ncalls= 6 at ti= 53100 fs
+ncalls= 6 at ti= 53200 fs
+ncalls= 6 at ti= 53300 fs
+ncalls= 6 at ti= 53400 fs
+ncalls= 6 at ti= 53500 fs
+ncalls= 6 at ti= 53600 fs
+ncalls= 6 at ti= 53700 fs
+ncalls= 6 at ti= 53800 fs
+ncalls= 6 at ti= 53900 fs
+ncalls= 6 at ti= 54000 fs
+ncalls= 6 at ti= 54100 fs
+ncalls= 6 at ti= 54200 fs
+ncalls= 6 at ti= 54300 fs
+ncalls= 6 at ti= 54400 fs
+ncalls= 6 at ti= 54500 fs
+ncalls= 6 at ti= 54600 fs
+ncalls= 6 at ti= 54700 fs
+ncalls= 6 at ti= 54800 fs
+ncalls= 6 at ti= 54900 fs
+ncalls= 6 at ti= 55000 fs
+ncalls= 6 at ti= 55100 fs
+ncalls= 6 at ti= 55200 fs
+ncalls= 6 at ti= 55300 fs
+ncalls= 6 at ti= 55400 fs
+ncalls= 6 at ti= 55500 fs
+ncalls= 6 at ti= 55600 fs
+ncalls= 6 at ti= 55700 fs
+ncalls= 6 at ti= 55800 fs
+ncalls= 6 at ti= 55900 fs
+ncalls= 6 at ti= 56000 fs
+ncalls= 6 at ti= 56100 fs
+ncalls= 6 at ti= 56200 fs
+ncalls= 6 at ti= 56300 fs
+ncalls= 6 at ti= 56400 fs
+ncalls= 6 at ti= 56500 fs
+ncalls= 6 at ti= 56600 fs
+ncalls= 6 at ti= 56700 fs
+ncalls= 6 at ti= 56800 fs
+ncalls= 6 at ti= 56900 fs
+ncalls= 6 at ti= 57000 fs
+ncalls= 6 at ti= 57100 fs
+ncalls= 6 at ti= 57200 fs
+ncalls= 6 at ti= 57300 fs
+ncalls= 6 at ti= 57400 fs
+ncalls= 6 at ti= 57500 fs
+ncalls= 6 at ti= 57600 fs
+ncalls= 6 at ti= 57700 fs
+ncalls= 6 at ti= 57800 fs
+ncalls= 6 at ti= 57900 fs
+ncalls= 6 at ti= 58000 fs
+ncalls= 6 at ti= 58100 fs
+ncalls= 6 at ti= 58200 fs
+ncalls= 6 at ti= 58300 fs
+ncalls= 6 at ti= 58400 fs
+ncalls= 6 at ti= 58500 fs
+ncalls= 6 at ti= 58600 fs
+ncalls= 6 at ti= 58700 fs
+ncalls= 6 at ti= 58800 fs
+ncalls= 6 at ti= 58900 fs
+ncalls= 6 at ti= 59000 fs
+ncalls= 6 at ti= 59100 fs
+ncalls= 6 at ti= 59200 fs
+ncalls= 6 at ti= 59300 fs
+ncalls= 6 at ti= 59400 fs
+ncalls= 6 at ti= 59500 fs
+ncalls= 6 at ti= 59600 fs
+ncalls= 6 at ti= 59700 fs
+ncalls= 6 at ti= 59800 fs
+ncalls= 6 at ti= 59900 fs
+ncalls= 6 at ti= 60000 fs
+ncalls= 6 at ti= 60100 fs
+ncalls= 6 at ti= 60200 fs
+ncalls= 6 at ti= 60300 fs
+ncalls= 6 at ti= 60400 fs
+ncalls= 6 at ti= 60500 fs
+ncalls= 6 at ti= 60600 fs
+ncalls= 6 at ti= 60700 fs
+ncalls= 6 at ti= 60800 fs
+ncalls= 6 at ti= 60900 fs
+ncalls= 6 at ti= 61000 fs
+ncalls= 6 at ti= 61100 fs
+ncalls= 6 at ti= 61200 fs
+ncalls= 6 at ti= 61300 fs
+ncalls= 6 at ti= 61400 fs
+ncalls= 6 at ti= 61500 fs
+ncalls= 6 at ti= 61600 fs
+ncalls= 6 at ti= 61700 fs
+ncalls= 6 at ti= 61800 fs
+ncalls= 6 at ti= 61900 fs
+ncalls= 6 at ti= 62000 fs
+ncalls= 6 at ti= 62100 fs
+ncalls= 6 at ti= 62200 fs
+ncalls= 6 at ti= 62300 fs
+ncalls= 6 at ti= 62400 fs
+ncalls= 6 at ti= 62500 fs
+ncalls= 6 at ti= 62600 fs
+ncalls= 6 at ti= 62700 fs
+ncalls= 6 at ti= 62800 fs
+ncalls= 6 at ti= 62900 fs
+ncalls= 6 at ti= 63000 fs
+ncalls= 6 at ti= 63100 fs
+ncalls= 6 at ti= 63200 fs
+ncalls= 6 at ti= 63300 fs
+ncalls= 6 at ti= 63400 fs
+ncalls= 6 at ti= 63500 fs
+ncalls= 6 at ti= 63600 fs
+ncalls= 6 at ti= 63700 fs
+ncalls= 6 at ti= 63800 fs
+ncalls= 6 at ti= 63900 fs
+ncalls= 6 at ti= 64000 fs
+ncalls= 6 at ti= 64100 fs
+ncalls= 6 at ti= 64200 fs
+ncalls= 6 at ti= 64300 fs
+ncalls= 6 at ti= 64400 fs
+ncalls= 6 at ti= 64500 fs
+ncalls= 6 at ti= 64600 fs
+ncalls= 6 at ti= 64700 fs
+ncalls= 6 at ti= 64800 fs
+ncalls= 6 at ti= 64900 fs
+ncalls= 6 at ti= 65000 fs
+ncalls= 6 at ti= 65100 fs
+ncalls= 6 at ti= 65200 fs
+ncalls= 6 at ti= 65300 fs
+ncalls= 6 at ti= 65400 fs
+ncalls= 6 at ti= 65500 fs
+ncalls= 6 at ti= 65600 fs
+ncalls= 6 at ti= 65700 fs
+ncalls= 6 at ti= 65800 fs
+ncalls= 6 at ti= 65900 fs
+ncalls= 6 at ti= 66000 fs
+ncalls= 6 at ti= 66100 fs
+ncalls= 6 at ti= 66200 fs
+ncalls= 6 at ti= 66300 fs
+ncalls= 6 at ti= 66400 fs
+ncalls= 6 at ti= 66500 fs
+ncalls= 6 at ti= 66600 fs
+ncalls= 6 at ti= 66700 fs
+ncalls= 6 at ti= 66800 fs
+ncalls= 6 at ti= 66900 fs
+ncalls= 6 at ti= 67000 fs
+ncalls= 6 at ti= 67100 fs
+ncalls= 6 at ti= 67200 fs
+ncalls= 6 at ti= 67300 fs
+ncalls= 6 at ti= 67400 fs
+ncalls= 6 at ti= 67500 fs
+ncalls= 6 at ti= 67600 fs
+ncalls= 6 at ti= 67700 fs
+ncalls= 6 at ti= 67800 fs
+ncalls= 6 at ti= 67900 fs
+ncalls= 6 at ti= 68000 fs
+ncalls= 6 at ti= 68100 fs
+ncalls= 6 at ti= 68200 fs
+ncalls= 6 at ti= 68300 fs
+ncalls= 6 at ti= 68400 fs
+ncalls= 6 at ti= 68500 fs
+ncalls= 6 at ti= 68600 fs
+ncalls= 6 at ti= 68700 fs
+ncalls= 6 at ti= 68800 fs
+ncalls= 6 at ti= 68900 fs
+ncalls= 6 at ti= 69000 fs
+ncalls= 6 at ti= 69100 fs
+ncalls= 6 at ti= 69200 fs
+ncalls= 6 at ti= 69300 fs
+ncalls= 6 at ti= 69400 fs
+ncalls= 6 at ti= 69500 fs
+ncalls= 6 at ti= 69600 fs
+ncalls= 6 at ti= 69700 fs
+ncalls= 6 at ti= 69800 fs
+ncalls= 6 at ti= 69900 fs
+ncalls= 6 at ti= 70000 fs
+ncalls= 6 at ti= 70100 fs
+ncalls= 6 at ti= 70200 fs
+ncalls= 6 at ti= 70300 fs
+ncalls= 6 at ti= 70400 fs
+ncalls= 6 at ti= 70500 fs
+ncalls= 6 at ti= 70600 fs
+ncalls= 6 at ti= 70700 fs
+ncalls= 6 at ti= 70800 fs
+ncalls= 6 at ti= 70900 fs
+ncalls= 6 at ti= 71000 fs
+ncalls= 6 at ti= 71100 fs
+ncalls= 6 at ti= 71200 fs
+ncalls= 6 at ti= 71300 fs
+ncalls= 6 at ti= 71400 fs
+ncalls= 6 at ti= 71500 fs
+ncalls= 6 at ti= 71600 fs
+ncalls= 6 at ti= 71700 fs
+ncalls= 6 at ti= 71800 fs
+ncalls= 6 at ti= 71900 fs
+ncalls= 6 at ti= 72000 fs
+ncalls= 6 at ti= 72100 fs
+ncalls= 6 at ti= 72200 fs
+ncalls= 6 at ti= 72300 fs
+ncalls= 6 at ti= 72400 fs
+ncalls= 6 at ti= 72500 fs
+ncalls= 6 at ti= 72600 fs
+ncalls= 6 at ti= 72700 fs
+ncalls= 6 at ti= 72800 fs
+ncalls= 6 at ti= 72900 fs
+ncalls= 6 at ti= 73000 fs
+ncalls= 6 at ti= 73100 fs
+ncalls= 6 at ti= 73200 fs
+ncalls= 6 at ti= 73300 fs
+ncalls= 6 at ti= 73400 fs
+ncalls= 6 at ti= 73500 fs
+ncalls= 6 at ti= 73600 fs
+ncalls= 6 at ti= 73700 fs
+ncalls= 6 at ti= 73800 fs
+ncalls= 6 at ti= 73900 fs
+ncalls= 6 at ti= 74000 fs
+ncalls= 6 at ti= 74100 fs
+ncalls= 6 at ti= 74200 fs
+ncalls= 6 at ti= 74300 fs
+ncalls= 6 at ti= 74400 fs
+ncalls= 6 at ti= 74500 fs
+ncalls= 6 at ti= 74600 fs
+ncalls= 6 at ti= 74700 fs
+ncalls= 6 at ti= 74800 fs
+ncalls= 6 at ti= 74900 fs
+ncalls= 6 at ti= 75000 fs
+ncalls= 6 at ti= 75100 fs
+ncalls= 6 at ti= 75200 fs
+ncalls= 6 at ti= 75300 fs
+ncalls= 6 at ti= 75400 fs
+ncalls= 6 at ti= 75500 fs
+ncalls= 6 at ti= 75600 fs
+ncalls= 6 at ti= 75700 fs
+ncalls= 6 at ti= 75800 fs
+ncalls= 6 at ti= 75900 fs
+ncalls= 6 at ti= 76000 fs
+ncalls= 6 at ti= 76100 fs
+ncalls= 6 at ti= 76200 fs
+ncalls= 6 at ti= 76300 fs
+ncalls= 6 at ti= 76400 fs
+ncalls= 6 at ti= 76500 fs
+ncalls= 6 at ti= 76600 fs
+ncalls= 6 at ti= 76700 fs
+ncalls= 6 at ti= 76800 fs
+ncalls= 6 at ti= 76900 fs
+ncalls= 6 at ti= 77000 fs
+ncalls= 6 at ti= 77100 fs
+ncalls= 6 at ti= 77200 fs
+ncalls= 6 at ti= 77300 fs
+ncalls= 6 at ti= 77400 fs
+ncalls= 6 at ti= 77500 fs
+ncalls= 6 at ti= 77600 fs
+ncalls= 6 at ti= 77700 fs
+ncalls= 6 at ti= 77800 fs
+ncalls= 6 at ti= 77900 fs
+ncalls= 6 at ti= 78000 fs
+ncalls= 6 at ti= 78100 fs
+ncalls= 6 at ti= 78200 fs
+ncalls= 6 at ti= 78300 fs
+ncalls= 6 at ti= 78400 fs
+ncalls= 6 at ti= 78500 fs
+ncalls= 6 at ti= 78600 fs
+ncalls= 6 at ti= 78700 fs
+ncalls= 6 at ti= 78800 fs
+ncalls= 6 at ti= 78900 fs
+ncalls= 6 at ti= 79000 fs
+ncalls= 6 at ti= 79100 fs
+ncalls= 6 at ti= 79200 fs
+ncalls= 6 at ti= 79300 fs
+ncalls= 6 at ti= 79400 fs
+ncalls= 6 at ti= 79500 fs
+ncalls= 6 at ti= 79600 fs
+ncalls= 6 at ti= 79700 fs
+ncalls= 6 at ti= 79800 fs
+ncalls= 6 at ti= 79900 fs
+ncalls= 6 at ti= 80000 fs
+ncalls= 6 at ti= 80100 fs
+ncalls= 6 at ti= 80200 fs
+ncalls= 6 at ti= 80300 fs
+ncalls= 6 at ti= 80400 fs
+ncalls= 6 at ti= 80500 fs
+ncalls= 6 at ti= 80600 fs
+ncalls= 6 at ti= 80700 fs
+ncalls= 6 at ti= 80800 fs
+ncalls= 6 at ti= 80900 fs
+ncalls= 6 at ti= 81000 fs
+ncalls= 6 at ti= 81100 fs
+ncalls= 6 at ti= 81200 fs
+ncalls= 6 at ti= 81300 fs
+ncalls= 6 at ti= 81400 fs
+ncalls= 6 at ti= 81500 fs
+ncalls= 6 at ti= 81600 fs
+ncalls= 6 at ti= 81700 fs
+ncalls= 6 at ti= 81800 fs
+ncalls= 6 at ti= 81900 fs
+ncalls= 6 at ti= 82000 fs
+ncalls= 6 at ti= 82100 fs
+ncalls= 6 at ti= 82200 fs
+ncalls= 6 at ti= 82300 fs
+ncalls= 6 at ti= 82400 fs
+ncalls= 6 at ti= 82500 fs
+ncalls= 6 at ti= 82600 fs
+ncalls= 6 at ti= 82700 fs
+ncalls= 6 at ti= 82800 fs
+ncalls= 6 at ti= 82900 fs
+ncalls= 6 at ti= 83000 fs
+ncalls= 6 at ti= 83100 fs
+ncalls= 6 at ti= 83200 fs
+ncalls= 6 at ti= 83300 fs
+ncalls= 6 at ti= 83400 fs
+ncalls= 6 at ti= 83500 fs
+ncalls= 6 at ti= 83600 fs
+ncalls= 6 at ti= 83700 fs
+ncalls= 6 at ti= 83800 fs
+ncalls= 6 at ti= 83900 fs
+ncalls= 6 at ti= 84000 fs
+ncalls= 6 at ti= 84100 fs
+ncalls= 6 at ti= 84200 fs
+ncalls= 6 at ti= 84300 fs
+ncalls= 6 at ti= 84400 fs
+ncalls= 6 at ti= 84500 fs
+ncalls= 6 at ti= 84600 fs
+ncalls= 6 at ti= 84700 fs
+ncalls= 6 at ti= 84800 fs
+ncalls= 6 at ti= 84900 fs
+ncalls= 6 at ti= 85000 fs
+ncalls= 6 at ti= 85100 fs
+ncalls= 6 at ti= 85200 fs
+ncalls= 6 at ti= 85300 fs
+ncalls= 6 at ti= 85400 fs
+ncalls= 6 at ti= 85500 fs
+ncalls= 6 at ti= 85600 fs
+ncalls= 6 at ti= 85700 fs
+ncalls= 6 at ti= 85800 fs
+ncalls= 6 at ti= 85900 fs
+ncalls= 6 at ti= 86000 fs
+ncalls= 6 at ti= 86100 fs
+ncalls= 6 at ti= 86200 fs
+ncalls= 6 at ti= 86300 fs
+ncalls= 6 at ti= 86400 fs
+ncalls= 6 at ti= 86500 fs
+ncalls= 6 at ti= 86600 fs
+ncalls= 6 at ti= 86700 fs
+ncalls= 6 at ti= 86800 fs
+ncalls= 6 at ti= 86900 fs
+ncalls= 6 at ti= 87000 fs
+ncalls= 6 at ti= 87100 fs
+ncalls= 6 at ti= 87200 fs
+ncalls= 6 at ti= 87300 fs
+ncalls= 6 at ti= 87400 fs
+ncalls= 6 at ti= 87500 fs
+ncalls= 6 at ti= 87600 fs
+ncalls= 6 at ti= 87700 fs
+ncalls= 6 at ti= 87800 fs
+ncalls= 6 at ti= 87900 fs
+ncalls= 6 at ti= 88000 fs
+ncalls= 6 at ti= 88100 fs
+ncalls= 6 at ti= 88200 fs
+ncalls= 6 at ti= 88300 fs
+ncalls= 6 at ti= 88400 fs
+ncalls= 6 at ti= 88500 fs
+ncalls= 6 at ti= 88600 fs
+ncalls= 6 at ti= 88700 fs
+ncalls= 6 at ti= 88800 fs
+ncalls= 6 at ti= 88900 fs
+ncalls= 6 at ti= 89000 fs
+ncalls= 6 at ti= 89100 fs
+ncalls= 6 at ti= 89200 fs
+ncalls= 6 at ti= 89300 fs
+ncalls= 6 at ti= 89400 fs
+ncalls= 6 at ti= 89500 fs
+ncalls= 6 at ti= 89600 fs
+ncalls= 6 at ti= 89700 fs
+ncalls= 6 at ti= 89800 fs
+ncalls= 6 at ti= 89900 fs
+ncalls= 6 at ti= 90000 fs
+ncalls= 6 at ti= 90100 fs
+ncalls= 6 at ti= 90200 fs
+ncalls= 6 at ti= 90300 fs
+ncalls= 6 at ti= 90400 fs
+ncalls= 6 at ti= 90500 fs
+ncalls= 6 at ti= 90600 fs
+ncalls= 6 at ti= 90700 fs
+ncalls= 6 at ti= 90800 fs
+ncalls= 6 at ti= 90900 fs
+ncalls= 6 at ti= 91000 fs
+ncalls= 6 at ti= 91100 fs
+ncalls= 6 at ti= 91200 fs
+ncalls= 6 at ti= 91300 fs
+ncalls= 6 at ti= 91400 fs
+ncalls= 6 at ti= 91500 fs
+ncalls= 6 at ti= 91600 fs
+ncalls= 6 at ti= 91700 fs
+ncalls= 6 at ti= 91800 fs
+ncalls= 6 at ti= 91900 fs
+ncalls= 6 at ti= 92000 fs
+ncalls= 6 at ti= 92100 fs
+ncalls= 6 at ti= 92200 fs
+ncalls= 6 at ti= 92300 fs
+ncalls= 6 at ti= 92400 fs
+ncalls= 6 at ti= 92500 fs
+ncalls= 6 at ti= 92600 fs
+ncalls= 6 at ti= 92700 fs
+ncalls= 6 at ti= 92800 fs
+ncalls= 6 at ti= 92900 fs
+ncalls= 6 at ti= 93000 fs
+ncalls= 6 at ti= 93100 fs
+ncalls= 6 at ti= 93200 fs
+ncalls= 6 at ti= 93300 fs
+ncalls= 6 at ti= 93400 fs
+ncalls= 6 at ti= 93500 fs
+ncalls= 6 at ti= 93600 fs
+ncalls= 6 at ti= 93700 fs
+ncalls= 6 at ti= 93800 fs
+ncalls= 6 at ti= 93900 fs
+ncalls= 6 at ti= 94000 fs
+ncalls= 6 at ti= 94100 fs
+ncalls= 6 at ti= 94200 fs
+ncalls= 6 at ti= 94300 fs
+ncalls= 6 at ti= 94400 fs
+ncalls= 6 at ti= 94500 fs
+ncalls= 6 at ti= 94600 fs
+ncalls= 6 at ti= 94700 fs
+ncalls= 6 at ti= 94800 fs
+ncalls= 6 at ti= 94900 fs
+ncalls= 6 at ti= 95000 fs
+ncalls= 6 at ti= 95100 fs
+ncalls= 6 at ti= 95200 fs
+ncalls= 6 at ti= 95300 fs
+ncalls= 6 at ti= 95400 fs
+ncalls= 6 at ti= 95500 fs
+ncalls= 6 at ti= 95600 fs
+ncalls= 6 at ti= 95700 fs
+ncalls= 6 at ti= 95800 fs
+ncalls= 6 at ti= 95900 fs
+ncalls= 6 at ti= 96000 fs
+ncalls= 6 at ti= 96100 fs
+ncalls= 6 at ti= 96200 fs
+ncalls= 6 at ti= 96300 fs
+ncalls= 6 at ti= 96400 fs
+ncalls= 6 at ti= 96500 fs
+ncalls= 6 at ti= 96600 fs
+ncalls= 6 at ti= 96700 fs
+ncalls= 6 at ti= 96800 fs
+ncalls= 6 at ti= 96900 fs
+ncalls= 6 at ti= 97000 fs
+ncalls= 6 at ti= 97100 fs
+ncalls= 6 at ti= 97200 fs
+ncalls= 6 at ti= 97300 fs
+ncalls= 6 at ti= 97400 fs
+ncalls= 6 at ti= 97500 fs
+ncalls= 6 at ti= 97600 fs
+ncalls= 6 at ti= 97700 fs
+ncalls= 6 at ti= 97800 fs
+ncalls= 6 at ti= 97900 fs
+ncalls= 6 at ti= 98000 fs
+ncalls= 6 at ti= 98100 fs
+ncalls= 6 at ti= 98200 fs
+ncalls= 6 at ti= 98300 fs
+ncalls= 6 at ti= 98400 fs
+ncalls= 6 at ti= 98500 fs
+ncalls= 6 at ti= 98600 fs
+ncalls= 6 at ti= 98700 fs
+ncalls= 6 at ti= 98800 fs
+ncalls= 6 at ti= 98900 fs
+ncalls= 6 at ti= 99000 fs
+ncalls= 6 at ti= 99100 fs
+ncalls= 6 at ti= 99200 fs
+ncalls= 6 at ti= 99300 fs
+ncalls= 6 at ti= 99400 fs
+ncalls= 6 at ti= 99500 fs
+ncalls= 6 at ti= 99600 fs
+ncalls= 6 at ti= 99700 fs
+ncalls= 6 at ti= 99800 fs
+ncalls= 6 at ti= 99900 fs
+ncalls= 6 at ti= 100000 fs
+total time: 67.7637 seconds

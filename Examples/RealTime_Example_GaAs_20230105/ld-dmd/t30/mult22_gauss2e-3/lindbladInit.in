@@ -1,0 +1,17 @@
+scissor         0.424240
+
+NkMult          22
+#NkzMult        1
+dmuMin          1.43
+dmuMax          1.43
+Tmax            30
+pumpOmegaMax    0
+pumpTau         10000
+probeOmegaMax   2.0
+
+ePhMode         DiagK
+ePhOnlyElec     1
+ePhDelta        0.002
+nEphDelta       1000
+writeU          1
+#write_sparseP  1

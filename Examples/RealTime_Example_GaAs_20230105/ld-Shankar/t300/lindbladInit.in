@@ -1,0 +1,28 @@
+# note that parameters scissor and onlyElec are not included in original version
+# so that they must be commented out for original ePhSpinRelax
+
+# scissor will change the energy of CBM
+
+# in many cases, including both valence and conduction bands make the simulation very hard to converge
+# I strongly suggest you to modify the code to add the option including only valence/conduction bands or controlling the band range
+
+onlyElec	1 # considering only conduction bands
+scissor         0.424240 # in unit eV, CBM energy will be added by this value
+#Bext		0.1,0,0  # magnetic filed vector in Tesla
+#EzExt		0  # For 2D systems, electric field along z direction in V/nm
+		   # help to identify VBM and CBM if system has tiny band gap
+
+NkMult          8  # fine k meshes = DFT kmeshes * NkMult
+dmuMin          0.715  # minimum chemical potential in eV
+		     # relative to VBM for semiconductor
+		     # or Fermi level for metal or when Fermi smearing is used
+dmuMax          1.43
+Tmax            300  # Temperature in K. Note that although the name is Tmax
+		     # current initialization is only useful for one temperatur
+nkBT		7
+pumpOmegaMax    1.47  # maximum pump energy in eV. zero means pump is not active
+pumpTau         50  # pump pulse time width in fs
+probeOmegaMax   2.0  # maximum probe energy in eV. zero means probe is not active
+
+ePhMode         DiagK  # Off - turn off electron-phonon; DiagK - turn on
+ePhDelta        0.005  # Gaussian smearing in eV for electron-phonon

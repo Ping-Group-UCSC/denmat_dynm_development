@@ -1,0 +1,10 @@
+lindblad initialization is done in this directory
+spectrum mode simulation is done in sub-directory "spectrum"
+real-time dynamics is done in sub-directory "rt-linear"
+
+
+The initialization code is modified so that
+if input paramter "onlyElec" is 1, only conduction bands will be considered
+
+The resulting spin lifetime due to only e-ph by Shankar's lindblad code
+is ~33 ps at 300 K, similar to that obtained by DMD code

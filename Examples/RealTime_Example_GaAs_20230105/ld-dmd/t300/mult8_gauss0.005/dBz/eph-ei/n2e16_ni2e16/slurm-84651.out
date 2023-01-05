@@ -1,0 +1,5 @@
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+srun: got SIGCONT
+slurmstepd: error: *** STEP 84651.0 ON krnode23 CANCELLED AT 2021-10-25T18:17:03 ***
+slurmstepd: error: *** JOB 84651 ON krnode23 CANCELLED AT 2021-10-25T18:17:03 ***
+srun: forcing job termination

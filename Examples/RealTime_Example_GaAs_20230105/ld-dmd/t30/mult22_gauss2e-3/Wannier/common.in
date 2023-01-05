@@ -1,0 +1,15 @@
+lattice face-centered Cubic 10.6829
+ion-species Ga_nv3_nocorecorr.upf
+ion-species As_nv5_nocorecorr.upf
+elec-cutoff 17
+
+ion Ga 0.00 0.00 0.00  0
+ion As 0.25 0.25 0.25  0
+
+elec-n-bands 34
+converge-empty-states yes
+spintype spin-orbit
+
+#elec-ex-corr mgga-TPSS
+#elec-ex-corr mgga-x-bj06 lda-c-pz
+elec-ex-corr mgga-x-scan mgga-c-scan

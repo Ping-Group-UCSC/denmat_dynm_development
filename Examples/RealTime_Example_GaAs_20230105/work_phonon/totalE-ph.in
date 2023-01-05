@@ -1,0 +1,10 @@
+include common.in
+
+kpoint-folding 16 16 16    #Use a Brillouin zone mesh
+
+initial-state totalE.$VAR
+
+electronic-minimize energyDiffThreshold 1e-9
+
+dump-name totalE.$VAR
+dump End State

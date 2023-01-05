@@ -1,0 +1,328 @@
+
+***************  JDFTx-1.6  ***************
+
+Start date and time: Mon Oct 25 02:43:55 2021
+Executable /data/groups/ping/jxu153/codes/jdftx/jdftx-202103/build/jdftx with command-line: -i scf.in
+Running on hosts (process indices):  gpu024 (0-7)  gpu025 (8-15)  gpu026 (16-23)  gpu027 (24-31)  gpu028 (32-39)  node001 (40-47)  node002 (48-55)  node003 (56-63)
+Divided in process groups (process indices):  0 (0)  1 (1)  2 (2)  3 (3)  4 (4)  5 (5)  6 (6)  7 (7)  8 (8)  9 (9)  10 (10)  11 (11)  12 (12)  13 (13)  14 (14)  15 (15)  16 (16)  17 (17)  18 (18)  19 (19)  20 (20)  21 (21)  22 (22)  23 (23)  24 (24)  25 (25)  26 (26)  27 (27)  28 (28)  29 (29)  30 (30)  31 (31)  32 (32)  33 (33)  34 (34)  35 (35)  36 (36)  37 (37)  38 (38)  39 (39)  40 (40)  41 (41)  42 (42)  43 (43)  44 (44)  45 (45)  46 (46)  47 (47)  48 (48)  49 (49)  50 (50)  51 (51)  52 (52)  53 (53)  54 (54)  55 (55)  56 (56)  57 (57)  58 (58)  59 (59)  60 (60)  61 (61)  62 (62)  63 (63)
+Resource initialization completed at t[s]:      0.01
+Run totals: 64 processes, 320 threads, 0 GPUs
+
+
+Input parsed successfully to the following command list (including defaults):
+
+basis kpoint-dependent
+converge-empty-states yes
+coords-type Lattice
+core-overlap-check vector
+coulomb-interaction Periodic
+davidson-band-ratio 1.1
+dump End State
+dump Init Symmetries
+dump-name totalE.$VAR
+elec-cutoff 17
+elec-eigen-algo Davidson
+elec-ex-corr mgga-x-scan mgga-c-scan
+elec-n-bands 34
+electronic-minimize  \
+	dirUpdateScheme      FletcherReeves \
+	linminMethod         DirUpdateRecommended \
+	nIterations          100 \
+	history              15 \
+	knormThreshold       0 \
+	energyDiffThreshold  1e-08 \
+	nEnergyDiff          2 \
+	alphaTstart          1 \
+	alphaTmin            1e-10 \
+	updateTestStepSize   yes \
+	alphaTreduceFactor   0.1 \
+	alphaTincreaseFactor 3 \
+	nAlphaAdjustMax      3 \
+	wolfeEnergy          0.0001 \
+	wolfeGradient        0.9 \
+	fdTest               no
+electronic-scf  \
+	nIterations	50 \
+	energyDiffThreshold	1e-08 \
+	residualThreshold	1e-07 \
+	mixFraction	0.5 \
+	qMetric	0.8 \
+	history	10 \
+	nEigSteps	2 \
+	eigDiffThreshold	1e-08 \
+	mixedVariable	Density \
+	qKerker	0.8 \
+	qKappa	-1 \
+	verbose	no \
+	mixFractionMag	1.5
+exchange-regularization WignerSeitzTruncated
+fluid None
+fluid-ex-corr (null) lda-PZ
+fluid-gummel-loop 10 1.000000e-05
+fluid-minimize  \
+	dirUpdateScheme      PolakRibiere \
+	linminMethod         DirUpdateRecommended \
+	nIterations          100 \
+	history              15 \
+	knormThreshold       0 \
+	energyDiffThreshold  0 \
+	nEnergyDiff          2 \
+	alphaTstart          1 \
+	alphaTmin            1e-10 \
+	updateTestStepSize   yes \
+	alphaTreduceFactor   0.1 \
+	alphaTincreaseFactor 3 \
+	nAlphaAdjustMax      3 \
+	wolfeEnergy          0.0001 \
+	wolfeGradient        0.9 \
+	fdTest               no
+fluid-solvent H2O 55.338 ScalarEOS \
+	epsBulk 78.4 \
+	pMol 0.92466 \
+	epsInf 1.77 \
+	Pvap 1.06736e-10 \
+	sigmaBulk 4.62e-05 \
+	Rvdw 2.61727 \
+	Res 1.42 \
+	tauNuc 343133 \
+	poleEl 15 7 1
+forces-output-coords Positions
+initial-state totalE.$VAR
+ion Ga   0.000000000000000   0.000000000000000   0.000000000000000 0
+ion As   0.250000000000000   0.250000000000000   0.250000000000000 0
+ion-species Ga_nv3_nocorecorr.upf
+ion-species As_nv5_nocorecorr.upf
+ion-width 0
+ionic-minimize  \
+	dirUpdateScheme      L-BFGS \
+	linminMethod         DirUpdateRecommended \
+	nIterations          0 \
+	history              15 \
+	knormThreshold       0.0001 \
+	energyDiffThreshold  1e-06 \
+	nEnergyDiff          2 \
+	alphaTstart          1 \
+	alphaTmin            1e-10 \
+	updateTestStepSize   yes \
+	alphaTreduceFactor   0.1 \
+	alphaTincreaseFactor 3 \
+	nAlphaAdjustMax      3 \
+	wolfeEnergy          0.0001 \
+	wolfeGradient        0.9 \
+	fdTest               no
+kpoint   0.000000000000   0.000000000000   0.000000000000  1.00000000000000
+kpoint-folding 24 24 24 
+latt-move-scale 1 1 1
+latt-scale 1 1 1 
+lattice Face-Centered Cubic 10.6829
+lattice-minimize  \
+	dirUpdateScheme      L-BFGS \
+	linminMethod         DirUpdateRecommended \
+	nIterations          0 \
+	history              15 \
+	knormThreshold       0 \
+	energyDiffThreshold  1e-06 \
+	nEnergyDiff          2 \
+	alphaTstart          1 \
+	alphaTmin            1e-10 \
+	updateTestStepSize   yes \
+	alphaTreduceFactor   0.1 \
+	alphaTincreaseFactor 3 \
+	nAlphaAdjustMax      3 \
+	wolfeEnergy          0.0001 \
+	wolfeGradient        0.9 \
+	fdTest               no
+lcao-params -1 1e-06 0.001
+pcm-variant GLSSA13
+spintype spin-orbit
+subspace-rotation-factor 1 yes
+symmetries automatic
+symmetry-threshold 0.0001
+
+
+
+---------- Setting up symmetries ----------
+
+Found 48 point-group symmetries of the bravais lattice
+Found 24 space-group symmetries with basis
+Applied RMS atom displacement 0 bohrs to make symmetries exact.
+
+---------- Initializing the Grid ----------
+R = 
+[            0      5.34145      5.34145  ]
+[      5.34145            0      5.34145  ]
+[      5.34145      5.34145            0  ]
+unit cell volume = 304.795
+G =
+[  -0.588154   0.588154   0.588154  ]
+[   0.588154  -0.588154   0.588154  ]
+[   0.588154   0.588154  -0.588154  ]
+Minimum fftbox size, Smin = [  32  32  32  ]
+Chosen fftbox size, S = [  32  32  32  ]
+
+---------- Exchange Correlation functional ----------
+Initialized LibXC exchange functional 'SCAN exchange of Sun, Ruzsinszky, and Perdew'
+Initialized LibXC correlation functional 'SCAN correlation of Sun, Ruzsinszky, and Perdew'
+
+---------- Setting up pseudopotentials ----------
+Width of ionic core gaussian charges (only for fluid interactions / plotting) set to 0
+
+Reading pseudopotential file 'Ga_nv3_nocorecorr.upf':
+  'Ga' pseudopotential, 'PBE' functional
+  Generated using ONCVPSP code by D. R. Hamann
+  Author: anonymous  Date: 200814.
+  3 valence electrons, 3 orbitals, 8 projectors, 1926 radial grid points, with lMax = 2
+  Transforming local potential to a uniform radial grid of dG=0.02 with 1566 points.
+  Transforming nonlocal projectors to a uniform radial grid of dG=0.02 with 399 points.
+    4S    l: 0   occupation:  2.0   eigenvalue: -0.328808
+    4P    l: 1   occupation:  0.7   eigenvalue: -0.093403
+    4P    l: 1   occupation:  0.3   eigenvalue: -0.097652
+  Transforming atomic orbitals to a uniform radial grid of dG=0.02 with 399 points.
+  Core radius for overlap checks: 2.08 bohrs.
+
+Reading pseudopotential file 'As_nv5_nocorecorr.upf':
+  'As' pseudopotential, 'PBE' functional
+  Generated using ONCVPSP code by D. R. Hamann
+  Author: anonymous  Date: 200814.
+  5 valence electrons, 3 orbitals, 8 projectors, 1358 radial grid points, with lMax = 2
+  Transforming local potential to a uniform radial grid of dG=0.02 with 1566 points.
+  Transforming nonlocal projectors to a uniform radial grid of dG=0.02 with 399 points.
+    4S    l: 0   occupation:  2.0   eigenvalue: -0.532523
+    4P    l: 1   occupation:  2.0   eigenvalue: -0.187649
+    4P    l: 1   occupation:  1.0   eigenvalue: -0.197670
+  Transforming atomic orbitals to a uniform radial grid of dG=0.02 with 399 points.
+  Core radius for overlap checks: 2.07 bohrs.
+
+Initialized 2 species with 2 total atoms.
+
+Folded 1 k-points by 24x24x24 to 13824 k-points.
+
+---------- Setting up k-points, bands, fillings ----------
+Adding inversion symmetry to k-mesh for non-inversion-symmetric unit cell.
+Reduced to 413 k-points under symmetry. 
+Computing the number of bands and number of electrons
+Calculating initial fillings.
+nElectrons:   8.000000   nBands: 34   nStates: 413
+
+----- Setting up reduced wavefunction bases (one per k-point) -----
+average nbasis = 1020.427 , ideal nbasis = 1020.410
+
+---------- Setting up ewald sum ----------
+Optimum gaussian width for ewald sums = 2.425994 bohr.
+Real space sum over 1331 unit cells with max indices [  5  5  5  ]
+Reciprocal space sum over 2197 terms with max indices [  6  6  6  ]
+
+---------- Allocating electronic variables ----------
+Initializing wave functions:  linear combination of atomic orbitals
+Note: number of bands (34) exceeds available atomic orbitals (16)
+Initializing semi-local functional for LCAO:
+Initalized PBE GGA exchange.
+Initalized PBE GGA correlation.
+Ga pseudo-atom occupations:   s ( 2 )  p- ( 1 )  p+ ( 0 )
+As pseudo-atom occupations:   s ( 2 )  p- ( 2 )  p+ ( 1 )
+	FillingsUpdate:  mu: +0.202254998  nElectrons: 8.000000
+LCAOMinimize: Iter:   0  Etot: -8.5323189287947834  |grad|_K:  1.678e-04  alpha:  1.000e+00
+	FillingsUpdate:  mu: +0.195817791  nElectrons: 8.000000
+LCAOMinimize: Iter:   1  Etot: -8.5358275945922397  |grad|_K:  4.000e-06  alpha:  5.162e-01  linmin: -1.449e-01  cgtest:  2.182e-01  t[s]:      2.74
+LCAOMinimize: Encountered beta<0, resetting CG.
+	FillingsUpdate:  mu: +0.195757369  nElectrons: 8.000000
+LCAOMinimize: Iter:   2  Etot: -8.5358314133148383  |grad|_K:  6.707e-07  alpha:  9.988e-01  linmin: -1.328e-03  cgtest:  1.282e-02  t[s]:      3.57
+	FillingsUpdate:  mu: +0.195787787  nElectrons: 8.000000
+LCAOMinimize: Iter:   3  Etot: -8.5358314733902407  |grad|_K:  9.460e-08  alpha:  5.587e-01  linmin:  1.116e-04  cgtest: -1.346e-02  t[s]:      4.41
+LCAOMinimize: None of the convergence criteria satisfied after 3 iterations.
+
+
+Dumping 'totalE.sym' ... done
+
+---- Citations for features of the code used in this run ----
+
+   Software package:
+      R. Sundararaman, K. Letchworth-Weaver, K.A. Schwarz, D. Gunceler, Y. Ozhabes and T.A. Arias, 'JDFTx: software for joint density-functional theory', SoftwareX 6, 278 (2017)
+
+   LibXC library of exchange-correlation functions:
+      M. A. L. Marques, M. J. T. Oliveira and T. Burnus, Comput. Phys. Commun. 183, 2272 (2012)
+
+   SCAN exchange of Sun, Ruzsinszky, and Perdew exchange functional:
+   SCAN correlation of Sun, Ruzsinszky, and Perdew correlation functional:
+      J. Sun, A. Ruzsinszky, and J. P. Perdew, Phys. Rev. Lett. 115, 036402 (2015)
+
+   gga-PBE exchange-correlation functional:
+      J.P. Perdew, K. Burke and M. Ernzerhof, Phys. Rev. Lett. 77, 3865 (1996)
+
+This list may not be complete. Please suggest additional citations or
+report any other bugs at https://github.com/shankar1729/jdftx/issues
+
+Initialization completed successfully at t[s]:      4.64
+
+
+-------- Electronic minimization -----------
+Will mix electronic and kinetic density at each iteration.
+SCF: Cycle:  0   Etot: -8.559536032025036   dEtot: -2.534e-02   |Residual|: 3.598e-02   |deigs|: 6.931e-01  t[s]:     10.45
+SCF: Cycle:  1   Etot: -8.559742743155745   dEtot: -2.067e-04   |Residual|: 2.120e-02   |deigs|: 5.023e-03  t[s]:     14.95
+SCF: Cycle:  2   Etot: -8.559831517421632   dEtot: -8.877e-05   |Residual|: 2.320e-03   |deigs|: 2.179e-03  t[s]:     19.32
+SCF: Cycle:  3   Etot: -8.559833555553215   dEtot: -2.038e-06   |Residual|: 9.683e-04   |deigs|: 3.055e-04  t[s]:     23.69
+SCF: Cycle:  4   Etot: -8.559834080578071   dEtot: -5.250e-07   |Residual|: 2.537e-04   |deigs|: 1.930e-04  t[s]:     28.15
+SCF: Cycle:  5   Etot: -8.559834172956544   dEtot: -9.238e-08   |Residual|: 7.387e-05   |deigs|: 1.218e-04  t[s]:     32.54
+SCF: Cycle:  6   Etot: -8.559834177491471   dEtot: -4.535e-09   |Residual|: 1.990e-05   |deigs|: 7.377e-05  t[s]:     36.84
+SCF: Cycle:  7   Etot: -8.559834177772213   dEtot: -2.807e-10   |Residual|: 5.961e-06   |deigs|: 4.418e-05  t[s]:     41.15
+SCF: Converged (|Delta E|<1.000000e-08 for 2 iters).
+
+Converging empty states (this may take a while): |deigs|: 2.556e-04
+
+# Ionic positions in lattice coordinates:
+ion Ga   0.000000000000000   0.000000000000000   0.000000000000000 0
+ion As   0.250000000000000   0.250000000000000   0.250000000000000 0
+
+# Forces in Lattice coordinates:
+force Ga  -0.000000000000000  -0.000000000000000   0.000000000000000 0
+force As   0.000000000000000   0.000000000000000   0.000000000000000 0
+
+# Energy components:
+   Eewald =       -8.4220291129144371
+       EH =        0.7936625144790563
+     Eloc =       -3.3313016784177898
+      Enl =        1.6676323214808804
+      Exc =       -2.4103869378615999
+       KE =        3.1425887154616770
+-------------------------------------
+     Etot =       -8.5598341777722133
+
+IonicMinimize: Iter:   0  Etot: -8.559834177772213  |grad|_K:  0.000e+00  t[s]:     51.41
+IonicMinimize: Converged (|grad|_K<1.000000e-04).
+
+#--- Lowdin population analysis ---
+# oxidation-state Ga +0.105
+# oxidation-state As -0.070
+
+
+Dumping 'totalE.wfns' ... done
+End date and time: Mon Oct 25 02:44:47 2021  (Duration: 0-0:00:52.06)
+Done!
+
+PROFILER:        ColumnBundle::randomize     0.003255 +/-     0.000031 s,    6 calls,      0.019527 s total
+PROFILER:                     diagouterI     0.008352 +/-     0.001435 s,  258 calls,      2.154841 s total
+PROFILER:              EdensityAndVscloc     0.069468 +/-     0.053915 s,   24 calls,      1.667230 s total
+PROFILER:                     EnlAndGrad     0.000134 +/-     0.000188 s,  532 calls,      0.071346 s total
+PROFILER:            ExCorrCommunication     0.013790 +/-     0.020005 s,   72 calls,      0.992890 s total
+PROFILER:               ExCorrFunctional     0.001098 +/-     0.001659 s,   40 calls,      0.043925 s total
+PROFILER:                    ExCorrTotal     0.046726 +/-     0.033499 s,   24 calls,      1.121417 s total
+PROFILER:                   Idag_DiagV_I     0.011379 +/-     0.004803 s,  854 calls,      9.717664 s total
+PROFILER:                    inv(matrix)     0.000031 +/-     0.000015 s,    7 calls,      0.000220 s total
+PROFILER:            matrix::diagonalize     0.000877 +/-     0.001246 s,  779 calls,      0.683141 s total
+PROFILER:                    matrix::set     0.000002 +/-     0.000001 s, 3572 calls,      0.005488 s total
+PROFILER:     RadialFunctionR::transform     0.011498 +/-     0.044817 s,   32 calls,      0.367946 s total
+PROFILER:                    reduceKmesh     0.019692 +/-     0.000000 s,    1 calls,      0.019692 s total
+PROFILER:               WavefunctionDrag     0.095173 +/-     0.000000 s,    1 calls,      0.095173 s total
+PROFILER:                            Y*M     0.000452 +/-     0.000911 s, 1248 calls,      0.563614 s total
+PROFILER:                          Y1^Y2     0.000270 +/-     0.000675 s, 1110 calls,      0.299732 s total
+
+MEMUSAGE:                   ColumnBundle     0.016077 GB
+MEMUSAGE:             complexScalarField     0.000977 GB
+MEMUSAGE:        complexScalarFieldTilde     0.002441 GB
+MEMUSAGE:                    IndexArrays     0.006425 GB
+MEMUSAGE:                         matrix     0.001569 GB
+MEMUSAGE:                           misc     0.001565 GB
+MEMUSAGE:                     RealKernel     0.000259 GB
+MEMUSAGE:                    ScalarField     0.010498 GB
+MEMUSAGE:               ScalarFieldTilde     0.002075 GB
+MEMUSAGE:                          Total     0.031452 GB

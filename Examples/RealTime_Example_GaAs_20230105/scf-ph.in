@@ -1,0 +1,10 @@
+include common.in
+
+kpoint-folding 24 24 24    #Use a Brillouin zone mesh
+
+initial-state totalE.$VAR
+
+electronic-scf energyDiffThreshold 1e-6
+
+dump-name totalE.$VAR
+dump End ElecDensity State

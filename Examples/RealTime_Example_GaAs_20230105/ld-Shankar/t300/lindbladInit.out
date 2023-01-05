@@ -1,0 +1,126 @@
+
+*************** gsl 1.5  ***************
++++++++++++++++ Linked to  JDFTx-1.6  +++++++++++++++
+
+Start date and time: Tue Nov  9 23:00:26 2021
+Executable /export/data/share/jxu/jdftx_codes/jdftx-feynwann-stable-202109/build-FeynWann/lindbladInit with command-line: -i lindbladInit.in
+Running on hosts (process indices):  krnode09.krhpc (0-15)  krnode10.krhpc (16-31)  krnode11.krhpc (32-47)  krnode12.krhpc (48-63)  krnode13.krhpc (64-79)  krnode14.krhpc (80-95)  krnode15.krhpc (96-111)  krnode16.krhpc (112-127)
+Divided in process groups (process indices):  0 (0)  1 (1)  2 (2)  3 (3)  4 (4)  5 (5)  6 (6)  7 (7)  8 (8)  9 (9)  10 (10)  11 (11)  12 (12)  13 (13)  14 (14)  15 (15)  16 (16)  17 (17)  18 (18)  19 (19)  20 (20)  21 (21)  22 (22)  23 (23)  24 (24)  25 (25)  26 (26)  27 (27)  28 (28)  29 (29)  30 (30)  31 (31)  32 (32)  33 (33)  34 (34)  35 (35)  36 (36)  37 (37)  38 (38)  39 (39)  40 (40)  41 (41)  42 (42)  43 (43)  44 (44)  45 (45)  46 (46)  47 (47)  48 (48)  49 (49)  50 (50)  51 (51)  52 (52)  53 (53)  54 (54)  55 (55)  56 (56)  57 (57)  58 (58)  59 (59)  60 (60)  61 (61)  62 (62)  63 (63)  64 (64)  65 (65)  66 (66)  67 (67)  68 (68)  69 (69)  70 (70)  71 (71)  72 (72)  73 (73)  74 (74)  75 (75)  76 (76)  77 (77)  78 (78)  79 (79)  80 (80)  81 (81)  82 (82)  83 (83)  84 (84)  85 (85)  86 (86)  87 (87)  88 (88)  89 (89)  90 (90)  91 (91)  92 (92)  93 (93)  94 (94)  95 (95)  96 (96)  97 (97)  98 (98)  99 (99)  100 (100)  101 (101)  102 (102)  103 (103)  104 (104)  105 (105)  106 (106)  107 (107)  108 (108)  109 (109)  110 (110)  111 (111)  112 (112)  113 (113)  114 (114)  115 (115)  116 (116)  117 (117)  118 (118)  119 (119)  120 (120)  121 (121)  122 (122)  123 (123)  124 (124)  125 (125)  126 (126)  127 (127)
+Resource initialization completed at t[s]:      0.05
+Run totals: 128 processes, 128 threads, 0 GPUs
+
+Inputs after conversion to atomic units:
+NkMult = [  8  8  8  ]
+dmuMin = 0.0262758
+dmuMax = 0.0525515
+band_skipped = -1
+Tmax = 0.000950043
+nkBT = 7
+pumpOmegaMax = 0.0540215
+pumpTau = 2067.07
+probeOmegaMax = 0.0734986
+ePhMode = DiagK
+modeStart = 0
+modeStop = -1
+defectName = Off
+ePhDelta = 0.000183747
+eIDelta = 6.75256e-06
+maxNeighbors = 0
+outFile = ldbd.dat
+onlyElec = 1
+onlyHole = 0
+assumeMetal = 0
+Bext = [  0  0  0  ]
+EzExt = 0
+scissor = 0.0155905
+EshiftWeight = 0
+
+Reading 'Wannier/totalE.out' ... done.
+NOTE: mu unavailable; assuming semiconductor/insulator and setting to VBM.
+Reading 'Wannier/totalE.eigenvals' ... done.
+mu = 0.180239
+nElectrons = 8
+nBandsDFT = 34
+nSpins = 1
+nSpinor = 2
+spinSuffix = ''
+kfold = [  24  24  24  ]
+isTruncated = [  0  0  0  ]
+R:
+[  0  5.34145  5.34145  ]
+[  5.34145  0  5.34145  ]
+[  5.34145  5.34145  0  ]
+Atoms with fractional coordinates:
+	Ga   0.000000000000000   0.000000000000000   0.000000000000000
+	As   0.250000000000000   0.250000000000000   0.250000000000000
+
+Reading 'Wannier/wannier.mlwfCellMap' ... done.
+Reading 'Wannier/wannier.mlwfBandContrib' ... done.
+nBands = 16
+
+Reading 'Wannier/wannier.mlwfCellWeights' ... done.
+
+Reading 'Wannier/phonon.out' ... done.
+nModes = 6
+phononSup = [  4  4  4  ]
+
+Reading 'Wannier/totalE.phononBasis' ... done.
+Reading 'Wannier/totalE.phononCellMap' ... done.
+Reading 'Wannier/totalE.phononOmegaSq' ... done.
+Reading 'Wannier/wannier.mlwfCellMapPh' ... done.
+Reading 'Wannier/wannier.mlwfCellMapPhSum' ... done.
+Reading 'Wannier/wannier.mlwfCellWeightsPh' ... done.
+Reading 'Wannier/wannier.mlwfHePh' ... done.
+Reading 'Wannier/wannier.mlwfHePhSum' ... done.
+Reading 'Wannier/wannier.mlwfD' ... done.
+
+Reading 'Wannier/wannier.out' ... done.
+polar = yes
+
+Reading 'Wannier/totalE.Zeff' ... done.
+Reading 'Wannier/totalE.epsInf' ... done.
+Reading 'Wannier/totalE.phononCellWeights' ... done.
+Benchmarking e-ph transform and single-point compute: tCompute[s]: 0.0269476 tTransform[s]: 0.210622
+Will switch from transform to compute when mask count <= 7
+Reading 'Wannier/wannier.mlwfH' ... done.
+Reading 'Wannier/wannier.mlwfP' ... done.
+Reading 'Wannier/wannier.mlwfS' ... done.
+
+Effective interpolated k-mesh dimensions: [  192  192  192  ]
+Effectively sampled nKpts: 7077888
+Determining energy range: 25% 50% 75% 100% done.
+VBM: -0.000000 eV, CBM: 1.430000 eV, Middle: 0.715000
+Note that VBM and CBM may not be determined correctly,
+you may have to use band_skipped to set starting band index of wannier bands
+The system is not metalic
+Active energy range: 0.715 to 1.651 eV
+Scanning k-points with active states: 25% 50% 75% 100% done.
+Found k-points with active states in 1363 of 110592 q-mesh offsets (81x reduction)
+Found 1363 k-points with active states from 7077888 total k-points (5193x reduction)
+Selected 2702 active states from 113246208 total electronic states (41912x reduction)
+
+1363 active q-mesh offsets parallelized over 128 process groups.
+
+Scanning k-pairs with e-ph coupling: 2% 4% 6% 8% 10% 12% 14% 16% 18% 20% 22% 24% 26% 28% 30% 31% 33% 35% 37% 39% 41% 43% 45% 47% 49% 51% 53% 55% 57% 59% 61% 63% 65% 67% 69% 71% 73% 75% 77% 79% 81% 83% 85% 87% 89% 91% 92% 94% 96% 98% done.
+Found 741702 k-pairs with e-ph coupling from 1857769 total pairs of selected k-points (3x reduction)
+Selected 10344594 active state pairs from 12824703626379264 total electronic state pairs (1239749344x reduction)
+Number of partners per k-point:  min: 26  max: 807  mean: 544.2
+
+Generating matrix elements: 10% 20% 30% 40% 50% 60% 70% 80% 90% 100% done.
+Writing ldbd.dat: 2% 4% 6% 8% 10% 12% 14% 16% 18% 20% 22% 24% 26% 28% 30% 32% 34% 36% 38% 40% 42% 44% 46% 48% 50% 52% 53% 55% 57% 59% 61% 63% 65% 67% 69% 71% 73% 75% 77% 79% 81% 83% 85% 87% 89% 91% 93% 95% 97% 99% done.
+End date and time: Wed Nov 10 02:46:03 2021  (Duration: 0-3:45:36.62)
+Done!
+
+PROFILER:    DistributedMatrix::compute2     0.023718 +/-     0.000370 s, 3632 calls,     86.144170 s total
+PROFILER:  DistributedMatrix::transform1     0.148183 +/-     0.107778 s, 45791 calls,   6785.467191 s total
+PROFILER:  DistributedMatrix::transform2     0.210618 +/-     0.006759 s,    3 calls,      0.631854 s total
+PROFILER:       FeynWann::eLoop:callback     0.000000 +/-     0.000000 s, 110592 calls,      0.015993 s total
+PROFILER:     FeynWann::ePhLoop:callback     0.000010 +/-     0.000004 s, 3613 calls,      0.037236 s total
+PROFILER:      FeynWann::phLoop:callback     0.000065 +/-     0.000008 s, 55296 calls,      3.567486 s total
+PROFILER:            FeynWann::setMatrix     0.000363 +/-     0.000074 s, 3613 calls,      1.312144 s total
+PROFILER:   FeynWann::setState:rotations     0.000113 +/-     0.000031 s, 573056 calls,     64.725304 s total
+PROFILER:            matrix::diagonalize     0.000072 +/-     0.000040 s, 859584 calls,     61.914647 s total
+
+MEMUSAGE:                         matrix     0.130980 GB
+MEMUSAGE:                           misc     0.729757 GB
+MEMUSAGE:                          Total     0.860577 GB

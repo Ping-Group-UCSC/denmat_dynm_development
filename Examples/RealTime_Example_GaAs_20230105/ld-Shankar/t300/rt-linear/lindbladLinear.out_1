@@ -1,0 +1,151 @@
+
+*************** gsl 1.5  ***************
++++++++++++++++ Linked to  JDFTx-1.6  +++++++++++++++
+
+Start date and time: Wed Nov 10 07:55:40 2021
+Executable /export/data/share/jxu/jdftx_codes/jdftx-feynwann-stable-202109/build-FeynWann/lindbladLinear with command-line: -i lindbladLinear.in -G8
+Running on hosts (process indices):  krnode01.krhpc (0-15)  krnode02.krhpc (16-31)  krnode03.krhpc (32-47)  krnode04.krhpc (48-63)  krnode05.krhpc (64-79)  krnode06.krhpc (80-95)  krnode07.krhpc (96-111)  krnode08.krhpc (112-127)
+Divided in process groups (process indices):  0 (0-15)  1 (16-31)  2 (32-47)  3 (48-63)  4 (64-79)  5 (80-95)  6 (96-111)  7 (112-127)
+Resource initialization completed at t[s]:      0.05
+Run totals: 128 processes, 128 threads, 0 GPUs
+
+Inputs after conversion to atomic units:
+dmu = 0.0498321
+T = 0.000950043
+mode = RealTime
+dt = 4134.14
+tStop = 4.13414e+06
+tStep = 0
+tolAdaptive = 0.001
+pumpMode = Bfield
+pumpB = [  0  0  4.25438e-06  ]
+dE = 3.67493e-05
+ePhMode = DiagK
+defectFraction = 0
+verbose = yes
+inFile = ldbd.dat
+checkpointFile = restart.dat
+valleyMode = None
+detailBalance = 0
+
+Electron energy grid from 1.43 eV to 1.6492 eV with spacing 0.001 eV.
+Determining sparsity structure of time evolution operator ... done.
+Initializing PETSc sparse matrix for time evolution ... done. Net sparsity: 15609480 non-zero in 5380 x 5380 matrix (53.9% fill)
+
+Initialization completed successfully at t[s]:    330.70
+
+1363 active k-points parallelized over 128 processes.
+
+Integrate: Step:    0   t[fs]: -100.0   Etot[eV]: 0.000000   dfMax: 0.0000   S: [                0                0                0 ]
+Integrate: Step:    1   t[fs]:    0.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ 7.54211798277161e-16 -7.52360845061377e-16 3.93827097456409e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 0  max(drhoDot): 6.11859e-10 drhoEigRange: [ -0.000228469 0.000229384 ] 
+	Computed at t[fs]: 20  max(drhoDot): 5.77215e-10 drhoEigRange: [ -0.000228158 0.000229073 ] 
+	Computed at t[fs]: 30  max(drhoDot): 5.64385e-10 drhoEigRange: [ -0.000228009 0.000228924 ] 
+	Computed at t[fs]: 60  max(drhoDot): 5.2269e-10 drhoEigRange: [ -0.000227561 0.000228477 ] 
+	Computed at t[fs]: 100  max(drhoDot): 4.85488e-10 drhoEigRange: [ -0.000226982 0.000227899 ] 
+	Computed at t[fs]: 87.5  max(drhoDot): 4.93722e-10 drhoEigRange: [ -0.00022716 0.000228077 ] 100% Done (6 function calls).
+Integrate: Step:    2   t[fs]:  100.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -1.05621157579263e-14 9.3555152650999e-15 3.93399029463196e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 100  max(drhoDot): 4.80549e-10 drhoEigRange: [ -0.000226981 0.000227899 ] 
+	Computed at t[fs]: 120  max(drhoDot): 4.61222e-10 drhoEigRange: [ -0.000226697 0.000227615 ] 
+	Computed at t[fs]: 130  max(drhoDot): 4.5402e-10 drhoEigRange: [ -0.00022656 0.000227478 ] 
+	Computed at t[fs]: 160  max(drhoDot): 4.30754e-10 drhoEigRange: [ -0.00022615 0.000227069 ] 
+	Computed at t[fs]: 200  max(drhoDot): 4.09113e-10 drhoEigRange: [ -0.000225621 0.000226541 ] 
+	Computed at t[fs]: 187.5  max(drhoDot): 4.14223e-10 drhoEigRange: [ -0.000225784 0.000226703 ] 100% Done (6 function calls).
+Integrate: Step:    3   t[fs]:  200.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -3.25191980689266e-14 2.99552991905486e-14 3.92574975719284e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 200  max(drhoDot): 4.06829e-10 drhoEigRange: [ -0.000225621 0.00022654 ] 
+	Computed at t[fs]: 220  max(drhoDot): 3.95834e-10 drhoEigRange: [ -0.000225361 0.000226281 ] 
+	Computed at t[fs]: 230  max(drhoDot): 3.91755e-10 drhoEigRange: [ -0.000225236 0.000226156 ] 
+	Computed at t[fs]: 260  max(drhoDot): 3.78544e-10 drhoEigRange: [ -0.000224861 0.000225782 ] 
+	Computed at t[fs]: 300  max(drhoDot): 3.65844e-10 drhoEigRange: [ -0.000224378 0.0002253 ] 
+	Computed at t[fs]: 287.5  max(drhoDot): 3.68982e-10 drhoEigRange: [ -0.000224527 0.000225449 ] 100% Done (6 function calls).
+Integrate: Step:    4   t[fs]:  300.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -6.05303459073124e-14 5.6411418646976e-14 3.91525135491439e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 300  max(drhoDot): 3.64752e-10 drhoEigRange: [ -0.000224378 0.0002253 ] 
+	Computed at t[fs]: 320  max(drhoDot): 3.58368e-10 drhoEigRange: [ -0.000224141 0.000225063 ] 
+	Computed at t[fs]: 330  max(drhoDot): 3.56028e-10 drhoEigRange: [ -0.000224027 0.000224949 ] 
+	Computed at t[fs]: 360  max(drhoDot): 3.48364e-10 drhoEigRange: [ -0.000223684 0.000224607 ] 
+	Computed at t[fs]: 400  max(drhoDot): 3.5614e-10 drhoEigRange: [ -0.000223243 0.000224167 ] 
+	Computed at t[fs]: 387.5  max(drhoDot): 3.53893e-10 drhoEigRange: [ -0.000223379 0.000224302 ] 100% Done (6 function calls).
+Integrate: Step:    5   t[fs]:  400.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -9.17443717501975e-14 8.59018073309852e-14 3.90352324597629e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 400  max(drhoDot): 3.56809e-10 drhoEigRange: [ -0.000223243 0.000224166 ] 
+	Computed at t[fs]: 420  max(drhoDot): 3.61072e-10 drhoEigRange: [ -0.000223025 0.000223949 ] 
+	Computed at t[fs]: 430  max(drhoDot): 3.62718e-10 drhoEigRange: [ -0.000222921 0.000223845 ] 
+	Computed at t[fs]: 460  max(drhoDot): 3.67719e-10 drhoEigRange: [ -0.000222607 0.000223532 ] 
+	Computed at t[fs]: 500  max(drhoDot): 3.72376e-10 drhoEigRange: [ -0.000222203 0.000223128 ] 
+	Computed at t[fs]: 487.5  max(drhoDot): 3.7123e-10 drhoEigRange: [ -0.000222328 0.000223252 ] 100% Done (6 function calls).
+Integrate: Step:    6   t[fs]:  500.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -1.24434352928165e-13 1.16751115756241e-13 3.89117870316942e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 500  max(drhoDot): 3.7272e-10 drhoEigRange: [ -0.000222202 0.000223127 ] 
+	Computed at t[fs]: 520  max(drhoDot): 3.74838e-10 drhoEigRange: [ -0.000222003 0.000222928 ] 
+	Computed at t[fs]: 530  max(drhoDot): 3.75667e-10 drhoEigRange: [ -0.000221907 0.000222832 ] 
+	Computed at t[fs]: 560  max(drhoDot): 3.78047e-10 drhoEigRange: [ -0.000221618 0.000222543 ] 
+	Computed at t[fs]: 600  max(drhoDot): 3.80147e-10 drhoEigRange: [ -0.000221244 0.00022217 ] 
+	Computed at t[fs]: 587.5  max(drhoDot): 3.79644e-10 drhoEigRange: [ -0.000221359 0.000222285 ] 100% Done (6 function calls).
+Integrate: Step:    7   t[fs]:  600.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -1.57589362157844e-13 1.47998556479723e-13 3.87857623834675e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 600  max(drhoDot): 3.80288e-10 drhoEigRange: [ -0.000221243 0.000222169 ] 
+	Computed at t[fs]: 620  max(drhoDot): 3.81139e-10 drhoEigRange: [ -0.000221059 0.000221985 ] 
+	Computed at t[fs]: 630  max(drhoDot): 3.81488e-10 drhoEigRange: [ -0.00022097 0.000221896 ] 
+	Computed at t[fs]: 660  max(drhoDot): 3.82331e-10 drhoEigRange: [ -0.000220702 0.000221629 ] 
+	Computed at t[fs]: 700  max(drhoDot): 3.82953e-10 drhoEigRange: [ -0.000220355 0.000221282 ] 
+	Computed at t[fs]: 687.5  max(drhoDot): 3.82816e-10 drhoEigRange: [ -0.000220462 0.000221389 ] 100% Done (6 function calls).
+Integrate: Step:    8   t[fs]:  700.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -1.90645476999347e-13 1.79120352389584e-13 3.8659190169552e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 700  max(drhoDot): 3.82968e-10 drhoEigRange: [ -0.000220354 0.000221281 ] 
+	Computed at t[fs]: 720  max(drhoDot): 3.83256e-10 drhoEigRange: [ -0.000220183 0.00022111 ] 
+	Computed at t[fs]: 730  max(drhoDot): 3.83459e-10 drhoEigRange: [ -0.000220099 0.000221027 ] 
+	Computed at t[fs]: 760  max(drhoDot): 3.83968e-10 drhoEigRange: [ -0.000219849 0.000220776 ] 
+	Computed at t[fs]: 800  max(drhoDot): 3.84205e-10 drhoEigRange: [ -0.000219523 0.000220451 ] 
+	Computed at t[fs]: 787.5  max(drhoDot): 3.84194e-10 drhoEigRange: [ -0.000219624 0.000220552 ] 100% Done (6 function calls).
+Integrate: Step:    9   t[fs]:  800.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -2.23311231059959e-13 2.09853662011198e-13 3.85331660409518e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 800  max(drhoDot): 3.8426e-10 drhoEigRange: [ -0.000219523 0.000220451 ] 
+	Computed at t[fs]: 820  max(drhoDot): 3.84274e-10 drhoEigRange: [ -0.000219362 0.00022029 ] 
+	Computed at t[fs]: 830  max(drhoDot): 3.84276e-10 drhoEigRange: [ -0.000219283 0.000220211 ] 
+	Computed at t[fs]: 860  max(drhoDot): 3.84137e-10 drhoEigRange: [ -0.000219047 0.000219975 ] 
+	Computed at t[fs]: 900  max(drhoDot): 3.8376e-10 drhoEigRange: [ -0.000218739 0.000219668 ] 
+	Computed at t[fs]: 887.5  max(drhoDot): 3.83899e-10 drhoEigRange: [ -0.000218835 0.000219763 ] 100% Done (6 function calls).
+Integrate: Step:   10   t[fs]:  900.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -2.55456261601932e-13 2.40086595770798e-13 3.84082318284796e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 900  max(drhoDot): 3.83758e-10 drhoEigRange: [ -0.000218739 0.000219667 ] 
+	Computed at t[fs]: 920  max(drhoDot): 3.83466e-10 drhoEigRange: [ -0.000218586 0.000219515 ] 
+	Computed at t[fs]: 930  max(drhoDot): 3.83354e-10 drhoEigRange: [ -0.000218511 0.00021944 ] 
+	Computed at t[fs]: 960  max(drhoDot): 3.82847e-10 drhoEigRange: [ -0.000218287 0.000219216 ] 
+	Computed at t[fs]: 1000  max(drhoDot): 3.82128e-10 drhoEigRange: [ -0.000217994 0.000218923 ] 
+	Computed at t[fs]: 987.5  max(drhoDot): 3.82349e-10 drhoEigRange: [ -0.000218085 0.000219014 ] 100% Done (6 function calls).
+Integrate: Step:   11   t[fs]: 1000.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -2.8704163656723e-13 2.69790805930147e-13 3.82846103316777e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 1000  max(drhoDot): 3.82093e-10 drhoEigRange: [ -0.000217993 0.000218922 ] 
+	Computed at t[fs]: 1020  max(drhoDot): 3.81632e-10 drhoEigRange: [ -0.000217847 0.000218777 ] 
+	Computed at t[fs]: 1030  max(drhoDot): 3.81457e-10 drhoEigRange: [ -0.000217776 0.000218705 ] 
+	Computed at t[fs]: 1060  max(drhoDot): 3.8075e-10 drhoEigRange: [ -0.000217561 0.00021849 ] 
+	Computed at t[fs]: 1100  max(drhoDot): 3.79852e-10 drhoEigRange: [ -0.000217278 0.000218208 ] 
+	Computed at t[fs]: 1087.5  max(drhoDot): 3.80113e-10 drhoEigRange: [ -0.000217366 0.000218296 ] 100% Done (6 function calls).
+Integrate: Step:   12   t[fs]: 1100.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -3.18077239085564e-13 2.98981125390921e-13 3.81623478401616e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 1100  max(drhoDot): 3.79796e-10 drhoEigRange: [ -0.000217278 0.000218208 ] 
+	Computed at t[fs]: 1120  max(drhoDot): 3.79248e-10 drhoEigRange: [ -0.000217138 0.000218068 ] 
+	Computed at t[fs]: 1130  max(drhoDot): 3.7904e-10 drhoEigRange: [ -0.000217068 0.000217999 ] 
+	Computed at t[fs]: 1160  max(drhoDot): 3.78233e-10 drhoEigRange: [ -0.000216861 0.000217791 ] 
+	Computed at t[fs]: 1200  max(drhoDot): 3.77251e-10 drhoEigRange: [ -0.000216587 0.000217518 ] 
+	Computed at t[fs]: 1187.5  max(drhoDot): 3.77529e-10 drhoEigRange: [ -0.000216672 0.000217603 ] 100% Done (6 function calls).
+Integrate: Step:   13   t[fs]: 1200.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -3.48596416756206e-13 3.27692111518065e-13 3.804139915664e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 1200  max(drhoDot): 3.77184e-10 drhoEigRange: [ -0.000216587 0.000217517 ] 
+	Computed at t[fs]: 1220  max(drhoDot): 3.76596e-10 drhoEigRange: [ -0.000216451 0.000217381 ] 
+	Computed at t[fs]: 1230  max(drhoDot): 3.76374e-10 drhoEigRange: [ -0.000216384 0.000217314 ] 
+	Computed at t[fs]: 1260  max(drhoDot): 3.75524e-10 drhoEigRange: [ -0.000216182 0.000217112 ] 
+	Computed at t[fs]: 1300  max(drhoDot): 3.74514e-10 drhoEigRange: [ -0.000215915 0.000216846 ] 
+	Computed at t[fs]: 1287.5  max(drhoDot): 3.74797e-10 drhoEigRange: [ -0.000215998 0.000216929 ] 100% Done (6 function calls).
+Integrate: Step:   14   t[fs]: 1300.0   Etot[eV]: 0.000000   dfMax: 0.0002   S: [ -3.78641439161455e-13 3.55964953223021e-13 3.79216770853613e-09 ]
+Integrate: Evolving: 
+	Computed at t[fs]: 1300  max(drhoDot): 3.74442e-10 drhoEigRange: [ -0.000215915 0.000216846 ] 
+	Computed at t[fs]: 1320  max(drhoDot): 3.73841e-10 drhoEigRange: [ -0.000215782 0.000216713 ] 
+	Computed at t[fs]: 1330  max(drhoDot): 3.73616e-10 drhoEigRange: [ -0.000215716 0.000216647 ] 
+	Computed at t[fs]: 1360  max(drhoDot): 3.72757e-10 drhoEigRange: [ -0.000215519 0.00021645 ] 
+	Computed at t[fs]: 1400  max(drhoDot): 3.71751e-10 drhoEigRange: [ -0.000215258 0.000216189 ] 
+	Computed at t[fs]: 1387.5  max(drhoDot): 3.7203e-10 drhoEigRange: [ -0.000215339 0.00021627 ] 100% Done (6 function calls).

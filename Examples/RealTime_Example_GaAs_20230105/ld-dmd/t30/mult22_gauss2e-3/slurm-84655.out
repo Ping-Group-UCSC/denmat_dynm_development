@@ -1,0 +1,671 @@
+--------------------------------------------------------------------------
+By default, for Open MPI 4.0 and later, infiniband ports on a device
+are not used by default.  The intent is to use UCX for these devices.
+You can override this policy by setting the btl_openib_allow_ib MCA parameter
+to true.
+
+  Local host:              krnode15
+  Local adapter:           mlx4_0
+  Local port:              1
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+WARNING: There was an error initializing an OpenFabrics device.
+
+  Local host:   krnode15
+  Local device: mlx4_0
+--------------------------------------------------------------------------
+[krnode14.krhpc:06441] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06423] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06427] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06429] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06437] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06425] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06432] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06436] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06434] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06431] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06426] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06357] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04234] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04221] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04225] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04227] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04228] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04229] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04232] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04235] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06445] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04223] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04231] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04233] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06450] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06358] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06452] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06305] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06442] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06362] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06309] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06454] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06368] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06311] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06444] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06363] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04224] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06319] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06448] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06367] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04222] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06315] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06446] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06366] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07608] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07610] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07618] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07622] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06312] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06440] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06365] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07611] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07612] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07616] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04236] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04097] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06316] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06447] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06359] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07619] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07621] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04226] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04088] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06435] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06320] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06361] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07623] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07609] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07613] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07615] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07617] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode18.krhpc:04230] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04092] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06318] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06443] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06369] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04094] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06424] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06310] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06371] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04096] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06433] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06314] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04102] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06438] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06308] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04098] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06428] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06306] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07620] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04099] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode17.krhpc:06430] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06313] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04089] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06317] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04091] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode16.krhpc:06307] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04093] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04095] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04100] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04101] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04087] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode20.krhpc:04090] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07614] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06449] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06455] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06453] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06364] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode14.krhpc:06451] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06370] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06372] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode15.krhpc:06360] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04028] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04032] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04034] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04036] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04038] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04040] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04025] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04027] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04029] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04030] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04031] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04033] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04035] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04037] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04039] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode19.krhpc:04026] mca_base_component_repository_open: unable to open mca_fs_lustre: liblustreapi.so: cannot open shared object file: No such file or directory (ignored)
+[krnode13.krhpc:07585] 127 more processes have sent help message help-mpi-btl-openib.txt / ib port not selected
+[krnode13.krhpc:07585] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+[krnode13.krhpc:07585] 127 more processes have sent help message help-mpi-btl-openib.txt / error in device init
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07615] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07614] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07622] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07612] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07616] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07618] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04092] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04033] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06427] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06363] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07621] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07623] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07619] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04226] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04099] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04035] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06454] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07611] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07609] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07620] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07610] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07617] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04232] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04087] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04036] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06424] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06317] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06449] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06360] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07608] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode13.krhpc:07613] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04236] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04089] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04031] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06433] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06307] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06451] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06364] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04228] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04096] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04032] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06435] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06315] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06450] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06359] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04223] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04091] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04037] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06428] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06316] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06367] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04221] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04088] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04039] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06432] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06319] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06441] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06370] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04227] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04094] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04038] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06429] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06314] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+[krnode14.krhpc:06443] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06372] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04231] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04098] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04028] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06434] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06318] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06453] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06366] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04233] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04095] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04026] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06438] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06320] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06447] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06362] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04222] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04101] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04029] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06426] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06306] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06357] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04224] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04090] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04034] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06436] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06312] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+[krnode14.krhpc:06440] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06369] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04234] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04025] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06430] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06311] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06442] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06365] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04225] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+[krnode20.krhpc:04102] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04027] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06437] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06309] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06445] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06368] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04229] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04093] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04030] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06423] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06310] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06444] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06371] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04230] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04100] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode19.krhpc:04040] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06425] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06305] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06452] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06361] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode18.krhpc:04235] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode20.krhpc:04097] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode17.krhpc:06431] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06313] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06455] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode15.krhpc:06358] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode16.krhpc:06308] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06448] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+*** The MPI_Barrier() function was called after MPI_FINALIZE was invoked.
+*** This is disallowed by the MPI standard.
+*** Your MPI job will now abort.
+[krnode14.krhpc:06446] Local abort after MPI_FINALIZE started completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[19543,1],104]
+  Exit code:    1
+--------------------------------------------------------------------------

@@ -1,5 +1,0 @@
-slurmstepd: error: *** JOB 5649806 ON c506-041 CANCELLED AT 2020-05-05T07:50:08 ***
-[mpiexec@c506-041.stampede2.tacc.utexas.edu] control_cb (../../pm/pmiserv/pmiserv_cb.c:864): connection to proxy 1 at host c506-053 failed
-[mpiexec@c506-041.stampede2.tacc.utexas.edu] HYDT_dmxu_poll_wait_for_event (../../tools/demux/demux_poll.c:76): callback returned error status
-[mpiexec@c506-041.stampede2.tacc.utexas.edu] HYD_pmci_wait_for_completion (../../pm/pmiserv/pmiserv_pmci.c:520): error waiting for event
-[mpiexec@c506-041.stampede2.tacc.utexas.edu] main (../../ui/mpich/mpiexec.c:1149): process manager error waiting for completion
