@@ -21,6 +21,7 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #define FEYNWANN_DISTRIBUTEDMATRIX_H
 
 #include <core/matrix.h>
+#include <memory>
 
 //! Distributed matrix elements / Hamiltonians for FeynWann
 class DistributedMatrix

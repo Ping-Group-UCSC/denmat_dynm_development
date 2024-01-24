@@ -195,7 +195,7 @@ void FeynWann::setState(FeynWann::StatePh& state)
 	matrix Osqq = getMatrix(OsqW->getResult(state.iq), nModes, nModes);
 
 	//Add polar corrections (LO-TO  splits) if any:
-	if(polar)
+	if(polar and state.q.isNonzero())
 	{	//Prefactor including denominator:
 		int prodSup = OsqW->nkTot;
 		matrix3<> G = (2.*M_PI)*inv(R);
@@ -262,7 +262,7 @@ void FeynWann::setMatrix(const FeynWann::StateE& e1, const FeynWann::StateE& e2,
 	//Get the matrix elements for all modes together:
 	matrix Mall = getMatrix(HePhW->getResult(ikPair), nBands*nBands, nModes);
 	//Add long range polar corrections if required:
-	if(polar)
+	if(polar and ph.q.isNonzero())
 	{	complex gLij;
 		for(int iMode=0; iMode<nModes; iMode++) //in Cartesian atom displacement basis
 		{	if (truncDir < 3)
