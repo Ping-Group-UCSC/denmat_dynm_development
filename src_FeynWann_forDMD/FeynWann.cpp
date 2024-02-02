@@ -26,20 +26,14 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include <fftw3-mpi.h>
 #include "config.h"
 
-#ifdef TDEP_ENABLED
-#include "tdep_wrapper.h"
-#endif
 
 FeynWannParams::FeynWannParams(InputMap* inputMap)
 : iSpin(0), totalEprefix("Wannier/totalE"), phononPrefix("Wannier/phonon"), wannierPrefix("Wannier/wannier"),
 needSymmetries(false), needPhonons(false), needVelocity(false), needSpin(false), needL(false), needQ(false),
 needLinewidth_ee(false), needLinewidth_ePh(false), needLinewidthP_ePh(false),
 ePhHeadOnly(false), maskOptimize(false), bandSumLQ(false),
-orbitalZeeman(false), EzExt(0.), scissor(0.), EshiftWeight(0.), enforceKramerDeg(0.), degeneracyThreshold(1E-4*eV), tdep(false),
-Bext(vector3<>(0., 0., 0.)), needLayer(false), trunc_iDi_outer(false),
-Bin_model("none"), alpha_Bin(0), kcut_model(1), kcut_width_model(0.1), dir_2drb(vector3<>(0, 0, 0)), pshk(vector3<>(0, 0, 0)), pshs(vector3<>(0, 0, 0)),
-bStart_model(0), bEnd_model(-1), renorm_Bin(0),
-scissor_above_band(0), band_scissor(0)
+orbitalZeeman(false), EzExt(0.), scissor(0.), EshiftWeight(0.), enforceKramerDeg(0.), degeneracyThreshold(1E-4*eV),
+Bext(vector3<>(0., 0., 0.)), needLayer(false), trunc_iDi_outer(false)
 {
 	if(inputMap)
 	{	const double nm = 10*Angstrom;
@@ -56,28 +50,7 @@ scissor_above_band(0), band_scissor(0)
 		bandSumLQ = inputMap->getBool("bandSumLQ", false);
 		enforceKramerDeg = inputMap->getBool("enforceKramerDeg", false);
 		degeneracyThreshold = inputMap->get("degeneracyThreshold", 1E-4) * eV;
-		tdep = inputMap->getBool("tdep", false);
-		#ifndef TDEP_ENABLED
-		if(tdep) die("Must link with TDEP code to use tdep.\n");
-		#endif
-		//JX
-		trunc_iDi_outer = inputMap->get("trunc_iDi_outer", 0);
-		Bin_model = inputMap->getString("Bin_model", "none");
-		kcut_model = inputMap->get("kcut_model", 1); assert(kcut_model > 0);
-		kcut_width_model = inputMap->get("kcut_width_model", 0.1); assert(kcut_width_model > 0);
-		bool allowed = Bin_model == "none" || Bin_model == "read"|| Bin_model == "3d-rashba" || Bin_model == "3d-rb" || Bin_model == "2d-rashba" || Bin_model == "2d-rb" || Bin_model == "psh";
-		if (not allowed) logPrintf("Bin_model should be none, read, 3d-rb, 3d-rashba, 2d-rb, 2d-rashba, psh");
-		assert(allowed);
-		alpha_Bin = inputMap->get("alpha_Bin", 0) * eV * Angstrom;
-		dir_2drb = normalize(inputMap->getVector("dir_2drb", vector3<>(0, 0, 1)));
-		pshk = normalize(inputMap->getVector("pshk", vector3<>(1, 0, 0)));
-		pshs = normalize(inputMap->getVector("pshs", vector3<>(0, 0, 1)));
-		bStart_model = inputMap->get("bStart_model", 0);
-		bEnd_model = inputMap->get("bEnd_model", -1);
-		renorm_Bin = inputMap->get("renorm_Bin", 0);
-		scissor_above_band = inputMap->get("scissor_above_band", 0.) * eV;
-		band_scissor = inputMap->get("band_scissor", 0);
-		//JX
+		trunc_iDi_outer = inputMap->get("trunc_iDi_outer", 0);//JX
 	}
 }
 
@@ -91,23 +64,7 @@ void FeynWannParams::printParams() const
 	logPrintf("bandSumLQ = %s\n", bandSumLQ ? "yes" : "no");
 	logPrintf("enforceKramerDeg = %s\n", enforceKramerDeg ? "yes" : "no");
 	logPrintf("degeneracyThreshold = %lg\n", degeneracyThreshold);
-	logPrintf("tdep = %s\n", tdep ? "yes" : "no");
-	//JX
-	logPrintf("trunc_iDi_outer = %d\n", trunc_iDi_outer);
-	logPrintf("Bin_model = %s\n", Bin_model.c_str());
-	logPrintf("alpha_Bin = %lg\n", alpha_Bin);
-	logPrintf("kcut_model = %lg\n", kcut_model);
-	logPrintf("kcut_width_model = %lg\n", kcut_width_model);
-	logPrintf("dir_2drb = %lg %lg %lg\n", dir_2drb[0], dir_2drb[1], dir_2drb[2]);
-	logPrintf("pshk = %lg %lg %lg\n", pshk[0], pshk[1], pshk[2]);
-	logPrintf("pshs = %lg %lg %lg\n", pshs[0], pshs[1], pshs[2]);
-	logPrintf("bStart_model = %d\n", bStart_model);
-	logPrintf("bEnd_model = %d\n", bEnd_model);
-	logPrintf("bEnd_model = %d\n", bEnd_model);
-	logPrintf("renorm_Bin = %d\n", renorm_Bin);
-	logPrintf("scissor_above_band = %lg\n", scissor_above_band);
-	logPrintf("band_scissor = %d\n", band_scissor);
-	//JX
+	logPrintf("trunc_iDi_outer = %d\n", trunc_iDi_outer);//JX
 }
 
 
@@ -144,7 +101,7 @@ FeynWann::FeynWann(FeynWannParams& fwp)
 : fwp(fwp), nAtoms(0), nSpins(0), nSpinor(0), spinWeight(0), mu(NAN), nElectrons(0),
 EminInner(-INFINITY), EmaxInner(+INFINITY), polar(false), ePhEstart(0.), ePhEstop(-1.),
 tTransformByCompute(1), tTransformByComputeD(1), inEphLoop(false),
-isMetal(false), energyOnly(false), 
+isMetal(false), eEneOnly(false), 
 Bso(vector3<>(0,0,0)), gfac(matrix3<>(gElectron, gElectron, gElectron))//JX
 {
 	//Create inter-group communicator if requested:
@@ -181,7 +138,6 @@ Bso(vector3<>(0,0,0)), gfac(matrix3<>(gElectron, gElectron, gElectron))//JX
 				sscanf(line.c_str(), "[ %lf %lf %lf ]", &R(j,0), &R(j,1), &R(j,2));
 			}
 			Omega = fabs(det(R));
-			G = 2 * M_PI * inv(R); GT = ~G; GGT = G * (~G); //JX
 		}
 		else if(line.find("kpoint-folding") != string::npos)
 		{	istringstream iss(line); string buf;
@@ -407,31 +363,20 @@ Bso(vector3<>(0,0,0)), gfac(matrix3<>(gElectron, gElectron, gElectron))//JX
 		offsetDim = phononSup; //size of an offset is limited by phonon supercell
 		
 		//Read phonon basis:
-		invsqrtM = readPhononBasis(fwp.totalEprefix + ".phononBasis");//confusing! read 1/sqrt(mass) in reality
-		phononBasis = readPhononBasisFromFile(fwp.totalEprefix + ".phononBasis");//JX
-
-		if(fwp.tdep)
-		{
-			#ifdef TDEP_ENABLED
-			logPrintf("\n---------- TDEP Initialization ----------\n");
-			int verbosity = mpiWorld->isHead() ? 2 : -10;
-			tdep_initialize_(&verbosity);
-			logPrintf("\n");
-			#endif
-		}
-		{	//Read phonon cell map:
-			fname = fwp.totalEprefix + ".phononCellMap";
-			if(fileSize((fname + "Corr").c_str()) > 0) //corrected force matrix cell map exists
-				fname += "Corr";
-			phononCellMap = readCellMap(fname);
-			
-			//Read phonon force matrix
-			fname = fwp.totalEprefix + ".phononOmegaSq";
-			if(fileSize((fname + "Corr").c_str()) > 0) //corrected force matrix exists
-				fname += "Corr";
-			OsqW = std::make_shared<DistributedMatrix>(fname, true, //phonon omegaSq is always real
-				mpiGroup, nModes*nModes, phononCellMap, offsetDim, false, mpiInterGroup);
-		}
+		invsqrtM = readPhononBasis(fwp.totalEprefix + ".phononBasis");
+		
+		//Read phonon cell map:
+		fname = fwp.totalEprefix + ".phononCellMap";
+		if(fileSize((fname + "Corr").c_str()) > 0) //corrected force matrix cell map exists
+			fname += "Corr";
+		phononCellMap = readCellMap(fname);
+		
+		//Read phonon force matrix
+		fname = fwp.totalEprefix + ".phononOmegaSq";
+		if(fileSize((fname + "Corr").c_str()) > 0) //corrected force matrix exists
+			fname += "Corr";
+		OsqW = std::make_shared<DistributedMatrix>(fname, true, //phonon omegaSq is always real
+			mpiGroup, nModes*nModes, phononCellMap, offsetDim, false, mpiInterGroup);
 		
 		//Read cell maps for electron-phonon matrix elements and sum rule:
 		ePhCellMap = readCellMap(fwp.wannierPrefix + ".mlwfCellMapPh" + spinSuffix);
@@ -507,14 +452,18 @@ Bso(vector3<>(0,0,0)), gfac(matrix3<>(gElectron, gElectron, gElectron))//JX
 		//Benchmark e-ph transform and compute to optimize masked computations, if needed:
 		if(fwp.maskOptimize)
 		{	logPrintf("Benchmarking e-ph transform and single-point compute: "); logFlush();
-			const int nRepeat = 5;
+			const double tMin = 0.5; //time for at least 0.5 s
+			const int nMin = 3; //time at least 3 evaluations
 			#define TIMErepeated(funcName) \
 				double funcName##Time = 0.; \
-				{	double tStart = clock_sec(); \
-					for(int iRepeat=0; iRepeat < nRepeat; iRepeat++) \
+				{	double tStart = clock_sec(), t=0.; \
+					int nTries = 0; \
+					while(nTries<nMin or t<tMin) \
 					{	HePhW->funcName(vector3<>(), vector3<>()); \
+						nTries++; \
+						t = clock_sec()-tStart; \
 					} \
-					funcName##Time = (clock_sec() - tStart) / nRepeat; \
+					funcName##Time = t / nTries; \
 				}
 			TIMErepeated(compute)
 			TIMErepeated(transform)

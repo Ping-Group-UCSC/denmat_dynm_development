@@ -66,7 +66,6 @@ void electron::saveEk(string suffix){
 
 void electron::generate_gfac(){
 	if (gfack.size() == 0 && (gfac_sigma[0] > 0 || gfac_sigma[1] > 0 || gfac_sigma[2] > 0)){
-		logPrintf("\ngenerate k-depenedent g-factors with normal distribution:\n");
 		gfack.resize(k.size());
 
 		if (mpiWorld->isHead()){
@@ -93,40 +92,14 @@ void electron::generate_gfac(){
 				matrix3<>(gfac_cap[0], gfac_cap[1], gfac_cap[2]), sum_dfde_k.data());
 			mean_gfack = mean_of_(gfack, sum_dfde_k.data());
 			sigma_gfack = sigma_of_(gfack, false, mean_gfack, sum_dfde_k.data());
-			logPrintf("mean of gfack with weights:\n"); logFlush();
+			logPrintf("mean of gfack without weights:\n"); logFlush();
 			if (mpiWorld->isHead()) mean_gfack.print(stdout, " %lg"); logFlush();
-			logPrintf("sigma of gfack with weights:\n"); logFlush();
+			logPrintf("sigma of gfack without weights:\n"); logFlush();
 			if (mpiWorld->isHead()) sigma_gfack.print(stdout, " %lg"); logFlush();
 			fprintf("gfack_normal.out", gfack, "#gfack:", " %14.10lf");
 		}
 
 		mpiWorld->bcastData(gfack);
-	}
-}
-void electron::generate_Bso(){
-	if (Bsok.size() == 0 and fw.fwp.Bin_model != "none" and fw.fwp.Bin_model != "read" and fabs(alpha_Bin) > 0){
-		logPrintf("\ngenerate k-depenedent model SOC fields\n");
-		Bsok.resize(k.size());
-
-		if (mpiWorld->isHead()){
-			std::vector<double> sum_dfde_k(k.size());
-			for (size_t ik = 0; ik < k.size(); ik++){
-				Bsok[ik] = fw.calc_Bso(k[ik]);
-
-				for (int b = 0; b < nBandsSel; b++){
-					double f = fermi((E[ik*nBandsSel_probe + b + bStart - bRef] - dmu) / Tmax);
-					sum_dfde_k[ik] += f * (1 - f);
-				}
-			}
-
-			vector3<> mean_Bsok = mean_of_(Bsok, sum_dfde_k.data());
-			vector3<> sigma_Bsok = sigma_of_(Bsok, false, mean_Bsok, sum_dfde_k.data());
-			logPrintf("mean of Bsok with weights: %lg %lg %lg\n", mean_Bsok[0], mean_Bsok[1], mean_Bsok[2]); logFlush();
-			logPrintf("sigma of Bsok with weights: %lg %lg %lg\n", sigma_Bsok[0], sigma_Bsok[1], sigma_Bsok[2]); logFlush();
-			fprintf("Bsok_model.out", Bsok, "#Bsok:", " %14.10lf");
-		}
-
-		mpiWorld->bcastData(Bsok);
 	}
 }
 
@@ -143,19 +116,6 @@ void electron::analyse_gfac(){
 		mean_gfack.print(stdout, " %lg"); logFlush();
 		logPrintf("sigma of gfack without weights:\n"); logFlush();
 		sigma_gfack.print(stdout, " %lg"); logFlush();
-	}
-}
-void electron::analyse_Bso(){
-	if (mpiWorld->isHead() && Bsok.size() > 0){
-		std::vector<double> sum_dfde_k(k.size());
-		for (size_t ik = 0; ik < k.size(); ik++)
-		for (int b = 0; b < nBandsSel; b++)
-			sum_dfde_k[ik] += F[ik][b] * (1 - F[ik][b]);
-
-		vector3<> mean_Bsok = mean_of_(Bsok, sum_dfde_k.data());
-		vector3<> sigma_Bsok = sigma_of_(Bsok, false, mean_Bsok, sum_dfde_k.data());
-		logPrintf("mean of Bsok with weights: %lg %lg %lg\n", mean_Bsok[0], mean_Bsok[1], mean_Bsok[2]); logFlush();
-		logPrintf("sigma of Bsok with weights: %lg %lg %lg\n", sigma_Bsok[0], sigma_Bsok[1], sigma_Bsok[2]); logFlush();
 	}
 }
 
@@ -192,7 +152,6 @@ void electron::report_density(std::vector<FeynWann::StateE>& states){
 
 void electron::generate_states_elec(std::vector<FeynWann::StateE>& states){
 	generate_gfac();
-	generate_Bso();
 
 	TaskDivision tasks(k.size(), mpiWorld);
 	size_t ikStart, ikStop;
@@ -208,7 +167,7 @@ void electron::generate_states_elec(std::vector<FeynWann::StateE>& states){
 		{// e will be free after "}"
 			FeynWann::StateE e; fw.eCalc(k[ik], e);
 			fw.trunc_stateE(e, states[ik], bBot_eph, bTop_eph, bBot_dm, bTop_dm, bBot_probe, bTop_probe);
-			if (!fw.energyOnly && save_dHePhSum_disk && e.dHePhSum.nRows() == fw.nBands*fw.nBands && e.dHePhSum.nCols() == 3){
+			if (!fw.eEneOnly && save_dHePhSum_disk && e.dHePhSum.nRows() == fw.nBands*fw.nBands && e.dHePhSum.nCols() == 3){
 				//write dHePhSum to file
 				string fname = "ldbd_data/dHePhSum/k" + int2str(ik) + ".bin";
 				FILE *fp = fopen(fname.c_str(), "wb");
@@ -344,9 +303,8 @@ void electron::savekData(parameters *param, size_t nkpairs, double omegaMax){
 	saveElec(); logPrintf("saveElec done\n"); logFlush();
 
 	F = computeF(Tmax, dmu, state_elec, bStart - bRef, bStop - bRef);
-	// g factor and Bso
+	// g factor
 	analyse_gfac();
-	analyse_Bso();
 
 	// spin mixing
 	if (mpiWorld->isHead()){

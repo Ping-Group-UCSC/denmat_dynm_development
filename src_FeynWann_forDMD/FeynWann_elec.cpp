@@ -61,53 +61,33 @@ void FeynWann::eCalc(const vector3<>& k, FeynWann::StateE& e)
 }
 
 
-void FeynWann::eTransformNeeded(const vector3<>& k0){
-	Hw->transform(k0);
-	if (!energyOnly){
-		if (fwp.needVelocity or (fwp.needL or fwp.needQ)) Pw->transform(k0);
-		if (fwp.needSpin) Sw->transform(k0);
-		if (fwp.needRP()) { RPw->transform(k0); for (int iDir = 0; iDir < 3; iDir++) HprimeW[iDir]->transform(k0); }
-		if (fwp.EzExt) Zw->transform(k0);
-		if (fwp.needLayer) Layerw->transform(k0);//JX
-		if (fwp.needLinewidth_ee) ImSigma_eeW->transform(k0);
-		if (fwp.needLinewidth_ePh) ImSigma_ePhW->transform(k0);
-		if (fwp.needLinewidthP_ePh) ImSigmaP_ePhW->transform(k0);
-		if (fwp.needLinewidth_D.length()) ImSigma_DW->transform(k0);
-		if (fwp.needLinewidthP_D.length()) ImSigmaP_DW->transform(k0);
-	}
-	else{
-		if ((fwp.Bext.isNonzero() or fwp.Bin_model != "none") and fwp.needSpin) Sw->transform(k0);
-		if (fwp.Bext.isNonzero() and fwp.orbitalZeeman){
-			if (fwp.needVelocity or(fwp.needL or fwp.needQ)) Pw->transform(k0);
-			if (fwp.needRP()) { RPw->transform(k0); for (int iDir = 0; iDir < 3; iDir++) HprimeW[iDir]->transform(k0); }
-		}
-		if (fwp.EzExt) Zw->transform(k0);
-	}
+void FeynWann::eTransformNeeded(const vector3<>& k0)
+{	Hw->transform(k0);
+	if(fwp.needVelocity or (fwp.needL or fwp.needQ)) Pw->transform(k0);
+	if(fwp.needSpin) Sw->transform(k0);
+	if(fwp.needRP()) { RPw->transform(k0); for(int iDir=0; iDir<3; iDir++) HprimeW[iDir]->transform(k0); }
+	if(fwp.EzExt) Zw->transform(k0);
+	if (fwp.needLayer) Layerw->transform(k0);//JX
+	if (fwp.needLinewidth_ee) ImSigma_eeW->transform(k0);
+	if(fwp.needLinewidth_ePh) ImSigma_ePhW->transform(k0);
+	if(fwp.needLinewidthP_ePh) ImSigmaP_ePhW->transform(k0);
+	if(fwp.needLinewidth_D.length()) ImSigma_DW->transform(k0);
+	if(fwp.needLinewidthP_D.length()) ImSigmaP_DW->transform(k0);
 }
 
 
-void FeynWann::eComputeNeeded(const vector3<>& k){
-	Hw->compute(k);
-	if (!energyOnly){
-		if (fwp.needVelocity or(fwp.needL or fwp.needQ)) Pw->compute(k);
-		if (fwp.needSpin) Sw->compute(k);
-		if (fwp.needRP()) { RPw->compute(k); for (int iDir = 0; iDir < 3; iDir++) HprimeW[iDir]->compute(k); }
-		if (fwp.EzExt) Zw->compute(k);
-		if (fwp.needLayer) Layerw->compute(k);//JX
-		if (fwp.needLinewidth_ee) ImSigma_eeW->compute(k);
-		if (fwp.needLinewidth_ePh) ImSigma_ePhW->compute(k);
-		if (fwp.needLinewidthP_ePh) ImSigmaP_ePhW->compute(k);
-		if (fwp.needLinewidth_D.length()) ImSigma_DW->compute(k);
-		if (fwp.needLinewidthP_D.length()) ImSigmaP_DW->compute(k);
-	}
-	else{
-		if ((fwp.Bext.isNonzero() or fwp.Bin_model != "none") and fwp.needSpin) Sw->compute(k);
-		if (fwp.Bext.isNonzero() and fwp.orbitalZeeman){
-			if (fwp.needVelocity or(fwp.needL or fwp.needQ)) Pw->compute(k);
-			if (fwp.needRP()) { RPw->compute(k); for (int iDir = 0; iDir < 3; iDir++) HprimeW[iDir]->compute(k); }
-		}
-		if (fwp.EzExt) Zw->compute(k);
-	}
+void FeynWann::eComputeNeeded(const vector3<>& k)
+{	Hw->compute(k);
+	if(fwp.needVelocity or (fwp.needL or fwp.needQ)) Pw->compute(k);
+	if(fwp.needSpin) Sw->compute(k);
+	if(fwp.needRP()) { RPw->compute(k); for(int iDir=0; iDir<3; iDir++) HprimeW[iDir]->compute(k); }
+	if(fwp.EzExt) Zw->compute(k);
+	if (fwp.needLayer) Layerw->compute(k);//JX
+	if (fwp.needLinewidth_ee) ImSigma_eeW->compute(k);
+	if(fwp.needLinewidth_ePh) ImSigma_ePhW->compute(k);
+	if(fwp.needLinewidthP_ePh) ImSigmaP_ePhW->compute(k);
+	if(fwp.needLinewidth_D.length()) ImSigma_DW->compute(k);
+	if(fwp.needLinewidthP_D.length()) ImSigmaP_DW->compute(k);
 }
 
 
@@ -140,22 +120,19 @@ bool FeynWann::is_state_withinRange(StateE& e){
 //JX
 
 void FeynWann::setState(FeynWann::StateE& state)
-{
-	static StopWatch watchRotations1("FeynWann::setState:rotations1"),
+{	static StopWatch watchRotations1("FeynWann::setState:rotations1"),
 		watchBL("FeynWann::setState:BL"),
 		watchRotations2("FeynWann::setState:rotations2");
 
 	//Get and diagonalize Hamiltonian:
 	matrix Hk = getMatrix(Hw->getResult(state.ik), nBands, nBands);
-
+	
 	//JX
-	if (Bso.length_squared() == 0) Bso = calc_Bso(state.k);
 	bool stark = fwp.EzExt;
-	bool zeeman_BS = fwp.needSpin and fwp.Bext.length_squared();
-	bool zeeman_BsoS = fwp.needSpin and Bso.length_squared();
+	bool zeeman_BS = fwp.needSpin and (fwp.Bext.length_squared() or Bso.length_squared());
 	bool zeeman_BL = fwp.Bext.length_squared() and fwp.orbitalZeeman;
-	bool hasField = stark or zeeman_BS or zeeman_BsoS or zeeman_BL;
-
+	bool hasField = stark or zeeman_BS or zeeman_BL;
+	
 	if (fwp.enforceKramerDeg and hasField){
 		matrix U; diagMatrix E;
 		Hk.diagonalize(U, E);
@@ -166,19 +143,11 @@ void FeynWann::setState(FeynWann::StateE& state)
 	//Stark and BS Perturbations:
 	if (stark) Hk += fwp.EzExt * getMatrix(Zw->getResult(state.ik), nBands, nBands);
 
-	/*
 	if (zeeman_BS and not zeeman_BL)
 	{	//Add S part of Zeeman perturbation:
-	vector3<> Bg = fwp.Bext * gfac + Bso * gElectron;
-	for (int iDir = 0; iDir < 3; iDir++)
-	if (Bg[iDir]) Hk += bohrMagneton * Bg[iDir] * 0.5 * getMatrix(Sw->getResult(state.ik), nBands, nBands, iDir);
-	}
-	*/
-	if (zeeman_BS and not zeeman_BL)
-	{	//Add S part of Zeeman perturbation:
-		vector3<> Bg = fwp.Bext * gfac;
+		vector3<> Bg = fwp.Bext * gfac + Bso * gElectron;
 		for (int iDir = 0; iDir < 3; iDir++)
-		if (Bg[iDir]) Hk += bohrMagneton * Bg[iDir] * 0.5 * getMatrix(Sw->getResult(state.ik), nBands, nBands, iDir);
+		if (fwp.Bext[iDir]) Hk += bohrMagneton * Bg[iDir] * 0.5 * getMatrix(Sw->getResult(state.ik), nBands, nBands, iDir);
 	}
 
 	Hk.diagonalize(state.U, state.E);
@@ -186,46 +155,24 @@ void FeynWann::setState(FeynWann::StateE& state)
 
 	for (double& E : state.E) E -= mu; //reference to Fermi level
 	if (fwp.scissor) fwp.applyScissor(state.E); //assume CBM > 0 and VBM <= 0, which may not be true if there is a field
-	if (fwp.scissor_above_band)	{ for (int i = fwp.band_scissor; i < nBands; i++) state.E[i] += fwp.scissor_above_band; } //JX
 
 	//Compute matrix elements
 	watchRotations1.start();
-	if (!energyOnly){
+	if (!eEneOnly){
 		bool needV = fwp.needVelocity or (fwp.needL or fwp.needQ);
 		if (needV) { for (int iDir = 0; iDir < 3; iDir++) state.v[iDir] = complex(0, -1) * state.getMatrixRotated(Pw, iDir); } //Since P was stored with -i omitted (to make it real when possible)
 		if (fwp.needSpin) { for (int iDir = 0; iDir < 3; iDir++) state.S[iDir] = state.getMatrixRotated(Sw, iDir); }
 		if (fwp.needL or fwp.needQ) state.computeLQ(fwp, RPw, HprimeW);
 	}
 	else{
-		if (zeeman_BS or zeeman_BsoS) { for (int iDir = 0; iDir < 3; iDir++) state.S[iDir] = state.getMatrixRotated(Sw, iDir); }
+		if (zeeman_BS) { for (int iDir = 0; iDir < 3; iDir++) state.S[iDir] = state.getMatrixRotated(Sw, iDir); }
 		if (zeeman_BL) { for (int iDir = 0; iDir < 3; iDir++) state.v[iDir] = complex(0, -1) * state.getMatrixRotated(Pw, iDir); } //Since P was stored with -i omitted (to make it real when possible)
 		if (zeeman_BL) state.computeLQ(fwp, RPw, HprimeW);
 	}
 	watchRotations1.stop();
 
 	//e-ph sum rule if needed:
-	if (!energyOnly and inEphLoop) state.compute_dHePhSum(Dw, HePhSumW); //e-ph sum rule on unperturbed H
-
-	//Bso S Perturbation:
-	if (zeeman_BsoS and not zeeman_BL){
-		matrix Hpert(state.E);
-
-		for (int iDir = 0; iDir < 3; iDir++)
-			if (Bso[iDir]) Hpert += (Bso[iDir] * bohrMagneton * gElectron * 0.5) * restrictBandRange(state.S[iDir], fwp.bStart_model, fwp.bEnd_model);  //0.5 because |S| in [0, 1]
-
-		//Diagonalize perturbed Hamiltonian:
-		matrix Upert; //additional rotations due to perturbation
-		Hpert.diagonalize(Upert, state.E); //energies are now perturbed
-		if (!energyOnly) state.U = state.U * Upert; //eigenvectors are now perturbed
-
-		if (!energyOnly){
-			//Apply rotations to matrix elements computed above:
-			if (fwp.needVelocity) for (int iDir = 0; iDir<3; iDir++) rotateMatrix(state.v[iDir], Upert);
-			if (fwp.needSpin) for (int iDir = 0; iDir<3; iDir++) rotateMatrix(state.S[iDir], Upert);
-			if (fwp.needL) for (int iDir = 0; iDir<3; iDir++) rotateMatrix(state.L[iDir], Upert);
-			if (fwp.needQ) for (int iComp = 0; iComp<5; iComp++) rotateMatrix(state.Q[iComp], Upert);
-		}
-	}
+	if (!eEneOnly and inEphLoop) state.compute_dHePhSum(Dw, HePhSumW); //e-ph sum rule on unperturbed H
 
 	//BL or B(L+2S) Perturbations:
 	if (zeeman_BL){
@@ -233,17 +180,16 @@ void FeynWann::setState(FeynWann::StateE& state)
 		matrix Hpert(state.E);
 
 		for (int iDir = 0; iDir < 3; iDir++){
-			if (zeeman_BS and fwp.Bext[iDir]) Hpert += (fwp.Bext[iDir] * bohrMagneton * gElectron * 0.5) * state.S[iDir];  //0.5 because |S| in [0, 1]
-			if (zeeman_BsoS and Bso[iDir]) Hpert += (Bso[iDir] * bohrMagneton * gElectron * 0.5) * restrictBandRange(state.S[iDir], fwp.bStart_model, fwp.bEnd_model);  //0.5 because |S| in [0, 1]
+			if (zeeman_BS and fwp.Bext[iDir]) Hpert += ((fwp.Bext[iDir] + Bso[iDir]) * bohrMagneton * gElectron * 0.5) * state.S[iDir];  //0.5 because |S| in [0, 1]
 			if (fwp.Bext[iDir])	Hpert += (fwp.Bext[iDir] * bohrMagneton) * restrictInnerWindow(state.L[iDir], state.E);
 		}
 
 		//Diagonalize perturbed Hamiltonian:
 		matrix Upert; //additional rotations due to perturbation
 		Hpert.diagonalize(Upert, state.E); //energies are now perturbed
-		if (!energyOnly) state.U = state.U * Upert; //eigenvectors are now perturbed
+		if (!eEneOnly) state.U = state.U * Upert; //eigenvectors are now perturbed
 
-		if (!energyOnly){
+		if (!eEneOnly){
 			//Apply rotations to matrix elements computed above:
 			if (fwp.needVelocity) for (int iDir = 0; iDir<3; iDir++) rotateMatrix(state.v[iDir], Upert);
 			if (fwp.needSpin) for (int iDir = 0; iDir<3; iDir++) rotateMatrix(state.S[iDir], Upert);
@@ -253,9 +199,7 @@ void FeynWann::setState(FeynWann::StateE& state)
 		watchBL.stop();
 	}
 
-	Bso = vector3<>(0,0,0); // should be reset to zero
-
-	if (energyOnly) return;
+	if (eEneOnly) return;
 	//Check whether any states in range (only if not already masked out by initial value of withinRange):
 	if (not is_state_withinRange(state)) return; //Remaining quantities will never be used
 	//JX

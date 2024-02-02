@@ -54,8 +54,7 @@ struct FeynWannParams
 	double EshiftWeight; //!< if non-zero, apply this energy shift to the region of space selected by wannier slab weight (in mlwfW)
 	bool enforceKramerDeg; //!< whether to enforce Kramer degeneracy in eigenvalues	
 	double degeneracyThreshold; //!< threshold within which to treat Wannier bands as degenerate
-	bool tdep; //!< use TDEP interface to compute phonon frequencies and eigenvectors
-
+	
 	FeynWannParams(class InputMap* inputMap=0); //!< If specified, look for optional parameters Bext (in Tesla), EzExt (in eV/nm), scissor (in eV) and EshiftWeight (in eV) from in inputMap
 	void printParams() const; //!< Print the parameters read from inputMap (in atomic units)
 	
@@ -68,12 +67,7 @@ struct FeynWannParams
 				Ei += scissor;
 	}
 
-	//JX
-	bool needLayer, trunc_iDi_outer;
-	string Bin_model; double alpha_Bin, kcut_model, kcut_width_model; vector3<> dir_2drb, pshk, pshs;
-	int bStart_model, bEnd_model; bool renorm_Bin;
-	double scissor_above_band; int band_scissor;
-	//JX
+	bool needLayer, trunc_iDi_outer;//JX
 };
 
 //! Wannier interpolator for electrons and phonons
@@ -106,7 +100,7 @@ public:
 		double ImSigmaP_ePh(int n, double f) const; //!< get e-ph linewidth for band n given its occupation f, available if needLinewidthP_ePh = true
 		diagMatrix ImSigma_D; //!< e-defect linewidth, available if needLinewidth_D is set
 		diagMatrix ImSigmaP_D; //!< e-defect momentum-relaxing linewidth, available if needLinewidthP_D is set
-		matrix dHePhSum, layer;//JX dHePhSum - nBands*nBands x 3 matrix used internally to enforce e-ph matrix element sum rule at all k's; layer - layer occupation
+		matrix layer, dHePhSum;//JX layer - layer occupation; dHePhSum - nBands*nBands x 3 matrix used internally to enforce e-ph matrix element sum rule at all k's
 	private:
 		std::vector<diagMatrix> logImSigma_ePhArr; //!< e-ph linewidth for each f in fGrid_ePh
 		std::vector<diagMatrix> logImSigmaP_ePhArr; //!< e-ph momentum-relaxation linewidth for each f in fGrid_ePh
@@ -252,22 +246,18 @@ public:
 	void setMatrix(const StateE& e1, const StateE& e2, int ikPair, MatrixDefect& m); //set defect properties for e1.ik and e2.ik in m
 	
 	//JX
-	matrix3<> G, GT, GGT;
 	int nBandsDFT, nStatesDFT;
 	bool isMetal;
 	std::shared_ptr<DistributedMatrix> Layerw; //Wannier layer matrix elements
 	void bcastState_inEphLoop(StateE& state, MPIUtil* mpiUtil, int root); //!< broadcast specified state on specified MPI instance
 	void bcastState_JX(StateE& state, MPIUtil* mpiUtil, int root, bool need_dHePhSum); //!< broadcast specified state on specified MPI instance
-	bool energyOnly;//if true, setState will only interpolation E and U
+	bool eEneOnly;//if true, setState will only interpolation E and U
 	vector3<> Bso;
 	matrix3<> gfac;//g-factor tensor. Diagonal and about 2 by default
 	void copy_stateE(const StateE& e, StateE& eout);
 	void trunc_stateE(StateE& e, StateE& eTrunc, int b0_eph, int b1_eph, int b0_dm, int b1_dm, int b0_probe, int b1_probe);
 	double omegaPhCut;
 	bool is_state_withinRange(StateE& e);
-	vector3<> calc_Bso(vector3<> kvec);
-	matrix restrictBandRange(const matrix& mat, const int& bStart, const int& bEnd) const;
-	std::vector<vector3<>> phononBasis;
 	//JX
 
 private:

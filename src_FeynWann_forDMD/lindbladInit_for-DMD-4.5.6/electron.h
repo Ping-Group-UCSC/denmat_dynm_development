@@ -15,7 +15,6 @@ public:
 	double dmuMin, dmuMax, dmu, Tmax, nkBT, n_dmu;
 	bool read_gfack, read_Bsok;
 	vector3<> gfac_mean, gfac_sigma, gfac_cap;
-	string Bin_model; double alpha_Bin;
 	double pumpOmegaMax, pumpTau, probeOmegaMax;
 
 	int band_skipped, nValence; bool assumeMetal, assumeMetal_scatt, useFinek_for_ERange, select_k_use_meff;
@@ -32,7 +31,6 @@ public:
 	// ?_probe for probe and can contain bands far from band edges; ?_eph for e-ph scattering; ?_dm for states related to density matrix change
 	int bStart, bStop, bCBM, nBandsSel, bBot_eph, bTop_eph, bBot_dm, bTop_dm, bBot_probe, bTop_probe, bRef, nBandsSel_probe;
 	double EvMax, EcMin, Emid; //VBM and CBM estimates, Emid is the energy in the middle of the gap
-	vector3<> k_EvMax, k_EcMin;
 	double Estart, Estop, EBot_probe, ETop_probe, EBot_dm, ETop_dm, EBot_eph, ETop_eph; //energy range for k selection
 
 	std::vector<vector3<>> k; //selected k-points
@@ -51,8 +49,7 @@ public:
 		: fw(fw), latt(latt),
 		dmuMin(param->dmuMin), dmuMax(param->dmuMax), dmu(dmuMax), Tmax(param->Tmax), nkBT(param->nkBT),
 		n_dmu(param->carrier_density * latt->cminvdim2au()),
-		read_Bsok(fw.fwp.Bin_model == "read"), Bin_model(fw.fwp.Bin_model), alpha_Bin(fw.fwp.alpha_Bin),
-		read_gfack(param->read_gfack), gfac_mean(param->gfac_mean), gfac_sigma(param->gfac_sigma), gfac_cap(param->gfac_cap),
+		read_Bsok(param->read_Bsok), read_gfack(param->read_gfack), gfac_mean(param->gfac_mean), gfac_sigma(param->gfac_sigma), gfac_cap(param->gfac_cap),
 		pumpOmegaMax(param->pumpOmegaMax), pumpTau(param->pumpTau), probeOmegaMax(param->probeOmegaMax),
 		band_skipped(param->band_skipped), assumeMetal(param->assumeMetal), assumeMetal_scatt(param->assumeMetal_scatt), useFinek_for_ERange(param->useFinek_for_ERange),
 		select_k_use_meff(param->select_k_use_meff), meff(param->meff),
@@ -68,7 +65,6 @@ public:
 		latt->print_carrier_density(n_dmu); logPrintf("\n"); logFlush();
 		get_k_offsets(param->NkMult);
 		read_gfac();
-		if (read_Bsok) assert(read_kpts);
 		read_Bso();
 		fw.gfac = matrix3<>(gfac_mean[0], gfac_mean[1], gfac_mean[2]);
 		if (fabs(nValence*fw.nSpins*fw.spinWeight - fw.nElectrons) > 1e-6) die("Number of electrons incompatible with semiconductor / insulator.\n");
@@ -84,7 +80,7 @@ public:
 
 	inline void bSelect(const FeynWann::StateE& state);
 	static void bSelect(const FeynWann::StateE& state, void* params);
-	void bSelect_driver(const std::vector<vector3<>>& k0, const double& EBot, const double& ETop, int& bBot, int& bTop);
+	void bSelect_driver(const double& EBot, const double& ETop, int& bBot, int& bTop);
 
 	inline void kSelect(const FeynWann::StateE& state);
 	static void kSelect(const FeynWann::StateE& state, void* params);
@@ -106,9 +102,7 @@ public:
 	void read_gfac();
 	void read_Bso();
 	void generate_gfac();
-	void generate_Bso();
 	void analyse_gfac();
-	void analyse_Bso();
 	void set_mu(std::vector<double>& E);
 	void set_mu(std::vector<FeynWann::StateE>& states);
 	void report_density(std::vector<FeynWann::StateE>& states);

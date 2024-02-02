@@ -50,34 +50,20 @@ void electron::read_gfac(){
 }
 void electron::read_Bso(){
 	if (read_Bsok){
-		// read_Bsok requires Bso_vector_k.dat exists
+		// read_gfack requires g_tensor_k.dat exists
 		logPrintf("read Bso_vector_k.dat\n"); logFlush();
 		assert(fileSize("Bso_vector_k.dat") > 0);
 		FILE *fp = fopen("Bso_vector_k.dat", "r");
 		char s[200]; fgets(s, sizeof s, fp);
-		if (Bsok.size() == 0){
-			while (fgets(s, sizeof s, fp) != NULL){
-				if (s[0] != '\n'){
-					vector3<> v3tmp;
-					sscanf(s, "%lf %lf %lf", &v3tmp[0], &v3tmp[1], &v3tmp[2]);
-					Bsok.push_back(v3tmp);
-				}
+		while (fgets(s, sizeof s, fp) != NULL){
+			if (s[0] != '\n'){
+				vector3<> v3tmp;
+				sscanf(s, "%lf %lf %lf", &v3tmp[0], &v3tmp[1], &v3tmp[2]);
+				Bsok.push_back(v3tmp);
 			}
-			logPrintf("size of Bsok: %lu\n", Bsok.size()); logFlush();
-		}
-		else{
-			int ik = 0;
-			while (fgets(s, sizeof s, fp) != NULL){
-				if (s[0] != '\n'){
-					vector3<> v3tmp;
-					sscanf(s, "%lf %lf %lf", &v3tmp[0], &v3tmp[1], &v3tmp[2]);
-					Bsok[ik] += v3tmp;
-					ik++;
-				}
-			}
-			logPrintf("number of Bsok read from file: %lu\n", ik); logFlush();
 		}
 		fclose(fp);
+		logPrintf("size of Bsok: %lu\n", Bsok.size()); logFlush();
 	}
 }
 
@@ -129,25 +115,13 @@ void electron::get_band_skipped(){
 inline void electron::eRange(const FeynWann::StateE& state){
 	if (band_skipped < 0){
 		for (const double& E : state.E){
-			if (E < 1e-4 and E > EvMax){
-				EvMax = E;
-				k_EvMax = state.k;
-			}
-			if (E > 1e-4 and E < EcMin){
-				EcMin = E;
-				k_EcMin = state.k;
-			}
+			if (E < 1e-4 and E > EvMax) EvMax = E;
+			if (E > 1e-4 and E < EcMin) EcMin = E;
 		}
 	}
 	else{
-		if (state.E[nValence - band_skipped - 1] > EvMax){
-			EvMax = state.E[nValence - band_skipped - 1];
-			k_EvMax = state.k;
-		}
-		if (state.E[nValence - band_skipped] < EcMin){
-			EcMin = state.E[nValence - band_skipped];
-			k_EcMin = state.k;
-		}
+		if (state.E[nValence - band_skipped - 1] > EvMax) EvMax = state.E[nValence - band_skipped - 1];
+		if (state.E[nValence - band_skipped] < EcMin) EcMin = state.E[nValence - band_skipped];
 	}
 }
 void electron::eRange(const FeynWann::StateE& state, void* params){
@@ -166,29 +140,12 @@ inline void electron::bSelect(const FeynWann::StateE& state){
 void electron::bSelect(const FeynWann::StateE& state, void* params){
 	((electron*)params)->bSelect(state);
 }
-void electron::bSelect_driver(const std::vector<vector3<>>& k0, const double& EBot, const double& ETop, int& bBot, int& bTop){
+void electron::bSelect_driver(const double& EBot, const double& ETop, int& bBot, int& bTop){
 	Estart = EBot; Estop = ETop;
 	bStart = fw.nBands; bStop = 0; bCBM = 0;
-	if (!useFinek_for_ERange){
-		//fw.eLoop(vector3<>(), electron::bSelect, this);
-		for (vector3<> qOff : fw.qOffset)
-			fw.eLoop(qOff, electron::bSelect, this);
-	}
-	else{
-		//Parallel:
-		size_t oStart, oStop; //range of offstes handled by this process group
-		if (mpiGroup->isHead()) TaskDivision(k0.size(), mpiGroupHead).myRange(oStart, oStop);
-		mpiGroup->bcast(oStart); mpiGroup->bcast(oStop);
-		size_t noMine = oStop - oStart;
-		size_t oInterval = std::max(1, int(round(noMine / 50.))); //interval for reporting progress
-
-		logPrintf("\nDetermin band range using fine k meshes\n"); logFlush();
-		for (size_t o = oStart; o < oStop; o++){
-			for (vector3<> qOff : fw.qOffset) fw.eLoop(k0[o] + qOff, electron::bSelect, this);
-			if ((o - oStart + 1) % oInterval == 0) { logPrintf("%d%% ", int(round((o - oStart + 1)*100. / noMine))); logFlush(); } //Print progress:
-		}
-		logPrintf("done.\n"); logFlush();
-	}
+	//fw.eLoop(vector3<>(), electron::bSelect, this);
+	for (vector3<> qOff : fw.qOffset)
+		fw.eLoop(qOff, electron::bSelect, this);
 	mpiWorld->allReduce(bStart, MPIUtil::ReduceMin);
 	mpiWorld->allReduce(bStop, MPIUtil::ReduceMax);
 	mpiWorld->allReduce(bCBM, MPIUtil::ReduceMax);
@@ -238,7 +195,7 @@ void electron::kpointSelect(const std::vector<vector3<>>& k0){
 		if (!useFinek_for_ERange){
 			logPrintf("\nDetermin VBM and CBM using DFT k meshes\n"); logFlush();
 			string fname = fw.fwp.totalEprefix + ".eigenvals";
-			bool hasField = fw.fwp.EzExt or fw.fwp.Bext.length_squared() or read_Bsok or (Bin_model != "none" and alpha_Bin != 0);
+			bool hasField = fw.fwp.EzExt or fw.fwp.Bext.length_squared() or read_Bsok;
 			if (exists(fname.c_str()) and !hasField){
 				logPrintf("Reading '%s' ... ", fname.c_str()); logFlush();
 				ManagedArray<double> Edft; Edft.init(fw.nBandsDFT*fw.nStatesDFT);
@@ -260,38 +217,13 @@ void electron::kpointSelect(const std::vector<vector3<>>& k0){
 			for (size_t o = oStart; o < oStop; o++){
 				for (vector3<> qOff : fw.qOffset) fw.eLoop(k0[o] + qOff, electron::eRange, this);
 				if ((o - oStart + 1) % oInterval == 0) { logPrintf("%d%% ", int(round((o - oStart + 1)*100. / noMine))); logFlush(); } //Print progress:
+				logPrintf("done.\n"); logFlush();
 			}
-			logPrintf("done.\n"); logFlush();
-			//find out k of CBM and VBM
-			double vbmArr[mpiWorld->nProcesses()], cbmArr[mpiWorld->nProcesses()];
-			vector3<> kvbmArr[mpiWorld->nProcesses()], kcbmArr[mpiWorld->nProcesses()];
-			for (int i = 0; i < mpiWorld->nProcesses(); i++){
-				if (i == mpiWorld->iProcess()){
-					vbmArr[i] = EvMax; kvbmArr[i] = k_EvMax;
-					cbmArr[i] = EcMin; kcbmArr[i] = k_EcMin;
-				}
-				mpiWorld->bcast(vbmArr[i], i); mpiWorld->bcast(kvbmArr[i], i);
-				mpiWorld->bcast(cbmArr[i], i); mpiWorld->bcast(kcbmArr[i], i);
-			}
-			double vbm = vbmArr[0], cbm = cbmArr[0];
-			k_EvMax = kvbmArr[0], k_EcMin = kcbmArr[0];
-			for (int i = 1; i < mpiWorld->nProcesses(); i++){
-				if (vbmArr[i] > vbm){
-					vbm = vbmArr[i];
-					k_EvMax = kvbmArr[i];
-				}
-				if (cbmArr[i] < cbm){
-					cbm = cbmArr[i];
-					k_EcMin = kcbmArr[i];
-				}
-			}
-			//logPrintf("VBM: %.6lf eV, CBM: %.6lf eV\n", vbm / eV, cbm / eV);
-			logPrintf("VBM at %lg %lg %lg, CBM at %lg %lg %lg\n", k_EvMax[0], k_EvMax[1], k_EvMax[2], k_EcMin[0], k_EcMin[1], k_EcMin[2]);
 			mpiWorld->allReduce(EvMax, MPIUtil::ReduceMax); mpiWorld->allReduce(EcMin, MPIUtil::ReduceMin);
 		}
 	}
 	Emid = (EvMax + EcMin) / 2.;
-	logPrintf("VBM: %.6lf eV, CBM: %.6lf eV, Middle: %.6lf eV\n", EvMax / eV, EcMin / eV, Emid / eV);
+	logPrintf("VBM: %.6lf eV, CBM: %.6lf eV, Middle: %.6lf\n", EvMax / eV, EcMin / eV, Emid / eV);
 	logPrintf("Note that VBM and CBM may not be determined correctly,\nyou may have to use band_skipped to set starting band index of wannier bands\n");
 	if (EvMax < EcMin && band_skipped >= 0) fw.isMetal = false;
 	if (assumeMetal) fw.isMetal = true;
@@ -350,9 +282,9 @@ void electron::kpointSelect(const std::vector<vector3<>>& k0){
 		fclose(fp);
 	}
 	else{
-		bSelect_driver(k0, EBot_probe, ETop_probe, bBot_probe, bTop_probe);
-		bSelect_driver(k0, EBot_dm, ETop_dm, bBot_dm, bTop_dm);
-		bSelect_driver(k0, EBot_eph, ETop_eph, bBot_eph, bTop_eph);
+		bSelect_driver(EBot_probe, ETop_probe, bBot_probe, bTop_probe);
+		bSelect_driver(EBot_dm, ETop_dm, bBot_dm, bTop_dm);
+		bSelect_driver(EBot_eph, ETop_eph, bBot_eph, bTop_eph);
 	}
 	nBandsSel_probe = bTop_probe - bBot_probe; bRef = bBot_probe;
 	if (fw.isMetal) bCBM = bBot_probe;
@@ -392,9 +324,6 @@ void electron::kpointSelect(const std::vector<vector3<>>& k0){
 			fread(k.data(), sizeof(double), k.size() * 3, fpk);
 			fread(E.data(), sizeof(double), k.size() * nBandsSel_probe, fpe);
 			fclose(fpk); fclose(fpe);
-
-			if (gfack.size() > 0) assert(gfack.size() == k.size());
-			if (Bsok.size() > 0) assert(Bsok.size() == k.size());
 		}
 		else{
 			logPrintf("\nRead k points from ldbd_data/ldbd_kvec_morek.bin.\n"); logFlush();
