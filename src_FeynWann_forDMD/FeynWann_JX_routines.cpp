@@ -24,6 +24,37 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include <wannier/WannierMinimizer.h>
 #include <fftw3-mpi.h>
 #include "config.h"
+#include "lindbladInit_for-DMD-4.5.6/help.h"
+
+matrix FeynWann::restrictBandRange(const matrix& mat, const int& bStart, const int& bEnd) const
+{	matrix M(mat);
+	if (bStart >= bEnd) return M;
+	complex* Mdata = M.data();
+	for (int bCol = 0; bCol<nBands; bCol++) //note: column major storage
+	for (int bRow = 0; bRow<nBands; bRow++){
+		if (bCol < bStart || bCol >= bEnd || bRow < bStart || bRow >= bEnd)
+			*Mdata = 0.;
+		Mdata++;
+	}
+	return M;
+}
+
+vector3<> FeynWann::calc_Bso(vector3<> k){
+	vector3<> r(0, 0, 0);
+	if (fwp.Bin_model == "none" || fwp.Bin_model == "read") return r;
+	vector3<> k_cart = wrap(k) * ~G;
+	double kl = k_cart.length();
+	double fac = 1. / (exp((kl - fwp.kcut_model) / fwp.kcut_width_model / fwp.kcut_model) + 1);
+	if (fwp.Bin_model == "3d-rashba" || fwp.Bin_model == "3d-rb")
+		r = (fac * fwp.alpha_Bin / sqrt(2)) * vector3<>(k_cart[1] - k_cart[2], k_cart[2] - k_cart[0], k_cart[0] - k_cart[1]);
+	else if (fwp.Bin_model == "2d-rashba" || fwp.Bin_model == "2d-rb") // along z
+		r = (fac * fwp.alpha_Bin) * cross(k_cart, fwp.dir_2drb); //r = (fac * fwp.alpha_Bin) * vector3<>(k_cart[1], -k_cart[0], 0);
+	else if (fwp.Bin_model == "psh"){
+		r = (fac * fwp.alpha_Bin * dot(k_cart, fwp.pshk)) * fwp.pshs;
+	}
+	//logPrintf("fac = %lg ; r = %lg %lg %lg ; |r| = %lg\n", fac, r[0], r[1], r[2], r.length());
+	return r;
+}
 
 //Copy assignment
 inline void copy(const matrix& in, matrix& out){
@@ -64,7 +95,7 @@ void FeynWann::copy_stateE(const FeynWann::StateE& e, FeynWann::StateE& eout){
 	eout.k = e.k;
 	eout.withinRange = e.withinRange;
 	eout.E = e.E(0, e.E.size());
-	if (eEneOnly) return;
+	if (energyOnly) return;
 	copy(e.U, eout.U);
 	if (fwp.needVelocity){
 		eout.vVec.resize(e.vVec.size());
@@ -97,7 +128,7 @@ void FeynWann::trunc_stateE(FeynWann::StateE& e, FeynWann::StateE& eTrunc, int b
 	eTrunc.k = e.k;
 	eTrunc.withinRange = e.withinRange;
 	eTrunc.E = e.E(b0_probe, b1_probe);
-	if (eEneOnly) return;
+	if (energyOnly) return;
 	copy(e.U(0, nBands, b0_eph, b1_eph), eTrunc.U);
 	if (fwp.needVelocity){
 		eTrunc.vVec.resize(b1_eph - b0_eph);
@@ -133,50 +164,52 @@ void FeynWann::bcastState_JX(FeynWann::StateE& state, MPIUtil* mpiUtil, int root
 	mpiUtil->bcast(state.ik, root);
 	mpiUtil->bcast(&state.k[0], 3, root);
 	//Energy and eigenvectors:
-	bcast(state.E, mpiUtil, root);
+	bcast(state.E, nBands, mpiUtil, root);
 	mpiUtil->bcast(state.withinRange, root);
 	if(not state.withinRange) return; //Remaining quantities will never be used
-	if (eEneOnly) return;
-	bcast(state.U, mpiUtil, root);
+	if (energyOnly) return;
+	bcast(state.U, nBands, nBands, mpiUtil, root);
 	//Velocity matrix, if needed:
 	if(fwp.needVelocity)
 	{	for(int iDir=0; iDir<3; iDir++)
-			bcast(state.v[iDir], mpiUtil, root);
-		bcast(state.vVec, mpiUtil, root);
+			bcast(state.v[iDir], nBands, nBands, mpiUtil, root);
+		state.vVec.resize(nBands);
+		mpiUtil->bcastData(state.vVec, root);
 	}
 	//Spin matrix, if needed:
 	if(fwp.needSpin)
 	{	for(int iDir=0; iDir<3; iDir++)
-			bcast(state.S[iDir], mpiUtil, root);
-		bcast(state.Svec, mpiUtil, root);
+			bcast(state.S[iDir], nBands, nBands, mpiUtil, root);
+		state.Svec.resize(nBands);
+		mpiUtil->bcastData(state.Svec, root);
 	}
 	//Angular momentum matrix, if needed:
 	if (fwp.needL){
 		for (int iDir = 0; iDir<3; iDir++)
-			bcast(state.L[iDir], mpiUtil, root);
+			bcast(state.L[iDir], nBands, nBands, mpiUtil, root);
 	}
 	//Electric quadrupole r*p matrix, if needed:
 	if (fwp.needQ){
 		for (int iComp = 0; iComp<3; iComp++)
-			bcast(state.Q[iComp], mpiUtil, root);
+			bcast(state.Q[iComp], nBands, nBands, mpiUtil, root);
 	}
 	if (fwp.needLayer)
-		bcast(state.layer, mpiUtil, root);
+		bcast(state.layer, nBands, nBands, mpiUtil, root);
 	//Linewidths, if needed:
-	if(fwp.needLinewidth_ee) bcast(state.ImSigma_ee, mpiUtil, root);
+	if (fwp.needLinewidth_ee) bcast(state.ImSigma_ee, nBands, mpiUtil, root);
 	if(fwp.needLinewidth_ePh)
 	{	state.logImSigma_ePhArr.resize(FeynWannParams::fGrid_ePh.size());
-		for(diagMatrix& d: state.logImSigma_ePhArr) bcast(d, mpiUtil, root);
+		for (diagMatrix& d : state.logImSigma_ePhArr) bcast(d, nBands, mpiUtil, root);
 	}
 	if(fwp.needLinewidthP_ePh)
 	{	state.logImSigmaP_ePhArr.resize(FeynWannParams::fGrid_ePh.size());
-		for(diagMatrix& d: state.logImSigmaP_ePhArr) bcast(d, mpiUtil, root);
+		for (diagMatrix& d : state.logImSigmaP_ePhArr) bcast(d, nBands, mpiUtil, root);
 	}
-	if(fwp.needLinewidth_D.length()) bcast(state.ImSigma_D, mpiUtil, root);
-	if(fwp.needLinewidthP_D.length()) bcast(state.ImSigmaP_D, mpiUtil, root);
+	if (fwp.needLinewidth_D.length()) bcast(state.ImSigma_D, nBands, mpiUtil, root);
+	if (fwp.needLinewidthP_D.length()) bcast(state.ImSigmaP_D, nBands, mpiUtil, root);
 	//e-ph sum rule if needed
 	if (need_dHePhSum)
-		bcast(state.dHePhSum, mpiUtil, root);
+		bcast(state.dHePhSum, nBands*nBands, 3, mpiUtil, root);
 }
 
 void FeynWann::bcastState_inEphLoop(FeynWann::StateE& state, MPIUtil* mpiUtil, int root)
@@ -188,7 +221,7 @@ void FeynWann::bcastState_inEphLoop(FeynWann::StateE& state, MPIUtil* mpiUtil, i
 	bcast(state.E, nBands, mpiUtil, root);
 	mpiUtil->bcast(state.withinRange, root);
 	if (not state.withinRange) return; //Remaining quantities will never be used
-	if (eEneOnly) return;
+	if (energyOnly) return;
 	bcast(state.U, nBands, nBands, mpiUtil, root);
 	//Velocity matrix, if needed:
 	if (fwp.needVelocity){
