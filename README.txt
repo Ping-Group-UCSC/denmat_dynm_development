@@ -1,5 +1,6 @@
 A detailed step-by-step pipline instruction is here:
-https://github.com/rraffiu/Util/blob/master/DMD/DMD-workflow-notes.md
+https://github.com/Ping-Group-UCSC/Tutorials/blob/master/DMD-workflows/GaAs-DMD-example.md
+
 
 Note:
 Except (i) DMD sources files (ii) FeynWann source files and (iii) Silicon example are new, 
