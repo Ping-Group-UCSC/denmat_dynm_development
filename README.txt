@@ -1,3 +1,6 @@
+A detailed step-by-step pipline instruction is here:
+https://github.com/rraffiu/Util/blob/master/DMD/DMD-workflow-notes.md
+
 Note:
 Except (i) DMD sources files (ii) FeynWann source files and (iii) Silicon example are new, 
 all others are from older version 4.4.3.
