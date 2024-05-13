@@ -1,0 +1,5 @@
+nK     1000      #number of k-points
+sigmaL  0.1      #L fluctuations
+tauP    1e5      #Carrier relaxation time in fs
+tauS    1e7      #Target EY spin relaxation time in fs
+fracNZ  0.1      #Fill-factor to control sparsity of scattering matrix elements
