@@ -22,20 +22,60 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include "Histogram.h"
 #include <core/Units.h>
 #include <core/Random.h>
+#include "lindbladInit_for-DMD-4.5.6/help.h"
 
 void findMaxOmega(const FeynWann::StatePh& state, void* params)
 {	double& omegaMax = *((double*)params);
 	omegaMax = std::max(omegaMax, state.omega.back()); //omega is in ascending order
 }
 
-struct CollectDOS
-{	Histogram* dos;
+struct CollectDOS{
+	Histogram* dos;
 	double weight;
+	FeynWann fw;
+	bool atomProj;
+	std::vector<Histogram> dosAtom;
+	diagMatrix basisLength;
+	double qmax;
+
+	CollectDOS(FeynWann& fw, bool atomProj, double domega, double omegaMax)
+		: fw(fw), atomProj(atomProj), dosAtom(fw.nAtoms, Histogram(0, domega, omegaMax)), basisLength(fw.nModes)
+	{
+		if (atomProj){
+			for (int m = 0; m < fw.nModes; m++)
+				basisLength[m] = fw.phononBasis[m].length();
+		}
+	}
 	
-	static void phProcess(const FeynWann::StatePh& state, void* params)
-	{	CollectDOS& cd = *((CollectDOS*)params);
-		for(const double& omega: state.omega)
-			cd.dos->addEvent(omega, cd.weight);
+	void process(const FeynWann::StatePh& state){
+		for (const double& omega : state.omega)
+			dos->addEvent(omega, weight);
+
+		if (!atomProj) return;
+		double qlength = sqrt(fw.GGT.metric_length_squared(wrap(state.q)));
+		if (qlength > qmax) return;
+		matrix ionDisp = basisLength * state.U;
+		complex* ionDispData = ionDisp.data();
+		for (int m = 0; m < fw.nModes; m++){
+			double omega = state.omega[m];
+
+			std::vector<double> ionDispMag(fw.nAtoms, 0);
+			double sum = 0;
+			for (int ia = 0; ia < fw.nAtoms; ia++){
+				for (int d = 0; d < 3; d++){
+					ionDispMag[ia] += pow((*ionDispData).real(), 2.);
+					ionDispData++;
+				}
+				ionDispMag[ia] = sqrt(ionDispMag[ia]);
+				sum = sum + ionDispMag[ia];
+			}
+
+			for (int ia = 0; ia < fw.nAtoms; ia++)
+				dosAtom[ia].addEvent(omega, weight * ionDispMag[ia] / sum);
+		}
+	}
+	static void phProcess(const FeynWann::StatePh& state, void* params){
+		((CollectDOS*)params)->process(state);
 	}
 };
 
@@ -51,6 +91,9 @@ int main(int argc, char** argv)
 	const double Tstep = inputMap.get("Tstep") * Kelvin; //lattice temperature grid spacing
 	const double vL = inputMap.get("vL", 0.) * meter/sec; //longitudinal speed of sound (optional for Debye model)
 	const double vT = inputMap.get("vT", vL) * meter/sec; //transverse speed of sound (assumed x2, optional for Debye model)
+	const bool atomProj = inputMap.get("atomProj", 0);
+	const double qmax = inputMap.get("qmax", 10);
+	FeynWannParams fwp(&inputMap);
 	
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("nOffsets = %lu\n", nOffsets);
@@ -60,9 +103,11 @@ int main(int argc, char** argv)
 	logPrintf("Tstep = %lg\n", Tstep);
 	if(vL) logPrintf("vL = %lg\n", vL);
 	if(vT) logPrintf("vT = %lg\n", vT);
+	logPrintf("atomProj = %d\n", atomProj);
+	logPrintf("qmax = %lg\n", qmax);
+	fwp.printParams();
 	
 	//Initialize FeynWann:
-	FeynWannParams fwp;
 	fwp.needPhonons = true;
 	FeynWann fw(fwp);
 	size_t nKpts = nOffsets * fw.phCountPerOffset();
@@ -94,6 +139,7 @@ int main(int argc, char** argv)
 	mpiWorld->allReduce(omegaMax, MPIUtil::ReduceMax);
 	omegaMax *= 1.25; //add some margin
 	Histogram dos(0, domega, omegaMax); //phonon density of states
+
 	logPrintf("Initialized phonon energy grid: 0 to %lg eV with %lu points.\n", (domega*(dos.out.size()-1))/eV, dos.out.size());
 	
 	//Initialize sampling parameters:
@@ -107,9 +153,10 @@ int main(int argc, char** argv)
 	if(fw.nModes!=3 && vL) logPrintf("WARNING: the Debye estimates are only valid if nModes = 3.\n");
 	
 	logPrintf("\nCollecting DOS: "); logFlush();
-	CollectDOS cd;
+	CollectDOS cd(fw, atomProj, domega, omegaMax);
 	cd.dos = &dos;
 	cd.weight = (1./nKpts);
+	cd.qmax = qmax;
 	for(int o=0; o<noMine; o++)
 	{	Random::seed(o+oStart); //to make results independent of MPI division
 		//Process with a random offset:
@@ -121,6 +168,13 @@ int main(int argc, char** argv)
 	logPrintf("done.\n"); logFlush();
 	dos.allReduce(MPIUtil::ReduceSum);
 	dos.print("phDOS.dat", 1./eV, eV);
+	if (atomProj){
+		for (int ia = 0; ia < fw.nAtoms; ia++){
+			cd.dosAtom[ia].allReduce(MPIUtil::ReduceSum);
+			string fname = "phDOS_at" + int2str(ia) + ".dat";
+			cd.dosAtom[ia].print(fname, 1. / eV, eV);
+		}
+	}
 	
 	//Calculate Cl at each temperature:
 	diagMatrix Cl(Tarr.size(), 0.), ClDebye(Tarr.size(), 0.);
