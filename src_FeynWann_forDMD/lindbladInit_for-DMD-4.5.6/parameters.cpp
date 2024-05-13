@@ -96,7 +96,6 @@ void parameters::read_params(InputMap& inputMap){
 		gfac_cap = vector3<>(0, 0, 0);
 		read_gfack = false;
 	}
-	read_Bsok = inputMap.get("read_Bsok", 0); if (read_Bsok) assert(read_kpts);
 	//---matrix element analysis
 	analyse_g2_E1E2fix = inputMap.get("analyse_g2_E1E2fix", 0); if (analyse_g2_E1E2fix) assert(DEBUG);
 	E1fix = inputMap.get("E1fix", 0) / 1000. *eV; // reference to CBM(VBM) if >(<) 0
@@ -117,6 +116,8 @@ void parameters::read_params(InputMap& inputMap){
 	logPrintf("assumeMetal = %d\n", assumeMetal);
 	logPrintf("assumeMetal_scatt = %d\n", assumeMetal_scatt);
 	logPrintf("useFinek_for_ERange = %d\n", useFinek_for_ERange);
+	logPrintf("select_k_use_meff = %d\n", select_k_use_meff);
+	logPrintf("meff = %lg\n", meff);
 	logPrintf("EBot_set = %lg\n", EBot_set);
 	logPrintf("ETop_set = %lg\n", ETop_set);
 	logPrintf("kparis_eph_eimp = %d\n", kparis_eph_eimp);

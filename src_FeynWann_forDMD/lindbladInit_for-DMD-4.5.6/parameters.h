@@ -6,7 +6,7 @@ public:
 	vector3<int> NkMult;
 
 	double dmuMin, dmuMax, dmu, carrier_density, Tmax, nkBT;
-	bool needL, read_gfack, read_Bsok;
+	bool needL, read_gfack;
 	vector3<> gfac_mean, gfac_sigma, gfac_cap;
 	double pumpOmegaMax, pumpTau, probeOmegaMax;
 
