@@ -105,6 +105,7 @@ int main(int argc, char** argv)
 	h.spinorial = true;
 	h.spinWeight = 1;
 	h.R = matrix3<>(1, 1, 1);
+	h.haveL = false;
 
 	//Compute offsets to each k-point within file:
 	std::vector<size_t> byteOffsets(h.nk);
