@@ -10,7 +10,6 @@ LindbladLinear::LindbladLinear(const LindbladParams& lp)
 	{
 		#ifdef PETSC_ENABLED
 		initialize();
-		#endif
 
 		//Initialize sparse time evolution matrix in evolveMat:
 		initializeMatrix();
@@ -25,6 +24,7 @@ LindbladLinear::LindbladLinear(const LindbladParams& lp)
 		
 		//Create corresponding vectors:
 		CHECKERR(MatCreateVecs(evolveMat, &vRho, &vRhoDot));
+		#endif
 	}
 }
 
@@ -39,6 +39,7 @@ LindbladLinear::~LindbladLinear()
 
 void LindbladLinear::rhoDotScatter()
 {	static StopWatch watch("LindbladLinear::rhoDotScatter");
+	#ifdef PETSC_ENABLED
 	if(not lp.ePhEnabled) return;
 	watch.start();
 
@@ -60,6 +61,7 @@ void LindbladLinear::rhoDotScatter()
 		s.rhoDot += 0.5 * getRho(vRhoDotPtr+rhoOffset[s.ik], s.nInner); //0.5 to compensate for +HC added later
 	VecRestoreArrayRead(vRhoDot, &vRhoDotPtr);
 	watch.stop();
+	#endif
 }
 
 
