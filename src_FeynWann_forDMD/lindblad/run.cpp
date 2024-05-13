@@ -61,13 +61,22 @@ int main(int argc, char** argv)
 		? "Bfield" //only uses pumpB to set perturbation strength for spectrum mode
 		: inputMap.getString("pumpMode"); //must be Evolve, Perturb or Bfield
 	if(pumpMode!="Evolve" and pumpMode!="Perturb" and pumpMode!="Bfield")
-		die("\npumpMode must be 'Evolve' or 'Perturb' pr 'Bfield'\n");
+		die("\npumpMode must be 'Evolve' or 'Perturb' or 'Bfield'\n");
 	lp.pumpEvolve = (pumpMode == "Evolve");
 	lp.pumpBfield = (pumpMode == "Bfield");
 	lp.pumpB = inputMap.getVector("pumpB", vector3<>()) * Tesla; //perturbing initial magnetic field in Tesla (used only in Bfield mode)
 	lp.pumpOmega = inputMap.get("pumpOmega", pumpMode=="Bfield" ? 0. : NAN) * eV; //pump frequency in eV (used only in Evolve/Perturb modes)
-	lp.pumpA0 = inputMap.get("pumpA0", pumpMode=="Bfield" ? 0. : NAN); //pump pulse amplitude / intensity (Units TBD)
-	lp.pumpTau = inputMap.get("pumpTau", pumpMode=="Bfield" ? 0. : NAN)*fs; //Gaussian pump pulse width (sigma of amplitude) in fs
+	lp.pumpTau = inputMap.get("pumpTau", pumpMode=="Bfield" ? 0. : NAN)*fs; //Gaussian pump pulse width in fs, or 0 for CW
+	lp.pumpI = inputMap.get("pumpI", pumpMode=="Bfield" ? 0. : NAN)
+		* (lp.pumpTau
+			? Joule / std::pow(meter, 2) //pump integrated energy flux in J/m^2 (gaussian pulse)
+			: Joule / (std::pow(meter, 2) * sec) //pump intensity in W/m^2 (CW)
+		); 
+	lp.pumpSigma = inputMap.get("pumpSigma",
+		pumpMode=="Bfield"
+		? 0.
+		: (lp.pumpTau ? (sqrt(0.5)/lp.pumpTau)/eV : NAN) //default from tau for Gauss pulse
+	)*eV; //Energy-conservation width for pump in eV
 	lp.pumpPol = normalize(
 		complex(1,0)*inputMap.getVector("pumpPolRe", vector3<>(1.,0.,0.)) +  //Real part of polarization
 		complex(0,1)*inputMap.getVector("pumpPolIm", vector3<>(0.,0.,0.)) ); //Imag part of polarization
@@ -134,8 +143,9 @@ int main(int argc, char** argv)
 	}
 	else
 	{	logPrintf("pumpOmega = %lg\n", lp.pumpOmega);
-		logPrintf("pumpA0 = %lg\n", lp.pumpA0);
 		logPrintf("pumpTau = %lg\n", lp.pumpTau);
+		logPrintf("pumpI = %lg\n", lp.pumpI);
+		logPrintf("pumpSigma = %lg\n", lp.pumpSigma);
 		logPrintf("pumpPol = "); print(globalLog, lp.pumpPol);
 	}
 	if(lp.pol.size())
@@ -150,11 +160,11 @@ int main(int argc, char** argv)
 	}
 	logPrintf("Bext = "); lp.Bext.print(globalLog, " %lg ");
 	logPrintf("orbitalZeeman = %s\n", lp.orbitalZeeman ? "yes" : "no");
-	if(lp.spinEchoFlipTime)
+	if(lp.spinEchoB.length_squared())
 	{	logPrintf("spinEchoB = \n"); lp.spinEchoB.print(globalLog, " %lg ");
 		logPrintf("spinEchoDelay = %lg\n", lp.spinEchoDelay);
-		logPrintf("spinEchoOmega = %lg\n", lp.spinEchoOmega);
-		logPrintf("spinEchoFlipTime = %lg\n", lp.spinEchoFlipTime);
+		logPrintf("spinEchoOmega = %lg (may be overrided later)\n", lp.spinEchoOmega);
+		logPrintf("spinEchoFlipTime = %lg (calculated later)\n", lp.spinEchoFlipTime);
 	}
 	logPrintf("dE = %lg\n", lp.dE);
 	logPrintf("ePhMode = %s\n", ePhMode.c_str());
