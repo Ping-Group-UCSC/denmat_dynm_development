@@ -1,0 +1,20 @@
+T          300     #Kelvin
+dmu         0      #eV
+mode    RealTime   #RealTime or Spectrum
+linearized yes     #If yes, use PETSc to implement scattering matrix elements
+
+dt       1E4      #fs; time step for reporting
+tStop    2E7      #fs; end time for simulation
+tStep    0.       #fs; if non-zero, time step for fixed-step integrator
+tolAdaptive 1e-2  #tolerance for adaptive integrator (used only if tStep = 0)
+
+pumpMode Bfield   #Perturb or Bfield
+pumpB    10,0,0   #Magnetic field for initial perturbation in Tesla
+
+dE      0.001     #eV; energy resolution of distribution functions
+ePhMode  DiagK    #Off or DiagK
+
+defectFraction 1.  #Relative magnitude of scattering terms in model
+orbitalZeeman yes
+saveDist no      #whether to write distributions at each time step (default: yes)
+#checkpointFile ldbd.rho  #optionally use for saving state and continuing
