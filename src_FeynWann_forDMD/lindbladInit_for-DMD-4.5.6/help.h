@@ -22,8 +22,6 @@ template <typename T> int sgn(T val){
 
 matrix degProj(matrix& M, diagMatrix& E, double degthr);
 void degProj(matrix& M, diagMatrix& E, double degthr, matrix& Mdeg);
-double compute_sz(complex **dm, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e);
-vector3<> compute_spin(std::vector<std::vector<matrix>> m, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e);
 void init_dm(complex **dm, size_t nk, int nb, std::vector<diagMatrix>& F);
 void set_dm1(complex **dm, size_t nk, int nb, complex **dm1);
 
@@ -45,9 +43,6 @@ void axbyc(double *y, double *x, int n, double a = 1, double b = 0, double c = 0
 void axbyc(double **y, double **x, int n1, int n2, double a = 1, double b = 0, double c = 0); // y = ax + by + c, default = copy
 void axbyc(complex *y, complex *x, int n, complex a = c1, complex b = c0, complex c = c0); // y = ax + by + c, default = copy
 void axbyc(complex **y, complex **x, int n1, int n2, complex a = c1, complex b = c0, complex c = c0); // y = ax + by + c, default = copy
-
-double maxval(std::vector<FeynWann::StateE>& e, int bStart, int bStop);
-double minval(std::vector<FeynWann::StateE>& e, int bStart, int bStop);
 
 double mean_of_array(double *a, int n, double *w = nullptr);
 double sigma_of_array(double *a, int n, bool compute_mean = true, double mean_fixed = 0, double *w = nullptr);
