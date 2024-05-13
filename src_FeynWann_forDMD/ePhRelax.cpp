@@ -9,6 +9,17 @@
 #include <core/matrix.h>
 #include <fstream>
 
+//Smooth v with a nearest-neighbor filter n times
+void smooth(std::vector<double>& v, int n)
+{	std::vector<double> vOut(v);
+	for(int repeat=0; repeat<n; repeat++)
+	{	for(size_t i=1; i<v.size()-1; i++)
+			vOut[i] = 0.5 * v[i] + 0.25 * (v[i-1] + v[i+1]);
+		v = vOut;
+	}
+}
+
+
 struct ePhRelax : public Integrator<diagMatrix>
 {
 	Interp1 dos, dosPh;
@@ -20,6 +31,8 @@ struct ePhRelax : public Integrator<diagMatrix>
 	double pInject; //probability that a carrier gets injected to substrate
 	double De, scaledDe; //De, and De scaled by g(eF)**-3
 	double pumpFWHM; //Pump full-width at half maximum
+	bool pumpCW; //If true, CW excitation: ignore pumpFWHM and treat Uabs as absorbed power density
+	bool fixedTl; //If true, hold lattice temperature fixed
 	double scatterFactor; //Artificially increase the electron-phonon and electron-electron scattering rate by this value
 	diagMatrix hInt; //energy resolved electron-phonon coupling
 	diagMatrix Mee; //energy resolved electron-electron matrix element
@@ -74,11 +87,16 @@ struct ePhRelax : public Integrator<diagMatrix>
 		minEcut = inputMap.get("minEcut", -DBL_MAX)*eV; // energy cutoff below which holes can be injected
 		maxEcut = inputMap.get("maxEcut", +DBL_MAX)*eV; //energy cutoff above which electrons can be injected
 		pInject = inputMap.get("pInject", 0.); //probability of injection for carriers outside (minEcut, maxEcut)
-		const double Uabs = inputMap.get("Uabs") * Joule/std::pow(meter,3); //absorbed laser energy per unit volume in Joule/meter^3
-		const double Eplasmon = inputMap.get("Eplasmon") * eV; //incident photon energy in eV
 		De = inputMap.get("De") / eV; //quadratic e-e lifetime coefficient in eV^-1
+		fixedTl = inputMap.getBool("fixedTl", false); //If true, hold Tl fixed (an infinite thermal conductance contact)
+		pumpCW = inputMap.getBool("pumpCW", false); //If true, pump is CW: ignore pumpFWHM and interpret Uabs as absorbed power density in Watt/meter^3
 		pumpFWHM = inputMap.get("pumpFWHM", 0.) * fs; //Gaussian pump pulse width in fs (default: 0 => treat pump as instantaneous)
+		double Uabs_unit = Joule/std::pow(meter,3); //Uabs is energy density for Gaussian pulses,
+		if(pumpCW) Uabs_unit *= 1/sec; // ... and power density for CW
+		const double Uabs = inputMap.get("Uabs") * Uabs_unit; //absorbed energy or power density in J/m^3 or W/m^3
+		const double Eplasmon = inputMap.get("Eplasmon") * eV; //incident photon energy in eV
 		scatterFactor= inputMap.get("scatterFactor", 1.); //Increase the e-e and e-ph scattering rate by this factor (dafeult: 1 => no scaling)
+		const int nSmooth = (int)inputMap.get("nSmooth", 0.); //smoothing of energy-functions to stabilize dynamics (default: off)
 		const string MeeFile = inputMap.getString("MeeFile"); //energy-dependent matrix element filename (use None to disable)
 		eeStride = (int)inputMap.get("eeStride", 1.); //coarse graining stride used to accelerate e-e calculation
 		runName = inputMap.getString("runName"); //prefix to use for output files
@@ -92,11 +110,14 @@ struct ePhRelax : public Integrator<diagMatrix>
 		logPrintf("T = %lg\n", T);
 		logPrintf("(minEcut,maxEcut) = (%lg, %lg)\n", minEcut, maxEcut);
 		logPrintf("pInject: %lg\n", pInject);
+		logPrintf("De = %lg\n", De);
+		logPrintf("fixedTl = %s\n", (fixedTl ? "yes" : "no"));
+		logPrintf("pumpCW = %s\n", (pumpCW ? "yes" : "no"));
+		logPrintf("pumpFWHM = %lg\n", pumpFWHM);
 		logPrintf("Uabs = %lg\n", Uabs);
 		logPrintf("Eplasmon = %lg\n", Eplasmon);
-		logPrintf("De = %lg\n", De);
-		logPrintf("pumpFWHM = %lg\n", pumpFWHM);
 		logPrintf("scatterFactor = %lg\n", scatterFactor);
+		logPrintf("nSmooth = %d\n", nSmooth);
 		logPrintf("MeeFile = %s\n", MeeFile.c_str());
 		logPrintf("eeStride = %d\n", eeStride);
 		logPrintf("runName = %s\n", runName.c_str());
@@ -105,6 +126,7 @@ struct ePhRelax : public Integrator<diagMatrix>
 		
 		//Read electron and phonon DOS (and convert to atomic units and per-unit volume):
 		dos.init("eDOS.dat", eV, 1./(detR*eV));
+		smooth(dos.yGrid[0], nSmooth);
 		dosPh.init("phDOS.dat", eV, 1./(detR*eV));
 		nE = dos.xGrid.size();
 		dE = dos.dx;
@@ -159,7 +181,7 @@ struct ePhRelax : public Integrator<diagMatrix>
 			die("Plasmon energy is out of the range available in carrierDistribDirect.dat")
 		if(Eplasmon < distribPhonon.omegaMin || Eplasmon > distribPhonon.omegaMin + (distribPhonon.nomega-1)*distribPhonon.domega)
 			die("Plasmon energy is out of the range available in carrierDistribPhonon.dat")
-		//--- interpolate to required photon energy and carrier eenergy grid:
+		//--- interpolate to required photon energy and carrier energy grid:
 		dfPert.resize(nE);
 		double Upert = 0.;
 		double dZ = 0.;
@@ -173,6 +195,9 @@ struct ePhRelax : public Integrator<diagMatrix>
 			{	double w = exp(-(jE*jE)/18.) / (sqrt(2*M_PI)*3); //gauss smoothing kernel with width 3*dE
 				dni += w * (distribDirect.interp1(Ei+jE*dE, Eplasmon) + distribPhonon.interp1(Ei+jE*dE, Eplasmon));
 			}
+			//Smoothly truncate any spurious contributions beyond photon energy:
+			if(fabs(Ei) > Eplasmon)
+				dni *= exp(-0.5*std::pow((fabs(Ei) - Eplasmon)/(3*dE), 2));
 			Upert += dni * Ei * dE; //calculate energy of perturbation
 			if (Ei < minEcut || Ei > maxEcut)
 			{	double dniInjected = dni * pInject;
@@ -186,6 +211,7 @@ struct ePhRelax : public Integrator<diagMatrix>
 				ieMax = std::max(ieMax, ie);
 			}
 		}
+		smooth(dfPert, nSmooth);
 		dfPert *= Uabs / Upert; //normalize to match absorbed laser energy per unit volume
 		dZ *= detR * Uabs / Upert; //correspondingly normalize (but per unit cell)
 		logPrintf("Change in electrons/cell: %lg\n", dZ);
@@ -196,6 +222,7 @@ struct ePhRelax : public Integrator<diagMatrix>
 		hInt.resize(nE-1);
 		for(int ie=0; ie<nE-1; ie++)
 			hInt[ie] = hIntInterp(Egrid(ie)+0.5*dE);
+		smooth(hInt, nSmooth);
 		
 		//Divide active energy grid for e-e scattering calculation:
 		//--- make length commensurate with eeStride
@@ -303,14 +330,19 @@ struct ePhRelax : public Integrator<diagMatrix>
 			fdot[i] += ElDot_i / (dE*dE*g[i]);
 			fdot[i+1] -= ElDot_i / (dE*dE*g[i+1]);
 		}
-		TlDot = ElDot / Cl(Tl);
+		TlDot = fixedTl ? 0.0 : ElDot / Cl(Tl);
 		
 		//Pump evolution:
-		if(pumpFWHM)
-		{	double sigma = pumpFWHM/2.355;
-			double gaussian = exp((-1.*t*t)/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
+		if(pumpCW or pumpFWHM)
+		{	double prefactor;
+			if(pumpCW)
+				prefactor = 1.0; //CW
+			else
+			{	double sigma = pumpFWHM / 2.355;
+				prefactor = exp(-0.5*std::pow(t/sigma, 2)) / (sigma * sqrt(2*M_PI));
+			}
 			for(int i=0; i<nE; i++)
-				fdot[i] += gaussian*dfPert[i];
+				fdot[i] += prefactor * dfPert[i];
 		}
 		
 		mpiWorld->bcastData(fdot); //Ensure consistency on all processes
@@ -385,14 +417,17 @@ int main(int argc, char** argv)
 	e.El0 = e.El(e.T);
 	diagMatrix f = e.f0; f.push_back(e.T); //Initial distribution
 	double t;
-	if(e.pumpFWHM == 0.)
+	if(e.pumpCW)
+	{	t = 0.; //CW pump applied during integration (and no extra time needed at start)
+	}
+	else if(e.pumpFWHM == 0.)
 	{	e.report(-e.dt, f);
 		//Apply pump instanteneously:
 		t = 0.;
 		f = e.f0 + e.dfPert; f.push_back(e.T);
 	}
 	else
-	{	t = -e.dt * ceil(2.*e.pumpFWHM/e.dt); //start earlier to accomodate pump (applied during integration)
+	{	t = -e.dt * ceil(2.*e.pumpFWHM/e.dt); //start earlier to accomodate Gaussian pump (applied during integration)
 	}
 	e.integrateAdaptive(f, t, e.tMax, 1e-4, e.dt);
 	watchSolve.stop();
@@ -416,6 +451,14 @@ int main(int argc, char** argv)
 		ofs << "#t[fs] Tl[K]\n";
 		for(int it=0; it<int(e.tArr.size()); it++)
 			ofs << e.tArr[it]/fs << '\t' << e.fArr[it].back()/Kelvin << '\n';
+		ofs.close();
+		
+		//Pump perturbation distribution [dimensionless]
+		ofs.open((e.runName+".dfPert").c_str());
+		ofs.precision(10);
+		ofs << "#E[ev]\\tdfPert\n";
+		for(int ie=0; ie<e.nE; ie++)
+			ofs << e.Egrid(ie)/eV << '\t' << e.dfPert[ie] << '\n';
 		ofs.close();
 		
 		//Distributions [dimensionless]
