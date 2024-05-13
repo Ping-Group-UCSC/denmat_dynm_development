@@ -84,6 +84,7 @@ std::vector<matrix> readCellWeights(string fname, int nCells, int nAtoms, int nB
 
 //! Read phonon basis file
 diagMatrix readPhononBasis(string fname);
+std::vector<vector3<>> readPhononBasisFromFile(string fname);//JX
 
 
 //! Read an array of vector3<> from a plain text file (implemented in wannier/WannierMinimizer_phonon.cpp)
