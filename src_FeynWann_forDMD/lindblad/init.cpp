@@ -60,6 +60,9 @@ struct LindbladInit
 	const double ePhDelta; //!< Gaussian energy conservation width
 	
 	const bool defectEnabled; //!< if defect scattering is enabled with phonons
+
+	double nkbt;
+	bool onlyElec, onlyHole;
 	
 	LindbladInit(FeynWann& fw, const vector3<int>& NkFine,
 		double dmuMin, double dmuMax, double Tmax, double pumpOmegaMax, double probeOmegaMax,
@@ -158,10 +161,11 @@ struct LindbladInit
 		logPrintf("done.\n"); logFlush();
 		mpiWorld->allReduce(EvMax, MPIUtil::ReduceMax);
 		mpiWorld->allReduce(EcMin, MPIUtil::ReduceMin);
+		double Emid = 0.5*(EvMax + EcMin);
 		//--- add margins of max phonon energy, energy conservation width and fermiPrime width
-		double Emargin =7.*Tmax; //neglect below 10^-3 occupation deviation from equilibrium
-		Estart = std::min(EcMin - pumpOmegaMax, EvMax) - Emargin;
-		Estop = std::max(EvMax + pumpOmegaMax, EcMin) + Emargin;
+		double Emargin = nkbt*Tmax; //neglect below 10^-3 occupation deviation from equilibrium
+		Estart = onlyElec ? Emid : std::min(EcMin - pumpOmegaMax, EvMax) - Emargin;
+		Estop = onlyHole ? Emid : std::max(EvMax + pumpOmegaMax, EcMin) + Emargin;
 		logPrintf("Active energy range: %.3lf to %.3lf eV\n", Estart/eV, Estop/eV);
 		
 		//Select k-points:
@@ -429,7 +433,7 @@ struct LindbladInit
 		size_t ik; if(not findK(kp.k, ik)) return;
 		
 		//Determine energy ranges:
-		const double *Ebegin = E.data()+ik*fw.nBands, *Eend = Ebegin+fw.nBands;
+		const double *Ebegin = state.E.data(), *Eend = Ebegin + fw.nBands;
 		//--- pump-active (inner) energy range:
 		int innerOffset = 0; //offset from original bands to inner window
 		activeOffsets(Ebegin, Eend, Estart, Estop, innerOffset, kp.nInner);
@@ -770,6 +774,7 @@ int main(int argc, char** argv)
 	const double dmuMin = inputMap.get("dmuMin", 0.) * eV; //optional: lowest shift in fermi level from neutral value / VBM in eV (default: 0)
 	const double dmuMax = inputMap.get("dmuMax", 0.) * eV; //optional: highest shift in fermi level from neutral value / VBM in eV (default: 0)
 	const double Tmax = inputMap.get("Tmax") * Kelvin; //maximum temperature in Kelvin (ambient phonon T = initial electron T)
+	const double nkbt = inputMap.get("nkbt", 7);
 	//--- pump
 	const double pumpOmegaMax = inputMap.get("pumpOmegaMax") * eV; //maximum pump frequency in eV
 	const double probeOmegaMax = inputMap.get("probeOmegaMax") * eV; //maximum probe frequency in eV
@@ -780,6 +785,9 @@ int main(int argc, char** argv)
 	const double ePhDelta = inputMap.get("ePhDelta") * eV; //energy conservation width for e-ph coupling
 	const size_t maxNeighbors = inputMap.get("maxNeighbors", 0); //if non-zero: limit neighbors per k by stochastic down-sampling and amplifying the Econserve weights
 	const string outFile = inputMap.has("outFile") ? inputMap.getString("outFile") : "ldbd.dat"; //output file name
+	const bool onlyElec = inputMap.get("onlyElec", 0);
+	const bool onlyHole = inputMap.get("onlyHole", 0);
+	bool notBothTrue = !(onlyElec && onlyHole); assert(notBothTrue);
 	FeynWannParams fwp(&inputMap);
 	
 	logPrintf("\nInputs after conversion to atomic units:\n");
@@ -787,6 +795,7 @@ int main(int argc, char** argv)
 	logPrintf("dmuMin = %lg\n", dmuMin);
 	logPrintf("dmuMax = %lg\n", dmuMax);
 	logPrintf("Tmax = %lg\n", Tmax);
+	logPrintf("nkbt = %lg\n", nkbt);
 	logPrintf("pumpOmegaMax = %lg\n", pumpOmegaMax);
 	logPrintf("probeOmegaMax = %lg\n", probeOmegaMax);
 	logPrintf("ePhMode = %s\n", ePhMode.c_str());
@@ -794,6 +803,8 @@ int main(int argc, char** argv)
 	logPrintf("ePhDelta = %lg\n", ePhDelta);
 	logPrintf("maxNeighbors = %lu\n", maxNeighbors);
 	logPrintf("outFile = %s\n", outFile.c_str());
+	logPrintf("onlyElec = %d\n", onlyElec);
+	logPrintf("onlyHole = %d\n", onlyHole);
 	fwp.printParams();
 	
 	//Initialize FeynWann:
@@ -842,9 +853,13 @@ int main(int argc, char** argv)
 	
 	//Create and initialize lindblad calculator:
 	LindbladInit lb(fw, NkFine, dmuMin, dmuMax, Tmax, pumpOmegaMax, probeOmegaMax, ePhEnabled, ePhDelta, defectEnabled);
+	lb.nkbt = nkbt;
+	lb.onlyElec = onlyElec; lb.onlyHole = onlyHole;
 	
 	//First pass (e only): select k-points
+	fw.energyOnly = true;
 	lb.kpointSelect(k0);
+	fw.energyOnly = false;
 	if(mpiWorld->isHead()) logPrintf("%lu active q-mesh offsets parallelized over %d process groups.\n", lb.offKuniq.size(), mpiGroupHead->nProcesses());
 	
 	if(ip.dryRun)
