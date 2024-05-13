@@ -53,10 +53,10 @@ int main(int argc, char** argv){
 	//First pass (e only): select k-points and output electronic quantities
 	lattice* latt = new lattice(fw, param);
 	electron* elec = new electron(fw, latt, param);
-	fw.eEneOnly = true; // only energies are needed in kpointSelect
+	fw.energyOnly = true; // only energies are needed in kpointSelect
 	elec->kpointSelect(elec->k0); // select energy range, bands and k points
 	if (!fw.isMetal && param->assumeMetal_scatt) elec->kpointSelect_scatt();
-	fw.eEneOnly = false; // we need more than energies now
+	fw.energyOnly = false; // we need more than energies now
 	elec->savekData(param, 0, ph->omegaMax); // output electronic quantities
 
 	//Second pass (ph only): select and output k pairs
