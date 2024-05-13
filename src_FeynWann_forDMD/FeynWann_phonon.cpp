@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------
-Copyright 2022 Ravishankar Sundararaman
+Copyright 2022 Ravishankar Sundararaman, Josh Quinton
 
 This file is part of JDFTx.
 
@@ -21,12 +21,16 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include "FeynWann_internal.h"
 #include <wannier/WannierMinimizer.h>
 
+#ifdef TDEP_ENABLED
+#include "tdep_wrapper.h"
+#endif
+
 
 void FeynWann::phLoop(const vector3<>& q0, FeynWann::phProcessFunc phProcess, void* params)
 {	static StopWatch watchCallback("FeynWann::phLoop:callback");
 	assert(fwp.needPhonons);
 	//Run Fourier transforms with this offset:
-	OsqW->transform(q0);
+	if(not fwp.tdep) OsqW->transform(q0);
 	//Call phProcess for q-points on present process:
 	int iq = OsqW->ikStart;
 	int iqStop = iq + OsqW->nk;
@@ -44,7 +48,7 @@ void FeynWann::phLoop(const vector3<>& q0, FeynWann::phProcessFunc phProcess, vo
 void FeynWann::phCalc(const vector3<>& q, FeynWann::StatePh& ph)
 {	assert(fwp.needPhonons);
 	//Compute Fourier versions for this q:
-	OsqW->compute(q);
+	if(not fwp.tdep) OsqW->compute(q);
 	//Prepare state on group head:
 	ph.iq = 0;
 	ph.q = q;
@@ -101,7 +105,7 @@ void FeynWann::ePhLoop(const vector3<>& k01, const vector3<>& k02, FeynWann::ePh
 	
 	//Prepare phonon states:
 	vector3<> q0 = k01 - k02;
-	OsqW->transform(q0);
+	if(not fwp.tdep) OsqW->transform(q0);
 	std::vector<StatePh> ph(prodOffsetDim);
 	{	int iq = OsqW->ikStart;
 		int iqStop = iq + OsqW->nk;
@@ -191,15 +195,25 @@ void FeynWann::ePhCalc(const FeynWann::StateE& e1, const FeynWann::StateE& e2, c
 
 void FeynWann::setState(FeynWann::StatePh& state)
 {	assert(fwp.needPhonons);
+	
+	if(fwp.tdep)
+	{
+		#ifdef TDEP_ENABLED
+		vector3<> qCart = GT * -state.q / (2*M_PI); //TDEP uses Cartesian q
+		state.omega.resize(nModes);
+		state.U = zeroes(nModes, nModes);
+		tdep_compute_(&qCart[0], state.omega.data(), state.U.data());
+		return;
+		#endif
+	}
+	
 	//Get force matrix:
 	matrix Osqq = getMatrix(OsqW->getResult(state.iq), nModes, nModes);
 
 	//Add polar corrections (LO-TO  splits) if any:
-	if(polar)
+	if(polar and state.q.isNonzero())
 	{	//Prefactor including denominator:
 		int prodSup = OsqW->nkTot;
-		matrix3<> G = (2.*M_PI)*inv(R);
-		matrix3<> GT = ~G;
 		//wrap q to BZ before qCart
 		vector3<> qBZ = state.q;
 		for(int iDir=0; iDir<3; iDir++)
@@ -262,7 +276,7 @@ void FeynWann::setMatrix(const FeynWann::StateE& e1, const FeynWann::StateE& e2,
 	//Get the matrix elements for all modes together:
 	matrix Mall = getMatrix(HePhW->getResult(ikPair), nBands*nBands, nModes);
 	//Add long range polar corrections if required:
-	if(polar)
+	if(polar and ph.q.isNonzero())
 	{	complex gLij;
 		for(int iMode=0; iMode<nModes; iMode++) //in Cartesian atom displacement basis
 		{	if (truncDir < 3)
@@ -289,7 +303,7 @@ void FeynWann::setMatrix(const FeynWann::StateE& e1, const FeynWann::StateE& e2,
 	//Apply phonon transformation:
 	Mall = Mall * m.ph->U; //to phonon eigenbasis
 	//Extract matrices for each phonon mode:
-	const double omegaPhCut = 1e-6;
+	//const double omegaPhCut = 1e-6;
 	m.M.resize(nModes);
 	for(int iMode=0; iMode<nModes; iMode++)
 		m.M[iMode] = sqrt(m.ph->omega[iMode]<omegaPhCut ? 0. : 0.5/m.ph->omega[iMode]) //frequency-dependent phonon amplitude
