@@ -47,6 +47,8 @@ double extrapCoeff[] = {-19./12, 13./3, -7./4 }; //account for constant, 1/eta a
 //double extrapCoeff[] = { -1, 2.}; //account for constant and 1/eta dependence
 const int nExtrap = sizeof(extrapCoeff)/sizeof(double);
 
+const double c = 137.035999084; //speed of light in atomic units = 1/(fine structure constant)
+
 //Collect ImEps contibutions using FeynWann callbacks:
 struct CollectImEps
 {	const std::vector<double>& dmu;
@@ -63,17 +65,30 @@ struct CollectImEps
 	vector3<complex> Ehat;
 	double EvMax, EcMin;
 	
+	//Optional emission collection (only for first dmu):
+	const bool emission;
+	const double emissionPrefac; //prefactor to omega^3 in ratio of emission to ImEps phase-space prefactors
+	const double selfEmissionPrefac; //prefactor to omega in ratio of self-emission to ImEps phase-space prefactors
+	std::shared_ptr<Histogram2D> Emission_E; //carrier and frequency-resolved emission rate
+	std::shared_ptr<Histogram2D> selfEmission_E; //carrier and frequency-resolved self-emission rate (from unscattered carriers)
 	
-	CollectImEps(const std::vector<double>& dmu, double T, double domega, double omegaFull, double omegaMax, bool needLW, double dv, double vMax)
+	CollectImEps(const std::vector<double>& dmu, double T, double domega, double omegaFull, double omegaMax, bool needLW, double dv, double vMax, bool emission)
 	: dmu(dmu), T(T), invT(1./T), domega(domega), omegaFull(omegaFull), omegaMax(omegaMax), needLW(needLW), dv(dv), vMax(vMax),
 		ImEps(dmu.size(), Histogram(0, domega, omegaFull)),
 		breadth(dmu.size(), Histogram(0, domega, omegaFull)),
 		breadthDen(dmu.size(), Histogram(0, domega, omegaFull)),
 		ImEps_E(-omegaMax, domega, omegaMax,  0, domega, omegaFull),
-		ImEps_v(-vMax, dv, vMax,  0, domega, omegaFull)
+		ImEps_v(-vMax, dv, vMax,  0, domega, omegaFull),
+		emission(emission),
+		emissionPrefac(1.0 / (std::pow(M_PI, 2) * std::pow(c, 3))),
+		selfEmissionPrefac(4.0 / std::pow(c, 3))
 	{	logPrintf("Initialized frequency grid: 0 to %lg eV with %d points.\n", ImEps[0].Emax()/eV, ImEps[0].nE);
 		EvMax = *std::max_element(dmu.begin(), dmu.end()) + 10*T;
 		EcMin = *std::min_element(dmu.begin(), dmu.end()) - 10*T;
+		if(emission)
+		{	Emission_E = std::make_shared<Histogram2D>(-omegaMax, domega, omegaMax,  0, domega, omegaMax);
+			selfEmission_E = std::make_shared<Histogram2D>(-omegaMax, domega, omegaMax,  0, domega, omegaMax);
+		}
 	}
 	
 	void calcStateRelated(const FeynWann::StateE& state, std::vector<diagMatrix>& F, std::vector<diagMatrix>& ImE)
@@ -100,22 +115,37 @@ struct CollectImEps
 		for(int iDir=0; iDir<3; iDir++)
 			P += Ehat[iDir] * state.v[iDir];
 		//Collect 
-		for(int v=0; v<nBands; v++) if(E[v]<EvMax)
-		{	for(int c=0; c<nBands; c++) if(E[c]>EcMin)
+		for(int v=0; v<nBands; v++)
+		{	for(int c=0; c<nBands; c++)
 			{	double omega = E[c] - E[v]; //energy conservation
-				if(omega<domega || omega>=omegaFull) continue; //irrelevant event
+				if((omega < domega) or (omega >= omegaFull)) continue; //always irrelevant
+				bool relevantImEps = (E[v] < EvMax) and (E[c] > EcMin);
+				bool relevantEmission = emission and ((E[c] < EvMax) or (E[v] > EcMin)) and (omega <= omegaMax);
+				if(not (relevantImEps or relevantEmission)) continue;
 				double weight_F = (prefac/(omega*omega)) * P(c,v).norm(); //event weight except for occupation factors
-				for(unsigned iMu=0; iMu<dmu.size(); iMu++)
-				{	double weight = weight_F * (F[iMu][v]-F[iMu][c]);
-					ImEps[iMu].addEvent(omega, weight);
-					if(needLW) breadth[iMu].addEvent(omega, weight*(ImE[iMu][c]+ImE[iMu][v]+GammaS));
-					if(iMu==0)
-					{	ImEps_E.addEvent(E[v], omega, -weight); //hole
-						ImEps_E.addEvent(E[c], omega, +weight); //electron
-						//speed distribution:
-						ImEps_v.addEvent(-state.vVec[v].length(), omega, -weight); //hole
-						ImEps_v.addEvent(+state.vVec[c].length(), omega, +weight); //electron
+				if(relevantImEps)
+					for(unsigned iMu=0; iMu<dmu.size(); iMu++)
+					{	double weight = weight_F * (F[iMu][v]-F[iMu][c]);
+						ImEps[iMu].addEvent(omega, weight);
+						if(needLW) breadth[iMu].addEvent(omega, weight*(ImE[iMu][c]+ImE[iMu][v]+GammaS));
+						if(iMu==0)
+						{	ImEps_E.addEvent(E[v], omega, -weight); //hole
+							ImEps_E.addEvent(E[c], omega, +weight); //electron
+							//speed distribution:
+							ImEps_v.addEvent(-state.vVec[v].length(), omega, -weight); //hole
+							ImEps_v.addEvent(+state.vVec[c].length(), omega, +weight); //electron
+						}
 					}
+				if(relevantEmission)
+				{	double weight = weight_F * emissionPrefac * std::pow(omega, 3);
+					Emission_E->addEvent(E[v], omega, -weight * F[0][c]); //hole
+					Emission_E->addEvent(E[c], omega, +weight * (1.-F[0][v])); //electron
+				}
+				if(relevantEmission and relevantImEps)
+				{	double weight = weight_F * (F[0][v]-F[0][c]) //ImEps part
+						* selfEmissionPrefac * omega * P(c,v).norm(); //emission part
+					selfEmission_E->addEvent(E[v], omega, weight * F[0][c]); //hole
+					selfEmission_E->addEvent(E[c], omega, weight * (1.-F[0][v])); //electron
 				}
 			}
 		}
@@ -148,12 +178,16 @@ struct CollectImEps
 			nPh[iMode] = bose(std::max(1e-3, omegaPhByT)); //avoid 0/0 for zero phonon frequencies
 		}
 		//Collect
-		for(int v=0; v<nBands; v++) if(E1[v]<EvMax)
-		{	for(int c=0; c<nBands; c++) if(E2[c]>EcMin)
+		for(int v=0; v<nBands; v++)
+		{	for(int c=0; c<nBands; c++)
 			{	for(int alpha=0; alpha<nModes; alpha++)
 				{	for(int ae=-1; ae<=+1; ae+=2) // +/- for phonon absorption or emmision
 					{	double omega = E2[c] - E1[v] - ae*omegaPh[alpha]; //energy conservation
-						if(omega<domega || omega>=omegaFull) continue; //irrelevant event
+						if((omega < domega) or (omega >= omegaFull)) continue; //always irrelevant
+						bool relevantImEps = (E1[v] < EvMax) and (E2[c] > EcMin);
+						bool relevantEmission = emission and ((E2[c] < EvMax) or (E1[v] > EcMin)) and (omega <= omegaMax);
+						if(not (relevantImEps or relevantEmission)) continue;
+
 						//Effective matrix elements
 						std::vector<complex> Meff(nExtrap, 0.);
 						for(int i=0; i<nBands; i++) // sum over the intermediate states
@@ -170,20 +204,26 @@ struct CollectImEps
 						for(int z=0; z<nExtrap; z++)
 							MeffSqExtrap += extrapCoeff[z] * Meff[z].norm();
 						double weight_F = (prefac/(omega*omega)) * (nPh[alpha] + 0.5*(1.-ae)) * MeffSqExtrap;
-						for(unsigned iMu=0; iMu<dmu.size(); iMu++)
-						{	double weight = weight_F * (F1[iMu][v]-F2[iMu][c]);
-							ImEps[iMu].addEvent(omega, weight);
-							if(needLW)
-							{	breadth[iMu].addEvent(omega, fabs(weight)*(ImE2[iMu][c]+ImE1[iMu][v]+GammaS));
-								breadthDen[iMu].addEvent(omega, fabs(weight));
+						if(relevantImEps)
+							for(unsigned iMu=0; iMu<dmu.size(); iMu++)
+							{	double weight = weight_F * (F1[iMu][v]-F2[iMu][c]);
+								ImEps[iMu].addEvent(omega, weight);
+								if(needLW)
+								{	breadth[iMu].addEvent(omega, fabs(weight)*(ImE2[iMu][c]+ImE1[iMu][v]+GammaS));
+									breadthDen[iMu].addEvent(omega, fabs(weight));
+								}
+								if(iMu==0)
+								{	ImEps_E.addEvent(E1[v], omega, -weight); //hole
+									ImEps_E.addEvent(E2[c], omega, +weight); //electron
+									//speed distribution:
+									ImEps_v.addEvent(-mat.e1->vVec[v].length(), omega, -weight); //hole
+									ImEps_v.addEvent(+mat.e2->vVec[c].length(), omega, +weight); //electron
+								}
 							}
-							if(iMu==0)
-							{	ImEps_E.addEvent(E1[v], omega, -weight); //hole
-								ImEps_E.addEvent(E2[c], omega, +weight); //electron
-								//speed distribution:
-								ImEps_v.addEvent(-mat.e1->vVec[v].length(), omega, -weight); //hole
-								ImEps_v.addEvent(+mat.e2->vVec[c].length(), omega, +weight); //electron
-							}
+						if(relevantEmission)
+						{	double weight = weight_F * emissionPrefac * std::pow(omega, 3);
+							Emission_E->addEvent(E1[v], omega, -weight * F2[0][c]); //hole
+							Emission_E->addEvent(E2[c], omega, +weight * (1.-F1[0][v])); //electron
 						}
 					}
 				}
@@ -228,6 +268,7 @@ int main(int argc, char** argv)
 	const double dmuMax = inputMap.get("dmuMax", 0.) * eV; //optional shift in chemical potential from neutral value; end of range (default to 0)
 	const int dmuCount = inputMap.get("dmuCount", 1); assert(dmuCount>0); //number of chemical potential shifts
 	const double broadening = inputMap.get("broadening", 0)*eV; //if non-zero, override broadening with this value in eV
+	const bool emission = inputMap.getBool("emission", false); //If true, also compute emission distributions
 	string contribution = inputMap.getString("contribution"); //direct / phonon
 	FeynWannParams fwp(&inputMap);
 	
@@ -252,6 +293,7 @@ int main(int argc, char** argv)
 	logPrintf("dmuMax = %lg\n", dmuMax);
 	logPrintf("dmuCount = %d\n", dmuCount);
 	logPrintf("broadening = %lg\n", broadening);
+	logPrintf("emission = %s\n", (emission ? "yes" : "no"));
 	logPrintf("contribution = %s\n", contribMap.getString(contribType));
 	fwp.printParams();
 	
@@ -308,7 +350,7 @@ int main(int argc, char** argv)
 		dmu[iMu] = dmuMin + iMu*(dmuMax-dmuMin)/(dmuCount-1);
 	
 	//Calculate delta-function resolved versions (no broadening yet):
-	CollectImEps cie(dmu, T, domega, omegaFull, omegaMax, needLW, dv, vMax);
+	CollectImEps cie(dmu, T, domega, omegaFull, omegaMax, needLW, dv, vMax, emission);
 	cie.prefac = 4. * std::pow(M_PI,2) * fw->spinWeight / (nKeff*fabs(det(fw->R))); //frequency independent part of prefactor
 	cie.eta = eta;
 	cie.GammaS = GammaS;
@@ -355,6 +397,15 @@ int main(int argc, char** argv)
 	}
 	cie.ImEps_E.allReduce(MPIUtil::ReduceSum);
 	cie.ImEps_v.allReduce(MPIUtil::ReduceSum);
+	if(emission)
+	{	cie.Emission_E->allReduce(MPIUtil::ReduceSum);
+		cie.Emission_E->print("emission"+fileSuffix+".dat", 1./eV, 1./eV, 1.);
+		//Self-emission part for direct contributions:
+		if(contribType == Direct)
+		{	cie.selfEmission_E->allReduce(MPIUtil::ReduceSum);
+			cie.selfEmission_E->print("selfEmission"+fileSuffix+".dat", 1./eV, 1./eV, 1.);
+		}
+	}
 	logPrintf("done.\n"); logFlush();
 	
 	//Normalize the breadths:
