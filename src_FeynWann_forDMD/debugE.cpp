@@ -22,6 +22,7 @@ along with JDFTx.  If not, see <http://www.gnu.org/licenses/>.
 #include "FeynWann.h"
 #include "InputMap.h"
 #include <core/Units.h>
+#include "lindbladInit_for-DMD-4.5.6/help.h"
 
 //Read a list of k-points from a file
 std::vector<vector3<>> readKpointsFile(string fname)
@@ -47,24 +48,33 @@ std::vector<vector3<>> readKpointsFile(string fname)
 }
 
 //Write debug code within process() to examine arbitrary electronic properties along a k-path
-struct DebugE
-{
+struct DebugE{
+	FeynWann& fw;
+	int bandStart, bandStop; //optional band range read in from input
 	FeynWann::StateE e; //updated for each k before calling process()
 	std::vector<diagMatrix> Earr;
-	std::vector<matrix> Larr;
-	std::vector<matrix> Qarr;
+	std::vector<matrix> Sarr, Larr, Qarr;
+
+	DebugE(int bandStart, int bandStop, FeynWann& fw) : bandStart(bandStart), bandStop(bandStop), fw(fw){}
 	
 	void process()
-	{	logPrintf("k: "); e.k.print(globalLog, " %9.6lf ");
+	{	//logPrintf("k: "); e.k.print(globalLog, " %9.6lf ");
+		vector3<> k_cart = wrap(e.k) * ~fw.G; //k_cart.print(globalLog, " %9.6lf ");
+		logPrintf("kz e (meV) sy:");
+		for (int b = bandStart; b < bandStop; b++)
+			logPrintf("   %lg %lg %lg", k_cart[2], e.E[b]*27211.386, e.S[1](b,b).real());
+		logPrintf("\n");
 		Earr.push_back(e.E);
-		for(int iDir=0; iDir<3; iDir++) Larr.push_back(e.L[iDir]);
-		for(int iComp=0; iComp<5; iComp++) Qarr.push_back(e.Q[iComp]);
+		for (int iDir = 0; iDir<3; iDir++) Sarr.push_back(e.S[iDir]);
+		//for(int iDir=0; iDir<3; iDir++) Larr.push_back(e.L[iDir]);
+		//for(int iComp=0; iComp<5; iComp++) Qarr.push_back(e.Q[iComp]);
 	}
 	
 	void saveOutputs()
 	{	write(Earr, "debug.E");
-		write(Larr, "debug.L");
-		write(Qarr, "debug.Q");
+		write(Sarr, "debug.S");
+		//write(Larr, "debug.L");
+		//write(Qarr, "debug.Q");
 	}
 	
 	static void write(const std::vector<diagMatrix>& Marr, string fname)
@@ -93,10 +103,14 @@ int main(int argc, char** argv)
 	//Get the system parameters (mu, T, lattice vectors etc.)
 	InputMap inputMap(ip.inputFilename);
 	string kFile = inputMap.getString("kFile"); //file containing list of k-points (like a bandstruct.kpoints file)
+	int bandStart = inputMap.get("bandStart", 0);
+	int bandStop = inputMap.get("bandStop", 0); //replaced with nBands below if 0
 	FeynWannParams fwp(&inputMap);
 
 	logPrintf("\nInputs after conversion to atomic units:\n");
 	logPrintf("kFile = %s\n", kFile.c_str());
+	logPrintf("bandStart = %d\n", bandStart);
+	logPrintf("bandStop = %d\n", bandStop);
 	fwp.printParams();
 
 	//Read k-points:
@@ -104,10 +118,12 @@ int main(int argc, char** argv)
 	logPrintf("Read %lu k-points from '%s'\n", kArr.size(), kFile.c_str());
 	
 	//Initialize FeynWann:
-	fwp.needL = true;
-	fwp.needQ = true;
+	fwp.needSpin = true;
+	//fwp.needL = true;
+	//fwp.needQ = true;
 	fwp.ePhHeadOnly = true; //so as to debug k-path alone
 	FeynWann fw(fwp);
+	if (!bandStop) bandStop = fw.nBands;
 	
 	if(ip.dryRun)
 	{	logPrintf("Dry run successful: commands are valid and initialization succeeded.\n");
@@ -117,9 +133,9 @@ int main(int argc, char** argv)
 	}
 	logPrintf("\n");
 	
-	DebugE de;
-	for(vector3<> k: kArr)
-	{	fw.eCalc(k, de.e);
+	DebugE de(bandStart, bandStop, fw);
+	for(vector3<> k: kArr){	
+		fw.eCalc(k, de.e);
 		if(mpiGroup->isHead())
 			de.process();
 	}
