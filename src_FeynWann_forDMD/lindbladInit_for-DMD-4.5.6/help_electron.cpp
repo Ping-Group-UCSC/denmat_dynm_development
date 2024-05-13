@@ -1,5 +1,46 @@
 #include "help_electron.h"
 
+double compute_sz(complex **dm, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e){
+	double result = 0.;
+	for (size_t ik = 0; ik < nk; ik++){
+		matrix s = e[ik].S[2](bStart, bStop, bStart, bStop);
+		for (int b2 = 0; b2 < nb; b2++)
+		for (int b1 = 0; b1 < nb; b1++)
+			result += real(s(b1, b2) * dm[ik][b2*nb + b1]);
+	}
+	return result / nkTot;
+}
+vector3<> compute_spin(std::vector<std::vector<matrix>> m, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e){
+	vector3<> result(0., 0., 0.);
+	for (size_t ik = 0; ik < nk; ik++)
+	for (int id = 0; id < 3; id++){
+		matrix s = e[ik].S[id](bStart, bStop, bStart, bStop);
+		for (int b2 = 0; b2 < nb; b2++)
+		for (int b1 = 0; b1 < nb; b1++)
+			result[id] += real(s(b1, b2) * m[ik][id](b2, b1));
+	}
+	return result / nkTot;
+}
+
+double maxval(std::vector<FeynWann::StateE>& e, int bStart, int bStop){
+	double r = DBL_MIN;
+	for (size_t ik; ik < e.size(); ik++){
+		diagMatrix Ek = e[ik].E(bStart, bStop);
+		for (int b = 0; b < bStop - bStart; b++)
+		if (Ek[b] > r) r = Ek[b];
+	}
+	return r;
+}
+double minval(std::vector<FeynWann::StateE>& e, int bStart, int bStop){
+	double r = DBL_MAX;
+	for (size_t ik; ik < e.size(); ik++){
+		diagMatrix Ek = e[ik].E(bStart, bStop);
+		for (int b = 0; b < bStop - bStart; b++)
+		if (Ek[b] < r) r = Ek[b];
+	}
+	return r;
+}
+
 double find_mu(double ncarrier, double t, double mu0, std::vector<double>& E, int nk, int bStart, int bCBM, int bStop){
 	int nb_E = E.size() / nk;
 	std::vector<diagMatrix> Ek(nk, diagMatrix(bStop - bStart));

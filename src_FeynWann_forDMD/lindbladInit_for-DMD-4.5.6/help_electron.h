@@ -1,6 +1,12 @@
 #pragma once
 #include "common_headers.h"
 
+double compute_sz(complex **dm, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e);
+vector3<> compute_spin(std::vector<std::vector<matrix>> m, size_t nk, double nkTot, int nb, int bStart, int bStop, std::vector<FeynWann::StateE>& e);
+
+double maxval(std::vector<FeynWann::StateE>& e, int bStart, int bStop);
+double minval(std::vector<FeynWann::StateE>& e, int bStart, int bStop);
+
 // occupation-related functions
 double find_mu(double ncarrier, double t, double mu0, std::vector<double>& E, int nk, int bStart, int bCBM, int bStop);
 double find_mu(double ncarrier, double t, double mu0, std::vector<FeynWann::StateE>& e, int bStart, int bCBM, int bStop);
