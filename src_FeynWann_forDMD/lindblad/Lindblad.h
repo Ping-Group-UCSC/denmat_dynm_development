@@ -61,10 +61,12 @@ struct LindbladParams
 	double tStep; //!< Explicit time evolution step size (fixed integrator)
 	double tolAdaptive; //!< Adaptive integrator relative tolerance
 
-	double pumpOmega, pumpA0, pumpTau; //!< pump frequency, amplitude and width
+	double pumpOmega, pumpI; //!< pump frequency and intensity(CW)/flux(pulse)
+	double pumpA0_sq() const; //!< compute the vector potential corresponding to pumpI and pumpOmega
+	double pumpTau, pumpSigma; //!< pulse width (zero for CW) and energy conservation width
 	vector3<complex> pumpPol; //!< pump polarization
 	bool pumpEvolve; //!< whether pump is explicitly evolved in time
-
+	
 	bool pumpBfield; //!< whether the "pump" is a magnetic field initialization
 	vector3<> pumpB; //!< initialization magnetic field
 	vector3<> Bext; //!< constant external magnetic field applied post-initialization
