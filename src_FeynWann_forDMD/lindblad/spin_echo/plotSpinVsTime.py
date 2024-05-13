@@ -7,7 +7,7 @@ ps = 1000. #in fs
 EhInv = 0.024188  #Eh^-1 in fs
 
 styles=['solid','solid', 'solid', 'solid','solid', 'solid', 'solid']
-for iFile, fname in enumerate(glob.glob('*.out')):
+for iFile, fname in enumerate(glob.glob('lindblad*.out')):
 	fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
 	plt.subplots_adjust(hspace=0.1)
 	title = fname.replace('.out','')
@@ -19,7 +19,7 @@ for iFile, fname in enumerate(glob.glob('*.out')):
 		if line.startswith('spinEchoDelay ='):
 			tDelay = float(line.split()[-1]) * EhInv
 		if line.startswith('spinEchoFlipTime ='):
-			tFlip = float(line.split()[-1]) * EhInv
+			tFlip = float(line.split()[2]) * EhInv
 		if line.startswith('Integrate: Step:'):
 			tokens = line.split()
 			t.append(float(tokens[4]))
