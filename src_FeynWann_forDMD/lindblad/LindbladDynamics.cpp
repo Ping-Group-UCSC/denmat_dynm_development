@@ -77,7 +77,7 @@ void Lindblad::applyPump()
 			{	deltaRho += rho0bar*P*rho0*Pdag - Pdag*rho0bar*P*rho0;
 				std::swap(P, Pdag); //P- <--> P+
 			}
-			accumRhoHC((M_PI*std::pow(lp.pumpA0, 2)) * deltaRho, drho.data()+rhoOffset[s.ik]);
+			accumRhoHC(M_PI * deltaRho, drho.data()+rhoOffset[s.ik]);
 		}
 	}
 	watch.stop();
@@ -134,9 +134,9 @@ void Lindblad::getStateDot(const State& s, DM1& rhoDot) const
 
 
 DM1 Lindblad::compute(double t, const DM1& drho)
-{	double pumpPrefac = lp.pumpEvolve
-		? sqrt(M_PI) * std::pow(lp.pumpA0, 2) * exp(-(t*t)/std::pow(lp.pumpTau, 2)) / lp.pumpTau
-		: 0.;
+{	double pumpPrefac = 1.0;
+	if(lp.pumpEvolve and lp.pumpTau) //Gaussian pulse
+		pumpPrefac = (sqrt(M_PI) * exp(-(t*t)/std::pow(lp.pumpTau, 2)) / lp.pumpTau);
 	vector3<> Bcur = lp.spinEchoGetB(t);
 	
 	for(State& s: state)
@@ -149,7 +149,7 @@ DM1 Lindblad::compute(double t, const DM1& drho)
 		if(lp.pumpEvolve)
 		{	matrix P = s.pumpPD; //P-
 			matrix Pdag = dagger(P); //P+
-			const matrix rhoBar = s.rho; //1-rho
+			const matrix rhoBar = bar(s.rho); //1-rho
 			for(int sign=-1; sign<=+1; sign+=2)
 			{	s.rhoDot += pumpPrefac * (rhoBar * P * s.rho * Pdag
 										- Pdag * rhoBar * P * s.rho); //+HC added by getRhoDot()
