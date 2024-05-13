@@ -206,3 +206,25 @@ diagMatrix readPhononBasis(string fname)
 	logPrintf("done.\n"); logFlush();
 	return invsqrtM;		
 }
+
+//JX
+std::vector<vector3<>> readPhononBasisFromFile(string fname){
+	logPrintf("Reading '%s' ... ", fname.c_str()); logFlush();
+	ifstream ifs(fname); if (!ifs.is_open()) die("could not open file.\n");
+	string headerLine; getline(ifs, headerLine); //read and ignore header line
+	std::vector<vector3<>> phononBasis;
+	while (!ifs.eof()){
+		string line; getline(ifs, line);
+		trim(line);
+		if (!line.length()) continue;
+		istringstream iss(line);
+		string spName; int atom; vector3<> disp; double M;
+		iss >> spName >> atom >> disp[0] >> disp[1] >> disp[2] >> M;
+		if (!iss.fail()){
+			phononBasis.push_back(disp);
+		}
+	}
+	logPrintf("done.\n"); logFlush();
+	return phononBasis;
+}
+//JX
